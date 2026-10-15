@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "55693049971",
+    "project_id": "expensepro-1d7c2",
+    "storage_bucket": "expensepro-1d7c2.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:55693049971:android:1e91e4bfaef4e0f77fea06",
+        "android_client_info": {
+          "package_name": "com.maantechnology.salesprosaasmain"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC0zuZQxnVNWo0-V7U8fcpCGPylCw88x_8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
