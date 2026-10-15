@@ -3,18 +3,16 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:intl_phone_field/intl_phone_field.dart';
 import 'package:mobile_pos/GlobalComponents/button_global.dart';
 import 'package:mobile_pos/Screens/Authentication/Phone%20Auth/phone_OTP_screen.dart';
 import 'package:mobile_pos/constant.dart';
 import 'package:mobile_pos/generated/l10n.dart' as lang;
-import 'package:nb_utils/nb_utils.dart';
 
 import 'Repo/phone_auth_repo.dart';
 
 class PhoneAuth extends StatefulWidget {
-  const PhoneAuth({Key? key}) : super(key: key);
+  const PhoneAuth({super.key});
 
   @override
   State<PhoneAuth> createState() => _PhoneAuthState();
@@ -63,7 +61,7 @@ class _PhoneAuthState extends State<PhoneAuth> {
               ),
               const SizedBox(height: 30),
               IntlPhoneField(
-                decoration:  InputDecoration(
+                decoration: InputDecoration(
                   //labelText: 'Phone Number',
                   labelText: lang.S.of(context).phoneNumber,
                   border: const OutlineInputBorder(borderSide: BorderSide(), borderRadius: BorderRadius.all(Radius.circular(15))),
@@ -168,12 +166,13 @@ class _PhoneAuthState extends State<PhoneAuth> {
                         PhoneAuthRepo repo = PhoneAuthRepo();
 
                         if (await repo.sentOTP(phoneNumber: phoneNumber!, context: context)) {
-                          OTPVerify(phoneNumber: phoneNumber!).launch(context);
+                          // OTPVerify(phoneNumber: phoneNumber!).launch(context);
+                          Navigator.push(context, MaterialPageRoute(builder: (context) => OTPVerify(phoneNumber: phoneNumber!)));
                         }
                       } else {
                         EasyLoading.showError(
                           lang.S.of(context).pleaseEnterAValidPhoneNumber,
-                            //'Enter a valid Phone Number'
+                          //'Enter a valid Phone Number'
                         );
                       }
                     },

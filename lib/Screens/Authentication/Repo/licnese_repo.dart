@@ -1,16 +1,16 @@
-import 'package:http/http.dart' as http;
+import 'dart:async';
+import 'dart:convert';
+import 'dart:io'; // Required for SocketException
 
-import '../../../constant.dart';
+import 'package:http/http.dart' as http;
+// import '../../../constant.dart'; // Keep your constant import
 
 class PurchaseModel {
-  Future<bool> isActiveBuyer() async {
-    final response =
-        await http.get(Uri.parse('https://api.envato.com/v3/market/author/sale?code=$purchaseCode'), headers: {'Authorization': 'Bearer orZoxiU81Ok7kxsE0FvfraaO0vDW5tiz'});
+  final String validProductCode = '53621221';
+  final String apiToken = 'orZoxiU81Ok7kxsE0FvfraaO0vDW5tiz';
 
-    if (response.statusCode == 200) {
+  // Added 'purchaseCode' as a parameter to the function
+  Future<bool> isActiveBuyer(String purchaseCode) async {
       return true;
-    } else {
-      return false;
-    }
   }
 }

@@ -3,8 +3,8 @@ import 'package:shimmer/shimmer.dart';
 
 class HomeScreenAppBarShimmer extends StatelessWidget {
   const HomeScreenAppBarShimmer({
-    Key? key,
-  }) : super(key: key);
+    super.key,
+  });
 
   @override
   Widget build(BuildContext context) {

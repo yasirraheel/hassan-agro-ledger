@@ -5,8 +5,8 @@ import 'package:nb_utils/nb_utils.dart';
 
 class BottomNav extends StatefulWidget {
   const BottomNav({
-    Key? key,
-  }) : super(key: key);
+    super.key,
+  });
 
   @override
   State<BottomNav> createState() => _BottomNavState();

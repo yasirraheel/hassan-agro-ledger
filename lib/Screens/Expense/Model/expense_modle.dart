@@ -1,19 +1,21 @@
 class Expense {
   Expense({
-      this.id, 
-      this.account, 
-      this.amount, 
-      this.expenseCategoryId, 
-      this.userId, 
-      this.businessId, 
-      this.expanseFor, 
-      this.paymentType, 
-      this.referenceNo, 
-      this.note, 
-      this.expenseDate, 
-      this.createdAt, 
-      this.updatedAt, 
-      this.category,});
+    this.id,
+    this.account,
+    this.amount,
+    this.expenseCategoryId,
+    this.userId,
+    this.businessId,
+    this.expanseFor,
+    this.paymentType,
+    this.paymentTypeId,
+    this.referenceNo,
+    this.note,
+    this.expenseDate,
+    this.createdAt,
+    this.updatedAt,
+    this.category,
+  });
 
   Expense.fromJson(dynamic json) {
     id = json['id'];
@@ -23,6 +25,7 @@ class Expense {
     userId = json['user_id'];
     businessId = json['business_id'];
     expanseFor = json['expanseFor'];
+    paymentTypeId = json["payment_type_id"];
     paymentType = json['paymentType'];
     referenceNo = json['referenceNo'];
     note = json['note'];
@@ -31,6 +34,7 @@ class Expense {
     updatedAt = json['updated_at'];
     category = json['category'] != null ? Category.fromJson(json['category']) : null;
   }
+
   num? id;
   dynamic account;
   num? amount;
@@ -38,6 +42,7 @@ class Expense {
   num? userId;
   num? businessId;
   String? expanseFor;
+  int? paymentTypeId;
   String? paymentType;
   String? referenceNo;
   String? note;
@@ -66,18 +71,19 @@ class Expense {
     }
     return map;
   }
-
 }
 
 class Category {
   Category({
-      this.id, 
-      this.categoryName,});
+    this.id,
+    this.categoryName,
+  });
 
   Category.fromJson(dynamic json) {
     id = json['id'];
     categoryName = json['categoryName'];
   }
+
   num? id;
   String? categoryName;
 
@@ -87,5 +93,4 @@ class Category {
     map['categoryName'] = categoryName;
     return map;
   }
-
 }

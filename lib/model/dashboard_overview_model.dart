@@ -1,19 +1,22 @@
 class DashboardOverviewModel {
   DashboardOverviewModel({
-      String? message, 
-      Data? data,}){
+    String? message,
+    Data? data,
+  }) {
     _message = message;
     _data = data;
-}
+  }
 
   DashboardOverviewModel.fromJson(dynamic json) {
     _message = json['message'];
     _data = json['data'] != null ? Data.fromJson(json['data']) : null;
   }
+
   String? _message;
   Data? _data;
 
   String? get message => _message;
+
   Data? get data => _data;
 
   Map<String, dynamic> toJson() {
@@ -24,22 +27,22 @@ class DashboardOverviewModel {
     }
     return map;
   }
-
 }
 
 class Data {
   Data({
-      num? totalItems, 
-      num? totalCategories, 
-      num? totalIncome, 
-      num? totalExpense, 
-      num? totalDue, 
-      num? stockQty, 
-      num? totalLoss, 
-      num? totalProfit, 
-      num? stockValue,
-      List<Sales>? sales,
-      List<Purchases>? purchases,}){
+    num? totalItems,
+    num? totalCategories,
+    num? totalIncome,
+    num? totalExpense,
+    num? totalDue,
+    num? stockQty,
+    num? totalLoss,
+    num? totalProfit,
+    num? stockValue,
+    List<Sales>? sales,
+    List<Purchases>? purchases,
+  }) {
     _totalItems = totalItems;
     _totalCategories = totalCategories;
     _totalIncome = totalIncome;
@@ -50,7 +53,7 @@ class Data {
     _totalProfit = totalProfit;
     _sales = sales;
     _purchases = purchases;
-}
+  }
 
   Data.fromJson(dynamic json) {
     _totalItems = json['total_items'];
@@ -75,11 +78,13 @@ class Data {
       });
     }
   }
+
   num? _totalItems;
   num? _totalCategories;
   num? _totalIncome;
   num? _totalExpense;
   num? _totalDue;
+
   // num? _stockQty;
   num? _totalLoss;
   num? _totalProfit;
@@ -88,15 +93,24 @@ class Data {
   List<Purchases>? _purchases;
 
   num? get totalItems => _totalItems;
+
   num? get totalCategories => _totalCategories;
+
   num? get totalIncome => _totalIncome;
+
   num? get totalExpense => _totalExpense;
+
   num? get totalDue => _totalDue;
+
   // num? get stockQty => _stockQty;
   num? get totalLoss => _totalLoss;
+
   num? get totalProfit => _totalProfit;
+
   num? get stockValue => _stockValue;
+
   List<Sales>? get sales => _sales;
+
   List<Purchases>? get purchases => _purchases;
 
   Map<String, dynamic> toJson() {
@@ -117,25 +131,27 @@ class Data {
     }
     return map;
   }
-
 }
 
 class Purchases {
   Purchases({
-      String? date, 
-      num? amount,}){
+    String? date,
+    num? amount,
+  }) {
     _date = date;
     _amount = amount;
-}
+  }
 
   Purchases.fromJson(dynamic json) {
     _date = json['date'];
     _amount = json['amount'];
   }
+
   String? _date;
   num? _amount;
 
   String? get date => _date;
+
   num? get amount => _amount;
 
   Map<String, dynamic> toJson() {
@@ -144,25 +160,27 @@ class Purchases {
     map['amount'] = _amount;
     return map;
   }
-
 }
 
 class Sales {
   Sales({
-      String? date, 
-      num? amount,}){
+    String? date,
+    num? amount,
+  }) {
     _date = date;
     _amount = amount;
-}
+  }
 
   Sales.fromJson(dynamic json) {
     _date = json['date'];
     _amount = json['amount'];
   }
+
   String? _date;
   num? _amount;
 
   String? get date => _date;
+
   num? get amount => _amount;
 
   Map<String, dynamic> toJson() {
@@ -171,5 +189,4 @@ class Sales {
     map['amount'] = _amount;
     return map;
   }
-
 }

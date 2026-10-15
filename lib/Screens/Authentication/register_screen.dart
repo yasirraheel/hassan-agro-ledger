@@ -2,8 +2,6 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'package:mobile_pos/GlobalComponents/button_global.dart';
 import 'package:mobile_pos/Screens/Authentication/Phone%20Auth/phone_auth_screen.dart';
 import 'package:mobile_pos/Screens/Authentication/profile_setup_screen.dart';
 import 'package:mobile_pos/generated/l10n.dart' as lang;
@@ -14,7 +12,7 @@ import '../../constant.dart';
 import 'login_form.dart';
 
 class RegisterScreen extends StatefulWidget {
-  const RegisterScreen({Key? key}) : super(key: key);
+  const RegisterScreen({super.key});
 
   @override
   State<RegisterScreen> createState() => _RegisterScreenState();
@@ -49,6 +47,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return SafeArea(
       child: Scaffold(
         body: Consumer(builder: (context, ref, child) {
@@ -77,7 +76,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             ),
                             validator: (value) {
                               if (value == null || value.isEmpty) {
-                               // return 'Email can\'n be empty';
+                                // return 'Email can\'n be empty';
                                 return lang.S.of(context).emailCannotBeEmpty;
                               } else if (!value.contains('@')) {
                                 //return 'Please enter a valid email';
@@ -151,7 +150,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 //return 'Password can\'t be empty';
                                 return lang.S.of(context).passwordCannotBeEmpty;
                               } else if (value.length < 4) {
-                               // return 'Please enter a bigger password';
+                                // return 'Please enter a bigger password';
                                 return lang.S.of(context).pleaseEnterABiggerPassword;
                               } else if (givenPassword != givenPassword2) {
                                 //return 'Password Not mach';
@@ -164,13 +163,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       ),
                     ),
                   ),
-                  ButtonGlobalWithoutIcon(
-                    buttontext: lang.S.of(context).register,
-                    buttonDecoration: kButtonDecoration.copyWith(color: kMainColor),
+                  ElevatedButton(
                     onPressed: () async {
                       if (validateAndSave()) {
                         RegisterRepo reg = RegisterRepo();
-                        if (await reg.registerRepo(email: email, context: context, password: password, confirmPassword: password))
+                        if (await reg.registerRepo(
+                            email: email, context: context, password: password, confirmPassword: password))
                           Navigator.push(
                               context,
                               MaterialPageRoute(
@@ -179,14 +177,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         // auth.signUp(context);
                       }
                     },
-                    buttonTextColor: Colors.white,
+                    child: Text(lang.S.of(context).register),
                   ),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
                         lang.S.of(context).haveAcc,
-                        style: GoogleFonts.poppins(color: kGreyTextColor, fontSize: 15.0),
+                        style: theme.textTheme.bodyLarge?.copyWith(
+                          color: kMainColor,
+                        ),
                       ),
                       TextButton(
                         onPressed: () {
@@ -197,10 +197,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         },
                         child: Text(
                           lang.S.of(context).logIn,
-                          style: GoogleFonts.poppins(
+                          style: theme.textTheme.titleSmall?.copyWith(
                             color: kMainColor,
-                            fontSize: 15.0,
-                            fontWeight: FontWeight.bold,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
                       ),

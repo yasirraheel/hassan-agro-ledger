@@ -1,443 +1,576 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:flutter_cart/flutter_cart.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:hugeicons/hugeicons.dart';
 import 'package:mobile_pos/Provider/product_provider.dart';
+import 'package:mobile_pos/Provider/profile_provider.dart';
 import 'package:mobile_pos/Screens/Customers/Model/parties_model.dart';
+import 'package:mobile_pos/Screens/Sales/sale_serial_selection_widget.dart';
+import 'package:mobile_pos/Screens/warehouse/warehouse_provider/warehouse_provider.dart';
 import 'package:mobile_pos/constant.dart';
 import 'package:mobile_pos/generated/l10n.dart' as lang;
-import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:nb_utils/nb_utils.dart';
-
-import '../../Const/api_config.dart';
-import '../../Provider/add_to_cart.dart';
+import 'package:shimmer/shimmer.dart';
+import '../../GlobalComponents/bar_code_scaner_widget.dart';
+import '../../GlobalComponents/glonal_popup.dart';
+import '../Products/Model/product_model.dart' as product;
+import 'provider/sales_cart_provider.dart';
 import '../../currency.dart';
-import '../../model/add_to_cart_model.dart';
+import 'model/sale_add_to_cart_model.dart';
+import '../Products/add product/modle/create_product_model.dart';
+import 'batch_select_popup_sales.dart';
 
-// ignore: must_be_immutable
-class SaleProductsList extends StatefulWidget {
-  SaleProductsList({Key? key, @required this.catName, this.customerModel}) : super(key: key);
+class SaleProductsList extends ConsumerStatefulWidget {
+  const SaleProductsList({super.key, this.customerModel});
 
-  // ignore: prefer_typing_uninitialized_variables
-  var catName;
-  Party? customerModel;
+  final Party? customerModel;
 
   @override
-  // ignore: library_private_types_in_public_api
-  _SaleProductsListState createState() => _SaleProductsListState();
+  ConsumerState<SaleProductsList> createState() => _SaleProductsListState();
 }
 
-class _SaleProductsListState extends State<SaleProductsList> {
-  String dropdownValue = '';
-  String productCode = '0000';
- TextEditingController codeController = TextEditingController();
+class _SaleProductsListState extends ConsumerState<SaleProductsList> {
+  // State Variables
+  String productCode = '';
+  TextEditingController codeController = TextEditingController();
+  int? _selectedWarehouseId; // Null means All Warehouses
 
-  var salesCart = FlutterCart();
-  num productPrice = 0;
-  String sentProductPrice = '';
+  // --- Helper Method for Floating-Point Precision Fix ---
+  num _round(num value) {
+    return num.parse(value.toStringAsFixed(2));
+  }
 
   @override
   void initState() {
-    widget.catName == null ? dropdownValue = 'Fashion' : dropdownValue = widget.catName;
     super.initState();
+    codeController.addListener(() {
+      setState(() {
+        productCode = codeController.text.trim();
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    codeController.dispose();
+    super.dispose();
+  }
+
+  // --- UI Builders ---
+
+  /// Builds Search Bar and Warehouse Dropdown
+  Widget _buildTopControls() {
+    final businessInfoAsync = ref.watch(businessInfoProvider);
+
+    return Column(
+      spacing: 10,
+      children: [
+        // 1. Search Bar
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8),
+          child: Row(
+            children: [
+              Flexible(
+                child: AppTextField(
+                  controller: codeController,
+                  textFieldType: TextFieldType.NAME,
+                  decoration: InputDecoration(
+                    hintText: lang.S.of(context).scanCode,
+                    prefixIcon: const Icon(Icons.search, color: kGreyTextColor),
+                    fillColor: Colors.white,
+                    filled: true,
+                    contentPadding: EdgeInsets.zero,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Colors.grey.shade300),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Colors.grey.shade300),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: const BorderSide(color: kMainColor),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Container(
+                height: 48,
+                width: 48,
+                decoration: BoxDecoration(
+                  color: kMainColor50,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: IconButton(
+                  onPressed: () {
+                    showDialog(
+                      context: context,
+                      builder: (context) => BarcodeScannerWidget(
+                        onBarcodeFound: (String code) {
+                          setState(() {
+                            productCode = code;
+                            codeController.text = productCode;
+                          });
+                        },
+                      ),
+                    );
+                  },
+                  icon: const HugeIcon(
+                    icon: HugeIcons.strokeRoundedIrisScan,
+                    color: kMainColor,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        // 2. Warehouse Dropdown (Conditional)
+        businessInfoAsync.when(
+          data: (info) {
+            final bool isWarehouseAddonEnabled = info.data?.addons?.warehouseAddon ?? false;
+            if (!isWarehouseAddonEnabled) return const SizedBox.shrink();
+
+            final warehouseListAsync = ref.watch(fetchWarehouseListProvider);
+
+            return warehouseListAsync.when(
+              data: (data) {
+                final warehouses = data.data ?? [];
+                if (warehouses.isEmpty) return const SizedBox.shrink();
+
+                return Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                  child: InputDecorator(
+                    decoration: InputDecoration(
+                      labelText: 'Filter by Warehouse',
+                      labelStyle: const TextStyle(color: kPeraColor),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
+                      fillColor: Colors.white,
+                      filled: true,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide(color: Colors.grey.shade300),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide(color: Colors.grey.shade300),
+                      ),
+                    ),
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<int?>(
+                        value: _selectedWarehouseId,
+                        isExpanded: true,
+                        dropdownColor: Colors.white,
+                        style: const TextStyle(color: Colors.black, fontSize: 16),
+                        icon: const Icon(Icons.keyboard_arrow_down, color: kPeraColor),
+                        hint: const Text("All Warehouses"),
+                        items: [
+                          const DropdownMenuItem<int?>(
+                            value: null,
+                            child: Text("All Warehouses"),
+                          ),
+                          ...warehouses.map((w) {
+                            return DropdownMenuItem<int?>(
+                              value: w.id?.toInt(),
+                              child: Text(w.name ?? ''),
+                            );
+                          }),
+                        ],
+                        onChanged: (val) {
+                          setState(() {
+                            _selectedWarehouseId = val;
+                          });
+                        },
+                      ),
+                    ),
+                  ),
+                );
+              },
+              loading: () => const SizedBox.shrink(),
+              error: (_, _) => const SizedBox.shrink(),
+            );
+          },
+          loading: () => const SizedBox.shrink(),
+          error: (_, _) => const SizedBox.shrink(),
+        ),
+      ],
+    );
+  }
+
+  /// Builds Shimmer Loading Effect
+  Widget _buildShimmerLoading() {
+    return Shimmer.fromColors(
+      baseColor: Colors.grey[300]!,
+      highlightColor: Colors.grey[100]!,
+      child: ListView.separated(
+        itemCount: 8,
+        padding: const EdgeInsets.all(16),
+        separatorBuilder: (_, _) => const SizedBox(height: 10),
+        itemBuilder: (_, _) => Row(
+          children: [
+            Container(
+              width: 50,
+              height: 50,
+              decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(width: double.infinity, height: 16, color: Colors.white),
+                  const SizedBox(height: 6),
+                  Container(width: 100, height: 12, color: Colors.white),
+                ],
+              ),
+            ),
+            const SizedBox(width: 20),
+            Container(width: 50, height: 20, color: Colors.white),
+          ],
+        ),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    return Consumer(builder: (context, ref, __) {
-      final providerData = ref.watch(cartNotifier);
-      final productList = ref.watch(productProvider);
+    final productListAsync = ref.watch(productProvider);
 
-      return Scaffold(
+    return GlobalPopup(
+      child: Scaffold(
         backgroundColor: kWhite,
         appBar: AppBar(
-          title: Text(
-            lang.S.of(context).addItems,
-            style: GoogleFonts.poppins(
-              color: Colors.black,
-              fontSize: 20.0,
-            ),
-          ),
+          title: Text(lang.S.of(context).addItems),
           iconTheme: const IconThemeData(color: Colors.black),
           centerTitle: true,
           backgroundColor: Colors.white,
           elevation: 0.0,
-          // actions: [
-          //   PopupMenuButton(
-          //     itemBuilder: (BuildContext bc) => [
-          //       const PopupMenuItem(value: "/addPromoCode", child: Text('Add Promo Code')),
-          //       const PopupMenuItem(value: "clear", child: Text('Cancel All Product')),
-          //       const PopupMenuItem(value: "/settings", child: Text('Vat Doesn\'t Apply')),
-          //     ],
-          //     onSelected: (value) {
-          //       value == 'clear'
-          //           ? {
-          //               providerData.clearCart(),
-          //               providerData.clearDiscount(),
-          //               const HomeScreen().launch(context, isNewTask: true)
-          //             }
-          //           : Navigator.pushNamed(context, '$value');
-          //     },
-          //   ),
-          // ],
         ),
-        body: Padding(
-          padding: const EdgeInsets.all(20.0),
-          child: SingleChildScrollView(
-            child: Column(
-              children: [
-                // Container(
-                //   height: 60.0,
-                //   width: MediaQuery.of(context).size.width,
-                //   decoration: BoxDecoration(
-                //     color: kMainColor,
-                //     borderRadius: BorderRadius.circular(10.0),
-                //   ),
-                //   child: GestureDetector(
-                //     onTap: () {
-                //       // ignore: missing_required_param
-                //       providerData.getTotalAmount() <= 0
-                //           ? EasyLoading.showError('Cart Is Empty')
-                //           : SalesDetails(
-                //               customerName: widget.customerModel!.customerName,
-                //             ).launch(context);
-                //     },
-                //     child: Row(
-                //       children: [
-                //         Expanded(
-                //           flex: 1,
-                //           child: Stack(
-                //             alignment: Alignment.center,
-                //             children: [
-                //               const Image(
-                //                 image: AssetImage('images/selected.png'),
-                //               ),
-                //               Text(
-                //                 items.toString(),
-                //                 style: GoogleFonts.poppins(
-                //                   fontSize: 15.0,
-                //                   color: Colors.white,
-                //                 ),
-                //               ),
-                //             ],
-                //           ),
-                //         ),
-                //         Expanded(
-                //           flex: 2,
-                //           child: Center(
-                //             child: Text(
-                //               providerData.getTotalAmount() <= 0
-                //                   ? 'Cart is empty'
-                //                   : 'Total: $currency${providerData.getTotalAmount().toString()}',
-                //               style: GoogleFonts.poppins(
-                //                 color: Colors.white,
-                //                 fontSize: 16.0,
-                //               ),
-                //             ),
-                //           ),
-                //         ),
-                //         const Expanded(
-                //           flex: 1,
-                //           child: Icon(
-                //             Icons.arrow_forward,
-                //             color: Colors.white,
-                //           ),
-                //         ),
-                //       ],
-                //     ),
-                //   ),
-                // ),
-                // const SizedBox(height: 20.0),
-                Row(
-                  children: [
-                    Expanded(
-                      flex: 3,
-                      child: Padding(
-                        padding: const EdgeInsets.all(10.0),
-                        child: AppTextField(
-                          controller: codeController,
-                          textFieldType: TextFieldType.NAME,
-                          onChanged: (value) {
-                            setState(() {
-                              productCode = value;
-                            });
-                          },
-                          decoration: InputDecoration(
-                            floatingLabelBehavior: FloatingLabelBehavior.always,
-                            labelText: lang.S.of(context).productCode,
-                            hintText: productCode == '0000' || productCode == '-1' ? 'Scan product QR code' : productCode,
-                            border: const OutlineInputBorder(),
-                          ),
-                        ),
-                      ),
-                    ),
-                    Expanded(
-                      flex: 1,
-                      child: Padding(
-                        padding: const EdgeInsets.all(10.0),
-                        child: GestureDetector(
-                          onTap: () async {
-                            await showDialog(
-                              context: context,
-                              useSafeArea: true,
-                              builder: (context1) {
-                                MobileScannerController controller = MobileScannerController(
-                                  torchEnabled: false,
-                                  returnImage: false,
-                                );
-                                return Container(
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadiusDirectional.circular(6.0),
-                                  ),
-                                  child: Column(
-                                    children: [
-                                      AppBar(
-                                        backgroundColor: Colors.transparent,
-                                        iconTheme: const IconThemeData(color: Colors.white),
-                                        leading: IconButton(
-                                          icon: const Icon(Icons.arrow_back),
-                                          onPressed: () {
-                                            Navigator.pop(context1);
-                                          },
-                                        ),
-                                      ),
-                                      Expanded(
-                                        child: MobileScanner(
-                                          fit: BoxFit.contain,
-                                          controller: controller,
-                                          onDetect: (capture) {
-                                            final List<Barcode> barcodes = capture.barcodes;
+        body: Column(
+          children: [
+            // Top Controls (Search & Warehouse)
+            _buildTopControls(),
 
-                                            if (barcodes.isNotEmpty) {
-                                              final Barcode barcode = barcodes.first;
-                                              debugPrint('Barcode found! ${barcode.rawValue}');
-                                              setState(() {
-                                                productCode = barcode.rawValue!;
-                                                codeController.text = productCode;
-                                              });
-                                              Navigator.pop(context1);
-                                            }
-                                          },
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                );
-                              },
-                            );
-                          },
-                          child: Container(
-                            height: 60.0,
-                            width: 100.0,
-                            padding: const EdgeInsets.all(5.0),
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(8.0),
-                              border: Border.all(color: kGreyTextColor),
-                            ),
-                            child: const Image(
-                              image: AssetImage('images/barcode.png'),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                productList.when(data: (products) {
-                  return ListView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: products.length,
-                      itemBuilder: (_, i) {
-                        if (widget.customerModel != null) {
-                          if (widget.customerModel!.type!.contains('Retailer')) {
-                            productPrice = products[i].productSalePrice ?? 0;
-                          } else if (widget.customerModel!.type!.contains('Dealer')) {
-                            productPrice = products[i].productDealerPrice ?? 0;
-                          } else if (widget.customerModel!.type!.contains('Wholesaler')) {
-                            productPrice = products[i].productWholeSalePrice ?? 0;
-                          } else if (widget.customerModel!.type!.contains('Supplier')) {
-                            productPrice = products[i].productPurchasePrice ?? 0;
-                          } else if (widget.customerModel!.type!.contains('Guest')) {
-                            productPrice = products[i].productSalePrice ?? 0;
-                          }
-                        } else {
-                          productPrice = products[i].productSalePrice ?? 0;
-                        }
+            // Product List
+            Expanded(
+              child: productListAsync.when(
+                data: (products) {
+                  // --- Filtering Logic ---
+                  final filteredProducts = products.where((product) {
+                    final query = productCode.toLowerCase();
 
-                        return GestureDetector(
-                          onTap: () async {
-                            if ((products[i].productStock ?? 0) <= 0) {
-                              EasyLoading.showError('Out of stock');
-                            } else {
-                              if (widget.customerModel == null) {
-                                sentProductPrice = products[i].productSalePrice.toString();
-                              } else {
-                                if (widget.customerModel!.type!.contains('Retailer')) {
-                                  sentProductPrice = products[i].productSalePrice.toString();
-                                } else if (widget.customerModel!.type!.contains('Dealer')) {
-                                  sentProductPrice = products[i].productDealerPrice.toString();
-                                } else if (widget.customerModel!.type!.contains('Wholesaler')) {
-                                  sentProductPrice = products[i].productWholeSalePrice.toString();
-                                } else if (widget.customerModel!.type!.contains('Supplier')) {
-                                  sentProductPrice = products[i].productPurchasePrice.toString();
-                                }
-                              }
+                    // 1. Basic Code/Name Match
+                    final codeMatch =
+                        (product.productCode ?? '').toLowerCase() == query ||
+                        product.productCode == '0000' ||
+                        productCode.isEmpty;
+                    final nameMatch = (product.productName?.toLowerCase() ?? '').contains(query);
 
-                              AddToCartModel cartItem = AddToCartModel(
-                                productName: products[i].productName,
-                                subTotal: sentProductPrice,
-                                productId: products[i].productCode,
-                                productBrandName: products[i].brand?.brandName ?? '',
-                                productPurchasePrice: products[i].productPurchasePrice,
-                                stock: (products[i].productStock ?? 0).round(),
-                                uuid: products[i].id ?? 0,
-                              );
-                              providerData.addToCartRiverPod(cartItem);
-                              providerData.addProductsInSales(products[i]);
-                              Navigator.pop(context);
+                    // 2. Serial Number Match
+                    bool serialMatch = false;
+                    if (query.isNotEmpty && product.stocks != null) {
+                      for (var stock in product.stocks!) {
+                        if (stock.serialNumbers != null) {
+                          for (var serial in stock.serialNumbers!) {
+                            if (serial.toString().toLowerCase() == query) {
+                              serialMatch = true;
+                              break;
                             }
-                          },
-                          child: ProductCard(
-                            productTitle: products[i].productName.toString(),
-                            productDescription: products[i].brand?.brandName ?? '',
-                            productPrice: productPrice,
-                            productImage: products[i].productPicture,
-                            stock: products[i].productStock ?? 0,
-                          ).visible((products[i].productCode == productCode || productCode == '0000' || productCode == '-1') && productPrice != '0' ||
-                              products[i].productName!.toLowerCase().contains(productCode.toLowerCase())),
-                        );
-                      });
-                }, error: (e, stack) {
-                  return Text(e.toString());
-                }, loading: () {
-                  return const Center(child: CircularProgressIndicator());
-                }),
-              ],
+                          }
+                        }
+                        if (serialMatch) break;
+                      }
+                    }
+
+                    // 3. Stock Availability Check
+                    bool isCombo = product.productType?.toLowerCase().contains('combo') ?? false;
+                    bool hasStock = (product.stocksSumProductStock ?? 0) > 0;
+
+                    // 4. Warehouse Filter Check
+                    bool warehouseMatch = true;
+                    if (_selectedWarehouseId != null) {
+                      final stocks = product.stocks;
+                      if (stocks == null || stocks.isEmpty) {
+                        warehouseMatch = false;
+                      } else {
+                        // Check if ANY stock belongs to selected warehouse
+                        warehouseMatch = stocks.any((s) => s.warehouseId == _selectedWarehouseId);
+                      }
+                    }
+
+                    if (!isCombo && !hasStock) return false;
+
+                    return (codeMatch || nameMatch || serialMatch) && warehouseMatch;
+                  }).toList();
+
+                  if (filteredProducts.isEmpty) {
+                    return Center(child: Text(lang.S.of(context).noProductFound));
+                  }
+
+                  return ListView.builder(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    itemCount: filteredProducts.length,
+                    itemBuilder: (_, i) {
+                      final product = filteredProducts[i];
+                      return _buildProductItem(product);
+                    },
+                  );
+                },
+                error: (e, stack) => Center(child: Text('Error: ${e.toString()}')),
+                loading: () => _buildShimmerLoading(),
+              ),
             ),
-          ),
+          ],
         ),
-        // bottomNavigationBar: ButtonGlobal(
-        //   iconWidget: Icons.arrow_forward,
-        //   buttontext: 'Sales List',
-        //   iconColor: Colors.white,
-        //   buttonDecoration: kButtonDecoration.copyWith(color: kMainColor),
-        //   onPressed: () {
-        //     // ignore: missing_required_param
-        //     providerData.getTotalAmount() <= 0
-        //         ? EasyLoading.showError('Cart Is Empty')
-        //         : SalesDetails(
-        //             customerName: widget.customerModel!.customerName,
-        //           ).launch(context);
-        //   },
-        // ),
+      ),
+    );
+  }
+
+  // --- Product Item & Logic ---
+
+  Widget _buildProductItem(product.Product product) {
+    final isCombo = product.productType?.toLowerCase().contains('combo') ?? false;
+    final stocks = product.stocks ?? [];
+
+    // --- 1. Price Logic (With Rounding Fix) ---
+    num displayPrice = 0;
+    final firstStock = stocks.isNotEmpty ? stocks.first : null;
+
+    if (isCombo) {
+      displayPrice = _round(product.productSalePrice ?? 0);
+    } else {
+      if (widget.customerModel?.type != null) {
+        final type = widget.customerModel!.type!;
+        if (type.contains('Dealer')) {
+          displayPrice = _round(firstStock?.productDealerPrice ?? 0);
+        } else if (type.contains('Wholesaler')) {
+          displayPrice = _round(firstStock?.productWholeSalePrice ?? 0);
+        } else if (type.contains('Supplier')) {
+          displayPrice = _round(firstStock?.productPurchasePrice ?? 0);
+        } else {
+          displayPrice = _round(firstStock?.productSalePrice ?? 0);
+        }
+      } else {
+        displayPrice = _round(firstStock?.productSalePrice ?? 0);
+      }
+    }
+
+    // --- 2. Stock Logic (Warehouse Aware) ---
+    String stockDisplayText;
+    if (isCombo) {
+      stockDisplayText = "Combo";
+    } else {
+      num stockCount = 0;
+      if (_selectedWarehouseId != null) {
+        // Calculate stock ONLY for selected warehouse
+        for (var s in stocks) {
+          if (s.warehouseId == _selectedWarehouseId) {
+            stockCount += (s.productStock ?? 0);
+          }
+        }
+      } else {
+        // All warehouses
+        stockCount = product.stocksSumProductStock ?? 0;
+      }
+      stockDisplayText = '${lang.S.of(context).stocks}$stockCount';
+    }
+
+    return GestureDetector(
+      onTap: () => _handleProductTap(product, isCombo, stocks, displayPrice),
+      child: ProductCard(
+        productTitle: product.productName.toString(),
+        productPrice: displayPrice,
+        productImage: product.productPicture,
+        stockInfo: stockDisplayText,
+      ),
+    );
+  }
+
+  Future<void> _handleProductTap(dynamic product, bool isCombo, List<product.Stock> stocks, num displayPrice) async {
+    final providerData = ref.read(cartNotifier);
+    final profileInfo = ref.read(businessInfoProvider);
+
+    // 1. Check Out of Stock (Total)
+    if (!isCombo && (product.stocksSumProductStock ?? 0) <= 0) {
+      EasyLoading.showError(lang.S.of(context).outOfStock);
+      return;
+    }
+
+    // 2. Check Serial Addon Status
+    final bool isSerialAddonEnabled = profileInfo.value?.data?.addons?.serialCodeAddon == true;
+    final bool hasSerial = product.hasSerial == 1;
+
+    if (hasSerial && !isSerialAddonEnabled) {
+      EasyLoading.showError("Serial add-on is disabled. Cannot sell serial product.");
+      return;
+    }
+
+    // 3. Logic: Variant OR Multiple Batches
+    // (Note: We might want to filter batches by warehouse here too, but for now keeping original logic
+    // which opens a popup. The popup typically handles stock selection).
+    if (product.productType == ProductType.variant.name || stocks.length > 1) {
+      await showAddItemPopup(
+        mainContext: context,
+        productModel: product,
+        ref: ref,
+        customerType: widget.customerModel?.type,
+        fromPOSSales: false,
       );
-    });
+    }
+    // 4. Single Stock Logic
+    else {
+      final stock = stocks.firstOrNull;
+      if (stock == null && !isCombo) return;
+
+      // 4.1 Serial Logic
+      if (hasSerial && isSerialAddonEnabled && !isCombo) {
+        // Find existing item in cart
+        final existingItem = providerData.cartItemList.firstWhere(
+          (element) => element.productId == product.id && element.stockId == stock?.id,
+          orElse: () => SaleCartModel(
+            batchName: '',
+            productId: -1,
+            stockId: -1,
+            unitPrice: 0,
+          ),
+        );
+
+        List<dynamic> preSelected = existingItem.productId != -1 ? (existingItem.serialNumber ?? []) : [];
+
+        showDialog(
+          context: context,
+          builder: (context) => BatchSerialSelectionWidget(
+            availableSerials: stock?.serialNumbers ?? [],
+            preSelectedSerials: preSelected,
+            onConfirmed: (selectedList) {
+              if (selectedList.isNotEmpty) {
+                SaleCartModel cartItem = SaleCartModel(
+                  productName: product.productName,
+                  batchName: stock?.batchNo ?? '',
+                  stockId: stock?.id ?? 0,
+                  unitPrice: displayPrice,
+                  productCode: product.productCode,
+                  productPurchasePrice: stock?.productPurchasePrice != null
+                      ? _round(stock!.productPurchasePrice!)
+                      : null,
+                  stock: stock?.productStock,
+                  productType: product.productType,
+                  productId: product.id ?? 0,
+                  quantity: selectedList.length,
+                  serialNumber: selectedList,
+                  productTaxAmount: stock?.saleTaxAmount ?? 0,
+                );
+
+                providerData.addToCartRiverPod(cartItem: cartItem, fromEditSales: false);
+                Navigator.pop(context);
+              }
+            },
+          ),
+        );
+      }
+      // 4.2 Standard Product Logic
+      else {
+        SaleCartModel cartItem = SaleCartModel(
+          productName: product.productName,
+          batchName: stock?.batchNo ?? '',
+          stockId: stock?.id ?? 0,
+          unitPrice: displayPrice,
+          productCode: product.productCode,
+          productPurchasePrice: stock?.productPurchasePrice != null ? _round(stock!.productPurchasePrice!) : null,
+          stock: stock?.productStock,
+          productType: product.productType,
+          productId: product.id ?? 0,
+          quantity: (stock?.productStock ?? 0) < 1 ? (isCombo ? 1 : 10) : 1,
+          productTaxAmount: stock?.saleTaxAmount ?? 0,
+        );
+        providerData.addToCartRiverPod(cartItem: cartItem, fromEditSales: false);
+        Navigator.pop(context);
+      }
+    }
   }
 }
 
-// ignore: must_be_immutable
-class ProductCard extends StatefulWidget {
-  ProductCard({Key? key, required this.productTitle, required this.productDescription, required this.productPrice, required this.productImage, required this.stock})
-      : super(key: key);
+// --- Product Card Widget ---
 
-  // final Product product;
-  String productTitle, productDescription;
-  num productPrice, stock;
-  String? productImage;
-  @override
-  State<ProductCard> createState() => _ProductCardState();
-}
+class ProductCard extends StatelessWidget {
+  final String productTitle;
+  final num productPrice;
+  final String stockInfo;
+  final String? productImage;
 
-class _ProductCardState extends State<ProductCard> {
-  int quantity = 0;
+  const ProductCard({
+    super.key,
+    required this.productTitle,
+    required this.productPrice,
+    required this.productImage,
+    required this.stockInfo,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Consumer(builder: (context, ref, __) {
-      final providerData = ref.watch(cartNotifier);
-      for (var element in providerData.cartItemList) {
-        if (element.productName == widget.productTitle) {
-          quantity = element.quantity;
-        }
-      }
-      return Padding(
-        padding: const EdgeInsets.all(5.0),
+    final theme = Theme.of(context);
+
+    // --- Number Formatting Logic ---
+    String formattedPrice = productPrice % 1 == 0 ? productPrice.toInt().toString() : productPrice.toStringAsFixed(2);
+
+    return Card(
+      elevation: 0,
+      color: Colors.white,
+      margin: const EdgeInsets.symmetric(vertical: 5),
+      child: Padding(
+        padding: const EdgeInsets.all(8.0),
         child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Padding(
-              padding: const EdgeInsets.all(4.0),
-              child: Container(
-                height: 50,
-                width: 50,
-                decoration: widget.productImage == null
-                    ? BoxDecoration(
-                        image: DecorationImage(image: AssetImage(noProductImageUrl), fit: BoxFit.cover),
-                        borderRadius: BorderRadius.circular(90.0),
-                      )
-                    : BoxDecoration(
-                        image: DecorationImage(image: NetworkImage("${APIConfig.domain}${widget.productImage}"), fit: BoxFit.cover),
-                        borderRadius: BorderRadius.circular(90.0),
-                      ),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.only(left: 10.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
+            Flexible(
+              child: Row(
                 children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        widget.productTitle,
-                        style: GoogleFonts.jost(
-                          fontSize: 20.0,
-                          color: Colors.black,
-                        ),
-                      ),
-                      Text(
-                        //'Stock: ${widget.stock}',
-                        '${lang.S.of(context).stocks}${widget.stock}',
-                        style: GoogleFonts.jost(
-                          color: Colors.black,
-                        ),
-                      ),
-                      // const SizedBox(width: 5),
-                      // Text(
-                      //   ' X $quantity',
-                      //   style: GoogleFonts.jost(
-                      //     fontSize: 14.0,
-                      //     color: Colors.grey.shade500,
-                      //   ),
-                      // ).visible(quantity != 0),
-                    ],
+                  Container(
+                    height: 50,
+                    width: 50,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(25.0),
+                      color: Colors.grey.shade100,
+                      image: productImage == null
+                          ? DecorationImage(image: AssetImage(noProductImageUrl), fit: BoxFit.cover)
+                          : DecorationImage(
+                              image: NetworkImage("$productImage"),
+                              fit: BoxFit.cover,
+                            ),
+                    ),
                   ),
-                  Text(
-                    widget.productDescription,
-                    style: GoogleFonts.jost(
-                      fontSize: 15.0,
-                      color: kGreyTextColor,
+                  const SizedBox(width: 10),
+                  Flexible(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          productTitle,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.titleMedium!.copyWith(fontSize: 16),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          stockInfo,
+                          style: const TextStyle(color: Colors.grey, fontSize: 13),
+                        ),
+                      ],
                     ),
                   ),
                 ],
               ),
             ),
-            const Spacer(),
             Text(
-              '$currency${widget.productPrice}',
-              style: GoogleFonts.jost(
-                fontSize: 20.0,
-                color: Colors.black,
-              ),
+              '$currency$formattedPrice',
+              style: theme.textTheme.titleMedium!.copyWith(fontSize: 16),
             ),
           ],
         ),
-      );
-    });
+      ),
+    );
   }
 }

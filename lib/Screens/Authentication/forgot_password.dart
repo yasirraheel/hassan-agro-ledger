@@ -1,14 +1,10 @@
-
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'package:mobile_pos/GlobalComponents/button_global.dart';
 import 'package:mobile_pos/generated/l10n.dart' as lang;
-import 'package:nb_utils/nb_utils.dart';
 
 import '../../constant.dart';
 
 class ForgotPassword extends StatefulWidget {
-  const ForgotPassword({Key? key}) : super(key: key);
+  const ForgotPassword({super.key});
 
   @override
   // ignore: library_private_types_in_public_api
@@ -21,6 +17,7 @@ class _ForgotPasswordState extends State<ForgotPassword> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return SafeArea(
       child: Scaffold(
         body: Center(
@@ -29,10 +26,8 @@ class _ForgotPasswordState extends State<ForgotPassword> {
               children: [
                 Text(
                   lang.S.of(context).forgotPassword,
-                  style: GoogleFonts.poppins(
-                    fontSize: 30.0,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black,
+                  style: theme.textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
                 Padding(
@@ -42,16 +37,15 @@ class _ForgotPasswordState extends State<ForgotPassword> {
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     textAlign: TextAlign.center,
-                    style: GoogleFonts.poppins(
+                    style: theme.textTheme.titleLarge?.copyWith(
                       color: kGreyTextColor,
-                      fontSize: 20.0,
                     ),
                   ),
                 ),
                 Padding(
                   padding: const EdgeInsets.all(10.0),
-                  child: AppTextField(
-                    textFieldType: TextFieldType.EMAIL,
+                  child: TextFormField(
+                    keyboardType: TextInputType.emailAddress,
                     onChanged: (value) {
                       setState(() {
                         email = value;
@@ -64,10 +58,8 @@ class _ForgotPasswordState extends State<ForgotPassword> {
                         hintText: 'example@example.com'),
                   ),
                 ),
-                ButtonGlobalWithoutIcon(
-                    buttontext: lang.S.of(context).sendLink,
-                    buttonDecoration: kButtonDecoration.copyWith(color: kMainColor),
-                    onPressed: (){},
+                ElevatedButton(
+                    onPressed: () {},
                     // onPressed: () async {
                     //   setState(() {
                     //     showProgress = true;
@@ -116,7 +108,7 @@ class _ForgotPasswordState extends State<ForgotPassword> {
                     //     },
                     //   );
                     // },
-                    buttonTextColor: Colors.white),
+                    child: Text(lang.S.of(context).sendLink)),
               ],
             ),
           ),

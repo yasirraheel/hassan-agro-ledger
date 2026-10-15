@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'package:mobile_pos/GlobalComponents/button_global.dart';
+import 'package:mobile_pos/core/theme/_app_colors.dart';
 import 'package:mobile_pos/generated/l10n.dart' as lang;
 import 'package:nb_utils/nb_utils.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
@@ -9,7 +8,7 @@ import '../../constant.dart';
 import '../Authentication/Sign In/sign_in_screen.dart';
 
 class OnBoard extends StatefulWidget {
-  const OnBoard({Key? key}) : super(key: key);
+  const OnBoard({super.key});
 
   @override
   // ignore: library_private_types_in_public_api
@@ -46,6 +45,7 @@ class _OnBoardState extends State<OnBoard> {
 
   @override
   Widget build(BuildContext context) {
+    final _theme = Theme.of(context);
     sliderList = getSlider(context: context);
     return Scaffold(
       backgroundColor: kWhite,
@@ -57,18 +57,15 @@ class _OnBoardState extends State<OnBoard> {
             padding: const EdgeInsets.all(8),
             child: TextButton(
               onPressed: () {
-                Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const SignIn(),
-                    ));
+                Navigator.pushAndRemoveUntil(
+                  context,
+                  MaterialPageRoute(builder: (context) => const SignIn()),
+                  (_) => false,
+                );
               },
               child: Text(
                 lang.S.of(context).skip,
-                style: GoogleFonts.jost(
-                  fontSize: 20.0,
-                  color: kGreyTextColor,
-                ),
+                style: _theme.textTheme.titleMedium,
               ),
             ),
           ),
@@ -87,16 +84,15 @@ class _OnBoardState extends State<OnBoard> {
                     return Column(
                       children: [
                         const SizedBox(height: 30),
-                        Image.asset(sliderList[index]['icon'], fit: BoxFit.fill, width: context.width() - 100, height: context.width() - 100),
+                        Image.asset(sliderList[index]['icon'],
+                            fit: BoxFit.fill, width: context.width() - 100, height: context.width() - 100),
                         const SizedBox(height: 30),
                         Padding(
                           padding: const EdgeInsets.all(10.0),
                           child: Text(
                             sliderList[index]['title'].toString(),
-                            style: GoogleFonts.jost(
-                              fontSize: 25.0,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black,
+                            style: _theme.textTheme.headlineSmall?.copyWith(
+                              fontWeight: FontWeight.w600,
                             ),
                             textAlign: TextAlign.center,
                           ),
@@ -112,9 +108,8 @@ class _OnBoardState extends State<OnBoard> {
                               textAlign: TextAlign.center,
                               overflow: TextOverflow.ellipsis,
                               maxLines: 5,
-                              style: GoogleFonts.jost(
-                                fontSize: 15.0,
-                                color: kGreyTextColor,
+                              style: _theme.textTheme.bodyLarge?.copyWith(
+                                color: DAppColors.kNeutral700,
                               ),
                             ),
                           ),
@@ -130,7 +125,8 @@ class _OnBoardState extends State<OnBoard> {
             child: SmoothPageIndicator(
               controller: pageController,
               count: sliderList.length,
-              effect: ExpandingDotsEffect(dotColor: kMainColor.withOpacity(0.2), activeDotColor: kMainColor, dotHeight: 8, dotWidth: 8),
+              effect: ExpandingDotsEffect(
+                  dotColor: kMainColor.withOpacity(0.2), activeDotColor: kMainColor, dotHeight: 8, dotWidth: 8),
             ),
           ),
           // DotIndicator(
@@ -143,26 +139,45 @@ class _OnBoardState extends State<OnBoard> {
           // ),
           const Spacer(),
           Padding(
-            padding: const EdgeInsets.only(right: 10.0, left: 10),
-            child: ButtonGlobal(
-              iconWidget: Icons.arrow_forward,
-              buttontext: lang.S.of(context).next,
-              iconColor: Colors.white,
-              // buttonDecoration: kButtonDecoration.copyWith(color: kMainColor, borderRadius: const BorderRadius.all(Radius.circular(30))),
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            child: ElevatedButton.icon(
+              style: OutlinedButton.styleFrom(
+                maximumSize: const Size(double.infinity, 48),
+                minimumSize: const Size(double.infinity, 48),
+                disabledBackgroundColor: _theme.colorScheme.primary.withValues(alpha: 0.15),
+                disabledForegroundColor: const Color(0xff567DF4).withOpacity(0.05),
+              ),
               onPressed: () {
                 setState(
                   () {
                     currentIndexPage < 2
-                        ? pageController.nextPage(duration: const Duration(microseconds: 1000), curve: Curves.bounceInOut)
-                        : Navigator.pushReplacement(
+                        ? pageController.nextPage(
+                            duration: const Duration(microseconds: 1000),
+                            curve: Curves.bounceInOut,
+                          )
+                        : Navigator.pushAndRemoveUntil(
                             context,
-                            MaterialPageRoute(
-                              builder: (context) => const SignIn(),
-                            ));
-                    // : const SignInScreen().launch(context);
+                            MaterialPageRoute(builder: (context) => const SignIn()),
+                            (_) => false,
+                          );
                   },
                 );
               },
+              icon: const Icon(
+                Icons.arrow_forward,
+                color: Colors.white,
+              ),
+              iconAlignment: IconAlignment.end,
+              label: Text(
+                lang.S.of(context).next,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: _theme.textTheme.bodyMedium?.copyWith(
+                  color: _theme.colorScheme.primaryContainer,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 16,
+                ),
+              ),
             ),
           ),
           const SizedBox(height: 20),

@@ -6,6 +6,7 @@ import 'package:http/http.dart' as http;
 
 import '../../../../Const/api_config.dart';
 import '../../../../Repository/constant_functions.dart';
+import '../../../../currency.dart';
 import '../../../Home/home.dart';
 import '../../Sign Up/verify_email.dart';
 import '../../profile_setup_screen.dart';
@@ -31,17 +32,34 @@ class LogInRepo {
 
       final responseData = jsonDecode(response.body);
       EasyLoading.dismiss();
+      print('Signin ${response.statusCode}');
+      print('Signin ${response.body}');
       if (response.statusCode == 200) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(responseData['message'])));
 
         bool isSetupDone = responseData['data']['is_setup'];
+        try {
+          await CurrencyMethods().saveCurrencyDataInLocalDatabase(
+              selectedCurrencySymbol: responseData['data']['currency']['symbol'],
+              selectedCurrencyName: responseData['data']['currency']['name']);
+        } catch (error) {
+          print(error);
+        }
         if (!isSetupDone) {
-          Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const ProfileSetup()));
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(builder: (context) => const ProfileSetup()),
+            (_) => false,
+          );
         } else {
           await saveUserData(
             token: responseData['data']['token'],
           );
-          Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const Home()));
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(builder: (context) => const Home()),
+            (_) => false,
+          );
         }
 
         return true;
@@ -63,8 +81,10 @@ class LogInRepo {
       }
     } catch (error) {
       print(error);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $error')));
+      // ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Network error: Please try again')));
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Network error: Please try again')));
-    } finally {}
+    }
 
     return false;
   }

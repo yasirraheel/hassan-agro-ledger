@@ -5,28 +5,29 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
-import 'package:mobile_pos/Screens/Products/Providers/category,brans,units_provide.dart';
 
 import '../../../Const/api_config.dart';
 import '../../../Repository/constant_functions.dart';
-import '../Model/unit_model.dart';
+import '../../../http_client/custome_http_client.dart';
+import '../../../http_client/customer_http_client_get.dart';
+import '../../product_unit/model/unit_model.dart';
+import '../../product_unit/provider/product_unit_provider.dart';
 
 class UnitsRepo {
   Future<List<Unit>> fetchAllUnits() async {
+    CustomHttpClientGet clientGet = CustomHttpClientGet(client: http.Client());
     final uri = Uri.parse('${APIConfig.url}/units');
 
     try {
-      final response = await http.get(uri, headers: {
-        'Accept': 'application/json',
-        'Authorization': await getAuthToken(),
-      });
+      final response = await clientGet.get(url: uri);
 
       if (response.statusCode == 200) {
         final parsedData = jsonDecode(response.body) as Map<String, dynamic>;
         final categoryList = parsedData['data'] as List<dynamic>;
         return categoryList.map((unit) => Unit.fromJson(unit)).toList();
       } else {
-        throw Exception('Failed to fetch units: ${response.statusCode}');
+        final _body = jsonDecode(response.body);
+        throw Exception(_body?['message']?.toString() ?? 'HTTP ${response.statusCode}');
       }
     } catch (error) {
       rethrow;
@@ -41,12 +42,14 @@ class UnitsRepo {
     final uri = Uri.parse('${APIConfig.url}/units');
 
     try {
-      var responseData = await http.post(uri, headers: {
-        "Accept": 'application/json',
-        'Authorization': await getAuthToken(),
-      }, body: {
-        'unitName': name,
-      });
+      CustomHttpClient customHttpClient = CustomHttpClient(client: http.Client(), context: context, ref: ref);
+      var responseData = await customHttpClient.post(
+        url: uri,
+        body: {
+          'unitName': name,
+        },
+        // addContentTypeInHeader: true,
+      );
       final parsedData = jsonDecode(responseData.body);
 
       if (responseData.statusCode == 200) {
@@ -96,13 +99,14 @@ class UnitsRepo {
     final uri = Uri.parse('${APIConfig.url}/units/$id');
 
     try {
-      var responseData = await http.post(uri, headers: {
-        "Accept": 'application/json',
-        'Authorization': await getAuthToken(),
-      }, body: {
-        'unitName': name,
-        '_method': 'put',
-      });
+      CustomHttpClient customHttpClient = CustomHttpClient(client: http.Client(), context: context, ref: ref);
+      var responseData = await customHttpClient.post(
+        url: uri,
+        body: {
+          'unitName': name,
+          '_method': 'put',
+        },
+      );
       final parsedData = jsonDecode(responseData.body);
 
       if (responseData.statusCode == 200) {
@@ -119,16 +123,13 @@ class UnitsRepo {
   }
 
   ///_________delete_unit________________________
-  Future<bool> deleteUnit({required BuildContext context, required num unitId}) async {
+  Future<bool> deleteUnit({required BuildContext context, required num unitId, required WidgetRef ref}) async {
     final String apiUrl = '${APIConfig.url}/units/$unitId'; // Replace with your API URL
 
     try {
-      final response = await http.delete(
-        Uri.parse(apiUrl),
-        headers: {
-          'Accept': 'application/json',
-          'Authorization': await getAuthToken(),
-        },
+      CustomHttpClient customHttpClient = CustomHttpClient(ref: ref, context: context, client: http.Client());
+      final response = await customHttpClient.delete(
+        url: Uri.parse(apiUrl),
       );
 
       if (response.statusCode == 200) {

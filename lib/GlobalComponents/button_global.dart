@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/svg.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:mobile_pos/constant.dart';
 
 // ignore: must_be_immutable
@@ -9,7 +7,8 @@ class ButtonGlobal extends StatelessWidget {
   var iconWidget;
   final String buttontext;
   final Color iconColor;
-  final Decoration ? buttonDecoration;
+  final Decoration? buttonDecoration;
+
   // ignore: prefer_typing_uninitialized_variables
   var onPressed;
 
@@ -23,18 +22,17 @@ class ButtonGlobal extends StatelessWidget {
       child: Container(
         width: double.infinity,
         padding: const EdgeInsets.only(top: 10.0, bottom: 10.0),
-        decoration: buttonDecoration??BoxDecoration(
-          borderRadius: BorderRadius.circular(8),
-          color: kMainColor
-        ),
+        decoration: buttonDecoration ?? BoxDecoration(borderRadius: BorderRadius.circular(8), color: kMainColor),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
               buttontext,
-              style: GoogleFonts.jost(fontSize: 20.0, color: Colors.white),
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.white),
             ),
-            const SizedBox(width: 2,),
+            const SizedBox(
+              width: 2,
+            ),
             Icon(
               iconWidget,
               color: iconColor,
@@ -50,6 +48,7 @@ class ButtonGlobal extends StatelessWidget {
 class ButtonGlobalWithoutIcon extends StatelessWidget {
   final String buttontext;
   final Decoration buttonDecoration;
+
   // ignore: prefer_typing_uninitialized_variables
   var onPressed;
   final Color buttonTextColor;
@@ -62,17 +61,16 @@ class ButtonGlobalWithoutIcon extends StatelessWidget {
     return TextButton(
       onPressed: onPressed,
       child: Container(
+        height: 50,
+        alignment: Alignment.center,
         width: double.infinity,
         padding: const EdgeInsets.only(top: 10.0, bottom: 10.0),
         decoration: buttonDecoration,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              buttontext,
-              style: GoogleFonts.jost(fontSize: 20.0, color: buttonTextColor),
-            ),
-          ],
+        child: Text(
+          buttontext,
+          overflow: TextOverflow.ellipsis,
+          maxLines: 1,
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(color: buttonTextColor),
         ),
       ),
     );
@@ -81,7 +79,7 @@ class ButtonGlobalWithoutIcon extends StatelessWidget {
 
 ///-----------------------name with logo------------------
 class NameWithLogo extends StatelessWidget {
-  const NameWithLogo({Key? key}) : super(key: key);
+  const NameWithLogo({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -90,11 +88,12 @@ class NameWithLogo extends StatelessWidget {
         Container(
           height: 75,
           width: 66,
-          decoration: const BoxDecoration(
-            image: DecorationImage(image: AssetImage(logo))
-          ),
+          decoration: const BoxDecoration(image: DecorationImage(image: AssetImage(logo))),
         ),
-        const Text(appsName,style: TextStyle(color: kTitleColor,fontWeight: FontWeight.bold,fontSize: 28),),
+        const Text(
+          appsName,
+          style: TextStyle(color: kTitleColor, fontWeight: FontWeight.bold, fontSize: 28),
+        ),
       ],
     );
   }
@@ -103,11 +102,13 @@ class NameWithLogo extends StatelessWidget {
 ///-------------------update button--------------------------------
 
 class UpdateButton extends StatelessWidget {
-  const UpdateButton({Key? key, required this.text, required this.onpressed}) : super(key: key);
+  const UpdateButton({super.key, required this.text, required this.onpressed});
   final String text;
   final VoidCallback onpressed;
+
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return GestureDetector(
       onTap: onpressed,
       child: Container(
@@ -118,9 +119,11 @@ class UpdateButton extends StatelessWidget {
           borderRadius: BorderRadius.circular(8),
           color: kMainColor,
         ),
-        child: Text(text,style: gTextStyle.copyWith(color: kWhite,fontWeight: FontWeight.bold,fontSize: 16),),
+        child: Text(
+          text,
+          style: theme.textTheme.titleMedium?.copyWith(color: kWhite),
+        ),
       ),
     );
   }
 }
-

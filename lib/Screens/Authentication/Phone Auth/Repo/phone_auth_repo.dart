@@ -5,7 +5,6 @@ import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:http/http.dart' as http;
 
 import '../../../../Const/api_config.dart';
-import '../../../../Repository/constant_functions.dart';
 import '../../profile_setup_screen.dart';
 import '../../success_screen.dart';
 

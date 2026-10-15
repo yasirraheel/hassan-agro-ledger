@@ -1,29 +1,24 @@
-// ignore_for_file: unused_result
-
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:flutter_cart/flutter_cart.dart';
-import 'package:flutter_easyloading/flutter_easyloading.dart';
+import 'package:flutter_easyloading/flutter_easyloading.dart'; // Import EasyLoading
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'package:mobile_pos/Const/api_config.dart';
 import 'package:mobile_pos/Provider/product_provider.dart';
 import 'package:mobile_pos/Screens/Customers/Model/parties_model.dart';
-import 'package:mobile_pos/Screens/Products/Model/product_model.dart';
+import 'package:mobile_pos/Screens/Purchase/Repo/purchase_repo.dart';
+import 'package:mobile_pos/Screens/Purchase/purchase_product_buttom_sheet.dart';
 import 'package:mobile_pos/constant.dart';
 import 'package:mobile_pos/generated/l10n.dart' as lang;
-import 'package:mobile_scanner/mobile_scanner.dart';
-import 'package:nb_utils/nb_utils.dart';
 
-import '../../Provider/add_to_cart.dart';
-import '../../Provider/add_to_cart_purchase.dart';
+import '../../GlobalComponents/bar_code_scaner_widget.dart';
+import '../../GlobalComponents/glonal_popup.dart';
+import '../../Provider/profile_provider.dart'; // Import Profile Provider for Addon Check
+import '../../core/theme/_app_colors.dart';
+import '../../widgets/empty_widget/_empty_widget.dart';
+import '../Products/Model/product_model.dart';
+import '../Products/add product/modle/create_product_model.dart';
 
-// ignore: must_be_immutable
 class PurchaseProducts extends StatefulWidget {
-  PurchaseProducts({Key? key, @required this.catName, this.customerModel}) : super(key: key);
+  PurchaseProducts({super.key, this.customerModel});
 
-  // ignore: prefer_typing_uninitialized_variables
-  var catName;
   Party? customerModel;
 
   @override
@@ -31,60 +26,46 @@ class PurchaseProducts extends StatefulWidget {
 }
 
 class _PurchaseProductsState extends State<PurchaseProducts> {
-  String dropdownValue = '';
   String productCode = '0000';
   TextEditingController codeController = TextEditingController();
 
-  var salesCart = FlutterCart();
-  String total = 'Cart Is Empty';
-  int items = 0;
-  String productPrice = '0';
-  String sentProductPrice = '';
-
   @override
   void initState() {
-    widget.catName == null ? dropdownValue = 'Fashion' : dropdownValue = widget.catName;
     super.initState();
   }
 
-
   @override
   Widget build(BuildContext context) {
-    return Consumer(builder: (context, ref, __) {
-      final providerData = ref.watch(cartNotifierPurchase);
+    return Consumer(builder: (context, ref, _) {
+      final _theme = Theme.of(context);
       final productList = ref.watch(productProvider);
-      return Scaffold(
-        backgroundColor: kWhite,
-        appBar: AppBar(
-          title: Text(
-            lang.S.of(context).productList,
-            style: GoogleFonts.poppins(
-              color: Colors.black,
-              fontSize: 20.0,
+      final profileInfo = ref.watch(businessInfoProvider); // Watch Business Info for Addon Status
+
+      return GlobalPopup(
+        child: Scaffold(
+          backgroundColor: kWhite,
+          appBar: AppBar(
+            title: Text(
+              lang.S.of(context).productList,
             ),
+            iconTheme: const IconThemeData(color: Colors.black),
+            centerTitle: true,
+            backgroundColor: Colors.white,
+            elevation: 0.0,
           ),
-          iconTheme: const IconThemeData(color: Colors.black),
-          centerTitle: true,
-          backgroundColor: Colors.white,
-          elevation: 0.0,
-        ),
-        body: Padding(
-          padding: const EdgeInsets.all(20.0),
-          child: SingleChildScrollView(
+          body: SingleChildScrollView(
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const SizedBox(
-                  height: 20.0,
-                ),
-                Row(
-                  children: [
-                    Expanded(
-                      flex: 3,
-                      child: Padding(
-                        padding: const EdgeInsets.all(10.0),
-                        child: AppTextField(
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        flex: 3,
+                        child: TextFormField(
                           controller: codeController,
-                          textFieldType: TextFieldType.NAME,
+                          keyboardType: TextInputType.name,
                           onChanged: (value) {
                             setState(() {
                               productCode = value;
@@ -93,343 +74,174 @@ class _PurchaseProductsState extends State<PurchaseProducts> {
                           decoration: InputDecoration(
                             floatingLabelBehavior: FloatingLabelBehavior.always,
                             labelText: lang.S.of(context).productCode,
-                            hintText: productCode == '0000' || productCode == '-1' ? 'Scan product QR code' : productCode,
+                            hintText: productCode == '0000' || productCode == '-1'
+                                ? lang.S.of(context).scanCode
+                                : productCode,
                             border: const OutlineInputBorder(),
                           ),
                         ),
                       ),
-                    ),
-                    Expanded(
-                      flex: 1,
-                      child: Padding(
-                        padding: const EdgeInsets.all(10.0),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        flex: 1,
                         child: GestureDetector(
-                          onTap: ()async {
-                            await showDialog(
+                          onTap: () async {
+                            showDialog(
                               context: context,
-                              useSafeArea: true,
-                              builder: (context1) {
-                                MobileScannerController controller = MobileScannerController(
-                                  torchEnabled: false,
-                                  returnImage: false,
-                                );
-                                return Container(
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadiusDirectional.circular(6.0),
-                                  ),
-                                  child: Column(
-                                    children: [
-                                      AppBar(
-                                        backgroundColor: Colors.transparent,
-                                        iconTheme: const IconThemeData(color: Colors.white),
-                                        leading: IconButton(
-                                          icon: const Icon(Icons.arrow_back),
-                                          onPressed: () {
-                                            Navigator.pop(context1);
-                                          },
-                                        ),
-                                      ),
-                                      Expanded(
-                                        child: MobileScanner(
-                                          fit: BoxFit.contain,
-                                          controller: controller,
-                                          onDetect: (capture) {
-                                            final List<Barcode> barcodes = capture.barcodes;
-
-                                            if (barcodes.isNotEmpty) {
-                                              final Barcode barcode = barcodes.first;
-                                              debugPrint('Barcode found! ${barcode.rawValue}');
-
-                                                setState(() {
-                                                  productCode = barcode.rawValue!;
-                                                  codeController.text = productCode;
-                                                });
-
-                                              Navigator.pop(context1);
-                                            }
-                                          },
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                );
-                              },
+                              builder: (context) => BarcodeScannerWidget(
+                                onBarcodeFound: (String code) {
+                                  setState(() {
+                                    productCode = code;
+                                    codeController.text = productCode;
+                                  });
+                                },
+                              ),
                             );
                           },
-                          child: Container(
-                            height: 60.0,
-                            width: 100.0,
-                            padding: const EdgeInsets.all(5.0),
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(8.0),
-                              border: Border.all(color: kGreyTextColor),
-                            ),
-                            child: const Image(
-                              image: AssetImage('images/barcode.png'),
-                            ),
-                          ),
+                          child: const BarCodeButton(),
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
                 productList.when(data: (products) {
+                  final filteredProducts =
+                      products.where((element) => element.productType?.toLowerCase() != 'combo').toList();
+
                   return ListView.builder(
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
-                      itemCount: products.length,
+                      itemCount: filteredProducts.length,
                       itemBuilder: (_, i) {
-                        if (widget.customerModel!.type!.contains('Retailer')) {
-                          productPrice = products[i].productSalePrice.toString();
-                        } else if (widget.customerModel!.type!.contains('Dealer')) {
-                          productPrice = products[i].productDealerPrice.toString();
-                        } else if (widget.customerModel!.type!.contains('Wholesaler')) {
-                          productPrice = products[i].productWholeSalePrice.toString();
-                        } else if (widget.customerModel!.type!.contains('Supplier')) {
-                          productPrice = products[i].productPurchasePrice.toString();
-                        }
-                        return GestureDetector(
-                          onTap: () {
-                            showDialog(
-                                context: context,
-                                builder: (_) {
-                                  ProductModel tempProduct = ProductModel(
-                                    type: products[i].type,
-                                    weight: products[i].weight,
-                                    size: products[i].size,
-                                    color: products[i].color,
-                                    capacity: products[i].capacity,
-                                    category: products[i].category,
-                                    unitId: products[i].unitId,
-                                    id: products[i].id,
-                                    brand: products[i].brand,
-                                    brandId: products[i].unitId,
-                                    businessId: products[i].businessId,
-                                    categoryId: products[i].categoryId,
-                                    createdAt: products[i].createdAt,
-                                    unit: products[i].unit,
-                                    updatedAt: products[i].updatedAt,
-                                    productCode: products[i].productCode,
-                                    productDealerPrice: products[i].productDealerPrice,
-                                    productDiscount: products[i].productDiscount,
-                                    productManufacturer: products[i].productManufacturer,
-                                    productName: products[i].productName,
-                                    productPicture: products[i].productPicture,
-                                    productPurchasePrice: products[i].productPurchasePrice,
-                                    productSalePrice: products[i].productSalePrice,
-                                    productStock: 0,
-                                    productWholeSalePrice: products[i].productWholeSalePrice,
-                                  );
-                                  return AlertDialog(
-                                      content: SizedBox(
-                                    child: SingleChildScrollView(
-                                      child: Column(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          Padding(
-                                            padding: const EdgeInsets.only(bottom: 10),
-                                            child: Row(
-                                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                              children: [
-                                                Text(
-                                                  lang.S.of(context).addItems,
-                                                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                                                ),
-                                                GestureDetector(
-                                                    onTap: () {
-                                                      Navigator.pop(context);
-                                                    },
-                                                    child: const Icon(
-                                                      Icons.cancel,
-                                                      color: kMainColor,
-                                                    )),
-                                              ],
-                                            ),
-                                          ),
-                                          Container(
-                                            height: 1,
-                                            width: double.infinity,
-                                            color: Colors.grey,
-                                          ),
-                                          const SizedBox(height: 10),
-                                          Row(
-                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                            children: [
-                                              Column(
-                                                mainAxisSize: MainAxisSize.min,
-                                                crossAxisAlignment: CrossAxisAlignment.start,
-                                                children: [
-                                                  Text(
-                                                    products[i].productName.toString(),
-                                                    style: const TextStyle(fontSize: 16),
-                                                  ),
-                                                  Text(
-                                                    products[i].brand?.brandName ?? '',
-                                                    style: const TextStyle(
-                                                      fontSize: 16,
-                                                      color: Colors.grey,
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                              Column(
-                                                mainAxisSize: MainAxisSize.min,
-                                                crossAxisAlignment: CrossAxisAlignment.end,
-                                                children: [
-                                                  Text(
-                                                    lang.S.of(context).stock,
-                                                    style: const TextStyle(fontSize: 16),
-                                                  ),
-                                                  Text(
-                                                    products[i].productStock.toString(),
-                                                    style: const TextStyle(
-                                                      fontSize: 16,
-                                                      color: Colors.grey,
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                            ],
-                                          ),
-                                          const SizedBox(height: 20),
-                                          Row(
-                                            mainAxisSize: MainAxisSize.min,
-                                            children: [
-                                              Expanded(
-                                                child: AppTextField(
-                                                  textFieldType: TextFieldType.NUMBER,
-                                                  inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,2}'))],
-                                                  onChanged: (value) {
-                                                    tempProduct.productStock = num.tryParse(value);
-                                                  },
-                                                  decoration: InputDecoration(
-                                                    floatingLabelBehavior: FloatingLabelBehavior.always,
-                                                    labelText: lang.S.of(context).quantity,
-                                                   // hintText: 'Enter quantity',
-                                                    hintText: lang.S.of(context).enterQuantity,
-                                                    border: const OutlineInputBorder(),
-                                                  ),
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                          const SizedBox(height: 20),
-                                          Row(
-                                            mainAxisSize: MainAxisSize.min,
-                                            children: [
-                                              Expanded(
-                                                child: TextFormField(
-                                                  initialValue: products[i].productPurchasePrice.toString(),
-                                                  keyboardType: TextInputType.number,
-                                                  inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,2}'))],
-                                                  onChanged: (value) {
-                                                    tempProduct.productPurchasePrice = num.tryParse(value);
-                                                  },
-                                                  decoration: InputDecoration(
-                                                    floatingLabelBehavior: FloatingLabelBehavior.always,
-                                                    labelText: lang.S.of(context).purchasePrice,
-                                                    border: const OutlineInputBorder(),
-                                                  ),
-                                                ),
-                                              ),
-                                              const SizedBox(width: 10),
-                                              Expanded(
-                                                child: TextFormField(
-                                                  initialValue: products[i].productSalePrice.toString(),
-                                                  keyboardType: TextInputType.number,
-                                                  inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,2}'))],
-                                                  onChanged: (value) {
-                                                    tempProduct.productSalePrice = num.tryParse(value);
-                                                  },
-                                                  decoration: InputDecoration(
-                                                    floatingLabelBehavior: FloatingLabelBehavior.always,
-                                                    labelText: lang.S.of(context).salePrice,
-                                                    border: const OutlineInputBorder(),
-                                                  ),
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                          const SizedBox(height: 20),
-                                          Row(
-                                            mainAxisSize: MainAxisSize.min,
-                                            children: [
-                                              Expanded(
-                                                child: TextFormField(
-                                                  initialValue: products[i].productWholeSalePrice.toString(),
-                                                  keyboardType: TextInputType.number,
-                                                  inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,2}'))],
-                                                  onChanged: (value) {
-                                                    tempProduct.productWholeSalePrice = num.tryParse(value);
-                                                  },
-                                                  decoration: InputDecoration(
-                                                    floatingLabelBehavior: FloatingLabelBehavior.always,
-                                                    labelText: lang.S.of(context).wholeSalePrice,
-                                                    border: const OutlineInputBorder(),
-                                                  ),
-                                                ),
-                                              ),
-                                              const SizedBox(width: 10),
-                                              Expanded(
-                                                child: TextFormField(
-                                                  initialValue: products[i].productDealerPrice.toString(),
-                                                  keyboardType: TextInputType.number,
-                                                  inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,2}'))],
-                                                  onChanged: (value) {
-                                                    tempProduct.productDealerPrice = num.tryParse(value);
-                                                  },
-                                                  decoration: InputDecoration(
-                                                    floatingLabelBehavior: FloatingLabelBehavior.always,
-                                                    labelText: lang.S.of(context).dealerPrice,
-                                                    border: const OutlineInputBorder(),
-                                                  ),
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                          const SizedBox(height: 20),
-                                          GestureDetector(
-                                            onTap: () {
-                                              if ((tempProduct.productStock ?? 0) > 0) {
-                                                providerData.addToCartRiverPod(tempProduct);
-                                                providerData.addProductsInSales(products[i]);
-                                                ref.refresh(productProvider);
-                                                int count = 0;
-                                                Navigator.popUntil(context, (route) {
-                                                  return count++ == 2;
-                                                });
-                                              } else {
-                                                EasyLoading.showError(
-                                                  lang.S.of(context).pleaseAddQuantity,
-                                                   // 'Please add quantity'
-                                                );
-                                              }
-                                            },
-                                            child: Container(
-                                              height: 60,
-                                              width: context.width(),
-                                              decoration: const BoxDecoration(color: kMainColor, borderRadius: BorderRadius.all(Radius.circular(15))),
-                                              child: Center(
-                                                child: Text(
-                                                  lang.S.of(context).save,
-                                                  style: const TextStyle(fontSize: 18, color: Colors.white),
-                                                ),
-                                              ),
-                                            ),
-                                          )
-                                        ],
+                        return Visibility(
+                          visible: ((filteredProducts[i].productCode == productCode ||
+                                  productCode == '0000' ||
+                                  productCode == '-1')) ||
+                              filteredProducts[i].productName!.toLowerCase().contains(productCode.toLowerCase()),
+                          child: ListTile(
+                            visualDensity: const VisualDensity(horizontal: -4, vertical: -4),
+                            contentPadding: EdgeInsets.zero,
+                            leading: filteredProducts[i].productPicture == null
+                                ? CircleAvatarWidget(
+                                    name: filteredProducts[i].productName,
+                                    size: const Size(50, 50),
+                                  )
+                                : Container(
+                                    height: 50,
+                                    width: 50,
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      image: DecorationImage(
+                                        image: NetworkImage(
+                                          filteredProducts[i].productPicture!,
+                                        ),
+                                        fit: BoxFit.cover,
                                       ),
                                     ),
-                                  ));
-                                });
-                          },
-                          child: ProductCard(
-                            productTitle: products[i].productName.toString(),
-                            productDescription: products[i].brand?.brandName ?? '',
-                            stock: products[i].productStock.toString(),
-                            productImage: products[i].productPicture,
-                          ).visible(((products[i].productCode == productCode || productCode == '0000' || productCode == '-1') && productPrice != '0') ||
-                              products[i].productName!.toLowerCase().contains(productCode.toLowerCase())),
+                                  ),
+                            title: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Flexible(
+                                  child: Text(
+                                    filteredProducts[i].productName.toString(),
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: _theme.textTheme.bodyMedium?.copyWith(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w400,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  lang.S.of(context).stock,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: _theme.textTheme.bodyMedium?.copyWith(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w400,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            subtitle: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Flexible(
+                                  child: Text(
+                                    filteredProducts[i].brand?.brandName ?? '',
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: _theme.textTheme.bodyMedium?.copyWith(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w400,
+                                      color: DAppColors.kSecondary,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  '${filteredProducts[i].stocksSumProductStock ?? 0}',
+                                  style: _theme.textTheme.bodyMedium?.copyWith(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w400,
+                                    color: DAppColors.kSecondary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            onTap: () {
+                              final product = filteredProducts[i];
+
+                              // -------------------------------------------------------------
+                              // CHECK: Block if Serial Addon is OFF but Product has Serial
+                              // -------------------------------------------------------------
+                              final bool isSerialAddonEnabled =
+                                  profileInfo.value?.data?.addons?.serialCodeAddon == true;
+                              final bool hasSerial = product.hasSerial == 1;
+
+                              if (hasSerial && !isSerialAddonEnabled) {
+                                EasyLoading.showError("Serial add-on is disabled. Cannot purchase serial product.");
+                                return;
+                              }
+                              // -------------------------------------------------------------
+
+                              final Stock? stock = ((product.stocks?.isEmpty ?? true) || product.stocks == null)
+                                  ? null
+                                  : product.stocks?.first;
+
+                              final cartProduct = CartProductModelPurchase(
+                                isSerialEnabled: hasSerial, // Use the variable
+                                productId: product.id ?? 0,
+                                brandName: product.brand?.brandName ?? '',
+                                productName: product.productName ?? '',
+                                productDealerPrice: stock?.productDealerPrice ?? 0,
+                                productPurchasePrice: stock?.productPurchasePrice ?? 0,
+                                productSalePrice: stock?.productSalePrice ?? 0,
+                                productWholeSalePrice: stock?.productWholeSalePrice ?? 0,
+                                quantities: 1,
+                                productType: product.productType ?? ProductType.single.name,
+                                vatAmount: product.vatAmount ?? 0,
+                                vatRate: product.vat?.rate ?? 0,
+                                vatType: product.vatType ?? 'exclusive',
+                                expireDate: stock?.expireDate,
+                                mfgDate: stock?.mfgDate,
+                                profitPercent: stock?.profitPercent ?? 0,
+                                stock: product.stocksSumProductStock,
+                                exclusivePrice: stock?.productPurchasePrice,
+                              );
+                              addProductInPurchaseCartButtomSheet(
+                                  context: context,
+                                  product: cartProduct,
+                                  ref: ref,
+                                  fromUpdate: false,
+                                  index: 0,
+                                  fromStock: false,
+                                  stocks: product.stocks ?? []);
+                            },
+                          ),
                         );
                       });
                 }, error: (e, stack) {
@@ -448,7 +260,12 @@ class _PurchaseProductsState extends State<PurchaseProducts> {
 
 // ignore: must_be_immutable
 class ProductCard extends StatefulWidget {
-  ProductCard({Key? key, required this.productTitle, required this.productDescription, required this.stock, required this.productImage}) : super(key: key);
+  ProductCard(
+      {super.key,
+      required this.productTitle,
+      required this.productDescription,
+      required this.stock,
+      required this.productImage});
 
   // final Product product;
   String productTitle, productDescription, stock;
@@ -459,17 +276,10 @@ class ProductCard extends StatefulWidget {
 }
 
 class _ProductCardState extends State<ProductCard> {
-  int quantity = 0;
-
   @override
   Widget build(BuildContext context) {
-    return Consumer(builder: (context, ref, __) {
-      final providerData = ref.watch(cartNotifier);
-      for (var element in providerData.cartItemList) {
-        if (element.productName == widget.productTitle) {
-          quantity = element.quantity;
-        }
-      }
+    final theme = Theme.of(context);
+    return Consumer(builder: (context, ref, _) {
       return Padding(
         padding: const EdgeInsets.all(5.0),
         child: Row(
@@ -485,7 +295,7 @@ class _ProductCardState extends State<ProductCard> {
                         borderRadius: BorderRadius.circular(90.0),
                       )
                     : BoxDecoration(
-                        image: DecorationImage(image: NetworkImage("${APIConfig.domain}${widget.productImage}"), fit: BoxFit.cover),
+                        image: DecorationImage(image: NetworkImage("${widget.productImage}"), fit: BoxFit.cover),
                         borderRadius: BorderRadius.circular(90.0),
                       ),
               ),
@@ -500,19 +310,13 @@ class _ProductCardState extends State<ProductCard> {
                     children: [
                       Text(
                         widget.productTitle,
-                        style: GoogleFonts.jost(
-                          fontSize: 20.0,
-                          color: Colors.black,
-                        ),
+                        style: theme.textTheme.titleLarge,
                       ),
                     ],
                   ),
                   Text(
                     widget.productDescription,
-                    style: GoogleFonts.jost(
-                      fontSize: 15.0,
-                      color: kGreyTextColor,
-                    ),
+                    style: theme.textTheme.bodyLarge,
                   ),
                 ],
               ),
@@ -523,16 +327,14 @@ class _ProductCardState extends State<ProductCard> {
               children: [
                 Text(
                   lang.S.of(context).stock,
-                  style: GoogleFonts.jost(
-                    fontSize: 18.0,
-                    color: Colors.black,
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontSize: 18,
                   ),
                 ),
                 Text(
                   widget.stock,
-                  style: GoogleFonts.jost(
-                    fontSize: 16.0,
-                    color: Colors.grey,
+                  style: theme.textTheme.bodyLarge?.copyWith(
+                    color: kGreyTextColor,
                   ),
                 ),
               ],

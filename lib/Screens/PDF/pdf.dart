@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_pdfview/flutter_pdfview.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:mobile_pos/generated/l10n.dart' as lang;
 
 class PDFViewerPage extends StatefulWidget {
   final String path;
 
-  const PDFViewerPage({Key? key, required this.path}) : super(key: key);
+  const PDFViewerPage({super.key, required this.path});
 
   @override
   PDFViewerPageState createState() => PDFViewerPageState();
@@ -19,10 +18,6 @@ class PDFViewerPageState extends State<PDFViewerPage> {
       appBar: AppBar(
         title: Text(
           lang.S.of(context).invoiceViewr,
-          style: GoogleFonts.poppins(
-            color: Colors.black,
-            fontSize: 20.0,
-          ),
         ),
         iconTheme: const IconThemeData(color: Colors.black),
         centerTitle: true,

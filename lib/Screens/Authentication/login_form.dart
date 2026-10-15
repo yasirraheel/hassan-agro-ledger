@@ -1,16 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'package:mobile_pos/GlobalComponents/button_global.dart';
 import 'package:mobile_pos/Screens/Authentication/register_screen.dart';
 import 'package:mobile_pos/generated/l10n.dart' as lang;
-import 'package:nb_utils/nb_utils.dart';
 
 import '../../constant.dart';
 import 'forgot_password.dart';
 
 class LoginForm extends StatefulWidget {
-  const LoginForm({Key? key, required this.isEmailLogin}) : super(key: key);
+  const LoginForm({super.key, required this.isEmailLogin});
 
   final bool isEmailLogin;
 
@@ -35,6 +32,7 @@ class _LoginFormState extends State<LoginForm> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return SafeArea(
       child: Scaffold(
         body: Consumer(builder: (context, ref, child) {
@@ -110,56 +108,60 @@ class _LoginFormState extends State<LoginForm> {
                       ),
                     ),
                   ),
-                  Row(
-                    children: [
-                      const Spacer(),
-                      TextButton(
-                        onPressed: () {
-                          const ForgotPassword().launch(context);
-                          // Navigator.pushNamed(context, '/forgotPassword');
-                        },
-                        child: Text(
-                          lang.S.of(context).forgotPassword,
-                          style: GoogleFonts.poppins(
-                            color: kGreyTextColor,
-                            fontSize: 15.0,
+                  Visibility(
+                    visible: widget.isEmailLogin,
+                    child: Row(
+                      children: [
+                        const Spacer(),
+                        TextButton(
+                          onPressed: () {
+                            Navigator.push(context, MaterialPageRoute(builder: (context) => const ForgotPassword()));
+                            // const ForgotPassword().launch(context);
+                          },
+                          child: Text(
+                            lang.S.of(context).forgotPassword,
+                            style: theme.textTheme.bodyLarge?.copyWith(
+                              color: kGreyTextColor,
+                            ),
                           ),
                         ),
-                      ),
-                    ],
-                  ).visible(widget.isEmailLogin),
-                  ButtonGlobalWithoutIcon(
-                      buttontext: lang.S.of(context).logIn,
-                      buttonDecoration: kButtonDecoration.copyWith(color: kMainColor),
-                      onPressed: () {
-                        if (validateAndSave()) {
-                          // loginProvider.signIn(context);
-                        }
-                      },
-                      buttonTextColor: Colors.white),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        lang.S.of(context).noAcc,
-                        style: GoogleFonts.poppins(color: kGreyTextColor, fontSize: 15.0),
-                      ),
-                      TextButton(
-                        onPressed: () {
-                          // Navigator.pushNamed(context, '/signup');
-                          const RegisterScreen().launch(context);
-                        },
-                        child: Text(
-                          lang.S.of(context).register,
-                          style: GoogleFonts.poppins(
-                            color: kMainColor,
-                            fontSize: 15.0,
-                            fontWeight: FontWeight.bold,
+                      ],
+                    ),
+                  ),
+                  ElevatedButton(
+                    child: Text(lang.S.of(context).logIn),
+                    onPressed: () {
+                      if (validateAndSave()) {
+                        // loginProvider.signIn(context);
+                      }
+                    },
+                  ),
+                  Visibility(
+                    visible: widget.isEmailLogin,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          lang.S.of(context).noAcc,
+                          style: theme.textTheme.bodyLarge?.copyWith(color: kGreyTextColor),
+                        ),
+                        TextButton(
+                          onPressed: () {
+                            // Navigator.pushNamed(context, '/signup');
+                            // const RegisterScreen().launch(context);
+                            Navigator.push(context, MaterialPageRoute(builder: (context) => const RegisterScreen()));
+                          },
+                          child: Text(
+                            lang.S.of(context).register,
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              color: kMainColor,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                         ),
-                      ),
-                    ],
-                  ).visible(widget.isEmailLogin),
+                      ],
+                    ),
+                  ),
                 ],
               ),
             ),

@@ -9,12 +9,10 @@ import 'package:mobile_pos/GlobalComponents/button_global.dart';
 import 'package:mobile_pos/Screens/Authentication/Phone%20Auth/Repo/phone_auth_repo.dart';
 import 'package:mobile_pos/constant.dart';
 import 'package:mobile_pos/generated/l10n.dart' as lang;
-import 'package:mobile_pos/generated/l10n.dart' as lang;
-import 'package:nb_utils/nb_utils.dart';
 import 'package:pinput/pinput.dart';
 
 class OTPVerify extends StatefulWidget {
-  const OTPVerify({Key? key, required this.phoneNumber}) : super(key: key);
+  const OTPVerify({super.key, required this.phoneNumber});
 
   final String phoneNumber;
 
@@ -23,7 +21,6 @@ class OTPVerify extends StatefulWidget {
 }
 
 class _OTPVerifyState extends State<OTPVerify> {
-
   String code = '';
   FocusNode focusNode = FocusNode();
   int _start = 60; // 2 minutes in seconds
@@ -87,10 +84,10 @@ class _OTPVerifyState extends State<OTPVerify> {
                   style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 10),
-                 Text(
-                   //lang.S.of(context)
-                   lang.S.of(context).weSentAnOTPInYourPhoneNumber,
-                 // 'We sent an OTP in your phone number',
+                Text(
+                  //lang.S.of(context)
+                  lang.S.of(context).weSentAnOTPInYourPhoneNumber,
+                  // 'We sent an OTP in your phone number',
                   style: TextStyle(
                     fontSize: 16,
                   ),
@@ -123,14 +120,21 @@ class _OTPVerifyState extends State<OTPVerify> {
                   child: Pinput(
                       focusNode: focusNode,
                       keyboardType: TextInputType.number,
-                      errorPinTheme:
-                          PinTheme(width: 50, height: 50, decoration: BoxDecoration(color: Colors.red.shade200, borderRadius: const BorderRadius.all(Radius.circular(8)))),
+                      errorPinTheme: PinTheme(
+                          width: 50,
+                          height: 50,
+                          decoration: BoxDecoration(
+                              color: Colors.red.shade200, borderRadius: const BorderRadius.all(Radius.circular(8)))),
                       validator: (value) {
-                        if (value.isEmptyOrNull) {
-                          //return 'Please enter the OTP';
+                        // if (value.isEmptyOrNull) {
+                        //   //return 'Please enter the OTP';
+                        //   return lang.S.of(context).pleaseEnterTheOTP;
+                        // }
+                        if (value == null || value.isEmpty) {
                           return lang.S.of(context).pleaseEnterTheOTP;
                         }
-                        if (value!.length < 4) {
+
+                        if (value.length < 4) {
                           //return 'Enter a valid OTP';
                           return lang.S.of(context).enterAValidOTP;
                         } else {
@@ -148,7 +152,9 @@ class _OTPVerifyState extends State<OTPVerify> {
                   width: double.infinity,
                   height: 45,
                   child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(backgroundColor: kMainColor, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
+                      style: ElevatedButton.styleFrom(
+                          backgroundColor: kMainColor,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
                       onPressed: () async {
                         focusNode.unfocus();
 
@@ -160,9 +166,9 @@ class _OTPVerifyState extends State<OTPVerify> {
                           await repo.submitOTP(phoneNumber: widget.phoneNumber, otp: code, context: context);
                         }
                       },
-                      child:   Text(
-                       lang.S.of(context).verify,
-                       // 'Verify',
+                      child: Text(
+                        lang.S.of(context).verify,
+                        // 'Verify',
                         style: const TextStyle(color: Colors.white),
                       )),
                 ),
@@ -175,20 +181,20 @@ class _OTPVerifyState extends State<OTPVerify> {
                     _start == 0
                         ? GestureDetector(
                             onTap: _resendOtp,
-                            child:  Text(
+                            child: Text(
                               //'Resend OTP',
-                            lang.S.of(context).resendOTP,
+                              lang.S.of(context).resendOTP,
                               style: const TextStyle(color: kMainColor),
                             ))
                         : Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                                Text(
-                                  lang.S.of(context).resendIn,
-                                   //'Resend OTP in '
-                               ),
                               Text(
-                                '${_start.toString()} seconds',
+                                lang.S.of(context).resendIn,
+                                //'Resend OTP in '
+                              ),
+                              Text(
+                                '${_start.toString()} ${lang.S.of(context).seconds}',
                                 style: const TextStyle(color: Colors.grey),
                               ),
                             ],

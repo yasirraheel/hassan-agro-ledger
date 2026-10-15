@@ -1,214 +1,151 @@
-import 'package:circle_nav_bar/circle_nav_bar.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_feather_icons/flutter_feather_icons.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:iconly/iconly.dart';
 import 'package:mobile_pos/Screens/DashBoard/dashboard.dart';
 import 'package:mobile_pos/Screens/Home/home_screen.dart';
 import 'package:mobile_pos/Screens/Report/reports.dart';
 import 'package:mobile_pos/Screens/Settings/settings_screen.dart';
+import 'package:mobile_pos/Screens/Sales/pos_sale/pos_sale.dart';
 import 'package:mobile_pos/constant.dart';
 import 'package:mobile_pos/generated/l10n.dart' as lang;
-import '../Sales/sales_contact.dart';
+
+import '../../GlobalComponents/glonal_popup.dart';
+import '../../Provider/profile_provider.dart';
 
 class Home extends StatefulWidget {
-  const Home({Key? key}) : super(key: key);
+  const Home({super.key});
 
   @override
-  // ignore: library_private_types_in_public_api
   _HomeState createState() => _HomeState();
 }
 
 class _HomeState extends State<Home> {
-  int _selectedIndex = 0;
-  bool isDeviceConnected = false;
-  bool isAlertSet = false;
-  bool isNoInternet = false;
-
-  static const List<Widget> _widgetOptions = <Widget>[HomeScreen(), SalesContact(), Reports(), SettingScreen()];
-
-  void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
-  }
-
-  // void signOutAutoLogin() async {
-  //   CurrentUserData currentUserData = CurrentUserData();
-  //   if (await currentUserData.isSubUserEmailNotFound() && isSubUser) {
-  //     await FirebaseAuth.instance.signOut();
-  //     Future.delayed(const Duration(milliseconds: 5000), () async {
-  //       EasyLoading.showError('User is deleted');
-  //     });
-  //     Future.delayed(const Duration(milliseconds: 1000), () async {
-  //       Restart.restartApp();
-  //     });
-  //   }
-  // }
-  //
-  // @override
-  // void initState() {
-  //   // TODO: implement initState
-  //   super.initState();
-  //   isSubUser ? signOutAutoLogin() : null;
-  // }
-
   int _tabIndex = 0;
-  int get tabIndex => _tabIndex;
-  set tabIndex(int v) {
-    _tabIndex = v;
-    setState(() {});
-  }
-
-  late PageController pageController;
+  late final PageController pageController = PageController(initialPage: _tabIndex);
 
   @override
-  void initState() {
-    super.initState();
-    pageController = PageController(initialPage: _tabIndex);
+  void dispose() {
+    pageController.dispose();
+    super.dispose();
+  }
+
+  void _handleNavigation(
+    int index,
+    BuildContext context,
+  ) {
+    setState(() => _tabIndex = index);
+    pageController.jumpToPage(index);
   }
 
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
-      onWillPop: () async {
-        final shouldPop = await showDialog<bool>(
-          context: context,
-          builder: (context) => AlertDialog(
-            title:  Text(
-              lang.S.of(context).areYouSure,
-                //'Are you sure?'
+      onWillPop: () async =>
+          await showDialog<bool>(
+            context: context,
+            builder: (context) => AlertDialog(
+              title: Text(lang.S.of(context).areYouSure),
+              content: Text(lang.S.of(context).doYouWantToExitTheApp),
+              actions: [
+                TextButton(onPressed: () => Navigator.pop(context, false), child: Text(lang.S.of(context).no)),
+                TextButton(onPressed: () => Navigator.pop(context, true), child: Text(lang.S.of(context).yes)),
+              ],
             ),
-            content: Text(
-              lang.S.of(context).doYouWantToExitTheApp,
-                //'Do you want to exit the app?'
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(false),
-                child:  Text(
-                  lang.S.of(context).no,
-                    //'No'
-                ),
+          ) ??
+          false,
+      child: Consumer(
+        builder: (context, ref, _) {
+          ref.watch(getExpireDateProvider(ref));
+          final modules = ref.watch(availableModulesProvider);
+
+          return GlobalPopup(
+            child: Scaffold(
+              body: PageView(
+                controller: pageController,
+                physics: const NeverScrollableScrollPhysics(),
+                onPageChanged: (v) => setState(() => _tabIndex = v),
+                children: [
+                  HomeScreen(),
+                  PosSaleScreen(),
+                  DashboardScreen(),
+                  Reports(),
+                  SettingScreen(),
+                ],
               ),
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(true),
-                child:  Text(
-                  lang.S.of(context).yes,
-                  //  'Yes'
-                ),
+              bottomNavigationBar: BottomNavigationBar(
+                currentIndex: _tabIndex,
+                backgroundColor: Colors.white,
+                onTap: (i) {
+                  if (i == 1 && !modules.sales) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('POS is not available in your plan')),
+                    );
+                    return;
+                  }
+                  if (i == 3 && !modules.reports) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Reports is not available in your plan')),
+                    );
+                    return;
+                  }
+                  return _handleNavigation(i, context);
+                },
+                items: [
+                  _buildNavItem(index: 0, activeIcon: 'cHome', icon: 'home', label: lang.S.of(context).home),
+                  _buildNavItem(
+                    index: 1,
+                    activeIcon: 'cPos',
+                    icon: 'pos',
+                    label: lang.S.of(context).pos,
+                  ),
+                  _buildNavItem(
+                    index: 2,
+                    activeIcon: 'dashbord1',
+                    icon: 'dashbord',
+                    label: lang.S.of(context).dashboard,
+                  ),
+                  _buildNavItem(
+                    index: 3,
+                    activeIcon: 'cFile',
+                    icon: 'file',
+                    label: lang.S.of(context).reports,
+                  ),
+                  _buildNavItem(
+                    index: 4,
+                    activeIcon: 'cSetting',
+                    icon: 'setting',
+                    label: lang.S.of(context).setting,
+                  ),
+                ],
+                type: BottomNavigationBarType.fixed,
+                selectedItemColor: kMainColor,
+                unselectedItemColor: kGreyTextColor,
+                selectedLabelStyle: const TextStyle(fontSize: 14),
+                unselectedLabelStyle: const TextStyle(fontSize: 14),
               ),
-            ],
-          ),
-        );
-        return shouldPop ?? false; // Allow default back button behavior if dialog is dismissed
-      },
-      child: Scaffold(
-        // body: Center(
-        //   child: _widgetOptions.elementAt(_selectedIndex),
-        // ),
-        // bottomNavigationBar: BottomNavigationBar(
-        //   type: BottomNavigationBarType.fixed,
-        //   elevation: 6.0,
-        //   backgroundColor: kWhite,
-        //   selectedItemColor: kMainColor,
-        //   items: [
-        //     BottomNavigationBarItem(
-        //       icon: const Icon(FeatherIcons.home),
-        //       label: lang.S.of(context).home,
-        //     ),
-        //     BottomNavigationBarItem(
-        //       icon: const Icon(FeatherIcons.shoppingCart),
-        //       label: lang.S.of(context).sales,
-        //     ),
-        //     BottomNavigationBarItem(
-        //       icon: const Icon(FeatherIcons.fileText),
-        //       label: lang.S.of(context).reports,
-        //     ),
-        //     BottomNavigationBarItem(icon: const Icon(FeatherIcons.settings), label: lang.S.of(context).setting),
-        //   ],
-        //   currentIndex: _selectedIndex,
-        //   onTap: _onItemTapped,
-        // ),
-        body: PageView(
-          controller: pageController,
-          onPageChanged: (v) {
-            tabIndex = v;
-          },
-          children: const [
-            HomeScreen(), DashboardScreen(), Reports(), SettingScreen()
-          ],
-        ),
-
-        bottomNavigationBar: CircleNavBar(
-          activeIcons:   [
-            SvgPicture.asset('assets/cHome.svg',fit: BoxFit.scaleDown,height: 28,width: 28,),
-            SvgPicture.asset('assets/dashbord1.svg',height: 28,width: 28,fit: BoxFit.scaleDown,),
-            SvgPicture.asset('assets/cFile.svg',height: 28,width: 28,fit: BoxFit.scaleDown,),
-            SvgPicture.asset('assets/cSetting.svg',height: 28,width: 28,fit: BoxFit.scaleDown,),
-          ],
-          inactiveIcons:  [
-            Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                SvgPicture.asset('assets/home.svg',height: 24,width: 24,color: kGreyTextColor,),
-                 Text(
-                   lang.S.of(context).home,
-                 //  "Home",
-                   style: const TextStyle(color: kGreyTextColor),),
-              ],
             ),
-            Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                SvgPicture.asset('assets/dashbord.svg',height: 24,width: 24,color: kGreyTextColor,),
-                 Text(
-                   lang.S.of(context).dashboard,
-                   //"Dashboard",
-                   style: const TextStyle(color: kGreyTextColor),),
-              ],
-            ),
-            Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                SvgPicture.asset('assets/file.svg',height: 24,width: 24,color: kGreyTextColor,),
-                Text(
-                  lang.S.of(context).reports,
-                 // "Reports",
-                  style: const TextStyle(color: kGreyTextColor),),
-              ],
-            ),
-            Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                SvgPicture.asset('assets/setting.svg',height: 24,width: 24,color: kGreyTextColor,),
-                Text(
-                  lang.S.of(context).setting,
-                  //"Setting",
-                  style: const TextStyle(color: kGreyTextColor),),
-              ],
-            ),
-          ],
-          color: Colors.white,
-          height: 65,
-          circleWidth: 60,
-          activeIndex: tabIndex,
-          onTap: (index) {
-            tabIndex = index;
-            pageController.jumpToPage(tabIndex);
-          },
-          padding:  EdgeInsets.zero,
-          cornerRadius: const BorderRadius.only(
-            topLeft: Radius.circular(8),
-            topRight: Radius.circular(8),
-
-          ),
-          shadowColor: kBorderColorTextField,
-          elevation: 2,
-        ),
-
+          );
+        },
       ),
     );
   }
-}
 
+  BottomNavigationBarItem _buildNavItem({
+    required int index,
+    required String activeIcon,
+    required String icon,
+    required String label,
+  }) {
+    return BottomNavigationBarItem(
+      icon: _tabIndex == index
+          ? SvgPicture.asset('assets/$activeIcon.svg', height: 28, width: 28, fit: BoxFit.scaleDown)
+          : SvgPicture.asset(
+              'assets/$icon.svg',
+              colorFilter: const ColorFilter.mode(kGreyTextColor, BlendMode.srcIn),
+              height: 24,
+              width: 24,
+            ),
+      label: label,
+    );
+  }
+}
