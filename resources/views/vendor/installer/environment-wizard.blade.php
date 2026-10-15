@@ -27,7 +27,7 @@
                     <label for="app_name">
                         {{ trans('installer_messages.environment.wizard.form.app_name_label') }}
                     </label>
-                    <input type="text" name="app_name" id="app_name" value="{{old('app_name')}}" placeholder="{{ trans('installer_messages.environment.wizard.form.app_name_placeholder') }}" />
+                    <input type="text" name="app_name" id="app_name" value="{{ old('app_name') }}" placeholder="{{ trans('installer_messages.environment.wizard.form.app_name_placeholder') }}" required />
                     @if ($errors->has('app_name'))
                         <span class="error-block">
                             <i class="fa fa-fw fa-exclamation-triangle" aria-hidden="true"></i>
@@ -104,7 +104,7 @@
                     <label for="app_url">
                         {{ trans('installer_messages.environment.wizard.form.app_url_label') }}
                     </label>
-                    <input type="url" name="app_url" id="app_url" value="http://localhost" placeholder="{{ trans('installer_messages.environment.wizard.form.app_url_placeholder') }}" />
+                    <input type="url" name="app_url" id="app_url" value="{{ url('/') }}" placeholder="{{ trans('installer_messages.environment.wizard.form.app_url_placeholder') }}" required />
                     @if ($errors->has('app_url'))
                         <span class="error-block">
                             <i class="fa fa-fw fa-exclamation-triangle" aria-hidden="true"></i>
@@ -157,10 +157,10 @@
                 </div>
 
                 <div class="form-group {{ $errors->has('database_name') ? ' has-error ' : '' }}">
-                    <label for="database_name">
+                    <label for="database_name required">
                         {{ trans('installer_messages.environment.wizard.form.db_name_label') }}
                     </label>
-                    <input type="text" name="database_name" id="database_name" value="" placeholder="{{ trans('installer_messages.environment.wizard.form.db_name_placeholder') }}" />
+                    <input type="text" name="database_name" id="database_name" value="{{ old('database_name') }}" placeholder="{{ trans('installer_messages.environment.wizard.form.db_name_placeholder') }}" required />
                     @if ($errors->has('database_name'))
                         <span class="error-block">
                             <i class="fa fa-fw fa-exclamation-triangle" aria-hidden="true"></i>
@@ -173,7 +173,7 @@
                     <label for="database_username">
                         {{ trans('installer_messages.environment.wizard.form.db_username_label') }}
                     </label>
-                    <input type="text" name="database_username" id="database_username" value="" placeholder="{{ trans('installer_messages.environment.wizard.form.db_username_placeholder') }}" />
+                    <input type="text" name="database_username" id="database_username" value="{{ old('database_username') }}" placeholder="{{ trans('installer_messages.environment.wizard.form.db_username_placeholder') }}" required />
                     @if ($errors->has('database_username'))
                         <span class="error-block">
                             <i class="fa fa-fw fa-exclamation-triangle" aria-hidden="true"></i>
@@ -182,7 +182,7 @@
                     @endif
                 </div>
 
-                <div class="form-group {{ $errors->has('database_password') ? ' has-error ' : '' }}">
+                <div class="form-group bottom-gap {{ $errors->has('database_password') ? ' has-error ' : '' }}">
                     <label for="database_password">
                         {{ trans('installer_messages.environment.wizard.form.db_password_label') }}
                     </label>
@@ -195,19 +195,13 @@
                     @endif
                 </div>
 
-                <div class="block">
+                <div class="block" style="display: none">
                     <input type="radio" name="appSettingsTabs" id="appSettingsTab1" value="null" checked />
                     <label for="appSettingsTab1">
                         <span>
                             {{ trans('installer_messages.environment.wizard.form.app_tabs.broadcasting_title') }}
                         </span>
                     </label>
-
-
-
-
-
-
 
                     <div class="info">
                         <div class="form-group {{ $errors->has('broadcast_driver') ? ' has-error ' : '' }}">
@@ -283,7 +277,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="block">
+                <div class="block d-none">
                     <input type="radio" name="appSettingsTabs" id="appSettingsTab2" value="null"/>
                     <label for="appSettingsTab2">
                         <span>
@@ -333,7 +327,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="block">
+                <div class="block d-none">
                     <input type="radio" name="appSettingsTabs" id="appSettingsTab3" value="null"/>
                     <label for="appSettingsTab3">
                         <span>
@@ -411,7 +405,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="block margin-bottom-2">
+                <div class="block margin-bottom-2 d-none">
                     <input type="radio" name="appSettingsTabs" id="appSettingsTab4" value="null"/>
                     <label for="appSettingsTab4">
                         <span>
@@ -459,11 +453,17 @@
                         </div>
                     </div>
                 </div>
-                <div class="buttons">
-                    <button class="button" type="submit">
-                        {{ trans('installer_messages.environment.wizard.form.buttons.install') }}
-                        <i class="fa fa-angle-right fa-fw" aria-hidden="true"></i>
-                    </button>
+                <div class="center-flex">
+                    <div class="btn-wrapper">
+                        <div class="btn-glow"></div>
+                        <button type="submit" class="btn" role="button">
+                            {{ trans('installer_messages.environment.wizard.form.buttons.install') }}
+                            <svg aria-hidden="true" viewBox="0 0 10 10" height="10" width="10" fill="none" class="arrow">
+                                <path d="M0 5h7" class="line1"></path>
+                                <path d="M1 1l4 4-4 4" class="line2"></path>
+                            </svg>
+                        </button>
+                    </div>
                 </div>
             </div>
         </form>

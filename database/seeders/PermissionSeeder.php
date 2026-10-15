@@ -6,11 +6,10 @@ use App\Models\User;
 use Illuminate\Database\Seeder;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 
 class PermissionSeeder extends Seeder
 {
-        /**
+    /**
      * Run the database seeds.
      *
      * @return void
@@ -23,20 +22,22 @@ class PermissionSeeder extends Seeder
                 'users' => 'r,c,u,d',
                 'banners' => 'r,c,u,d',
                 'business' => 'r,c,u,d',
+                'addons' => 'r,c',
                 'business-categories' => 'r,c,u,d',
                 'plans' => 'r,c,u,d',
                 'subscription-reports' => 'r',
+                'subscription-orders' => 'r',
                 'features' => 'r,c,u,d',
+                'domains' => 'r,c,u,d',
                 'interfaces' => 'r,c,u,d',
                 'testimonials' => 'r,c,u,d',
                 'blogs' => 'r,c,u,d',
                 'messages' => 'r,c,u,d',
                 'terms' => 'r,u',
-
-                // settings
-                'sms-settings' => 'r,u',
                 'gateways' => 'r,u',
                 'currencies' => 'r,c,u,d',
+                'countries' => 'r,c,u,d',
+                'states' => 'r,c,u,d',
                 'settings' => 'r,u',
                 'roles' => 'r,c,u,d',
                 'permissions' => 'r,c',
@@ -46,7 +47,35 @@ class PermissionSeeder extends Seeder
             'Admin' => [
                 'dashboard' => 'r',
                 'users' => 'r,c,u,d',
+                'banners' => 'r,c,u,d',
+                'business' => 'r,c,u,d',
+                'addons' => 'r,c',
+                'business-categories' => 'r,c,u,d',
+                'plans' => 'r,c,u,d',
+                'domains' => 'r,c,u,d',
+                'subscription-reports' => 'r',
+                'features' => 'r,c,u,d',
+                'interfaces' => 'r,c,u,d',
+                'testimonials' => 'r,c,u,d',
+                'blogs' => 'r,c,u,d',
+                'messages' => 'r,c,u,d',
+                'terms' => 'r,u',
+                'currencies' => 'r,c,u,d',
             ],
+
+            'Manager' => [
+                'dashboard' => 'r',
+                'banners' => 'r,c,u,d',
+                'business-categories' => 'r,c,u,d',
+                'plans' => 'r,c,u,d',
+                'subscription-reports' => 'r',
+                'features' => 'r,c,u,d',
+                'interfaces' => 'r,c,u,d',
+                'testimonials' => 'r,c,u,d',
+                'blogs' => 'r,c,u,d',
+                'messages' => 'r,c,u,d',
+                'terms' => 'r,u',
+            ]
         ];
 
         foreach ($rolesStructure as $key => $modules) {
@@ -57,7 +86,7 @@ class PermissionSeeder extends Seeder
             ]);
             $permissions = [];
 
-            $this->command->info('Creating Role '. strtoupper($key));
+            $this->command->info('Creating Role ' . strtoupper($key));
 
             // Reading role permission modules
             foreach ($modules as $module => $value) {
@@ -71,7 +100,7 @@ class PermissionSeeder extends Seeder
                         'guard_name' => 'web'
                     ])->id;
 
-                    $this->command->info('Creating Permission to '.$permissionValue.' for '. $module);
+                    $this->command->info('Creating Permission to ' . $permissionValue . ' for ' . $module);
                 }
             }
 
@@ -84,15 +113,16 @@ class PermissionSeeder extends Seeder
                 'role' => str($key)->remove(' ')->lower(),
                 'name' => ucwords(str_replace('_', ' ', $key)),
                 'password' => bcrypt(str($key)->remove(' ')->lower()),
-                'email' => str($key)->remove(' ')->lower().'@'.str($key)->remove(' ')->lower().'.com',
-                'image' => 'https://api.dicebear.com/9.x/pixel-art/svg?seed='.str($key)->slug(),
+                'email' => str($key)->remove(' ')->lower() . '@' . str($key)->remove(' ')->lower() . '.com',
+                'image' => 'assets/images/profile/' . str($key)->remove(' ')->lower() . '.png',
             ]);
 
             $user->assignRole($role);
         }
     }
 
-    private function permissionMap() {
+    private function permissionMap()
+    {
         return collect([
             'c' => 'create',
             'r' => 'read',

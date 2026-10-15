@@ -10,24 +10,21 @@ Route::group(['as' => 'admin.', 'prefix' => 'admin', 'middleware' => ['auth', 'a
     Route::get('/plans-overview', [ADMIN\DashboardController::class, 'plansOverview'])->name('dashboard.plans-overview');
 
     // Website settings
-    Route::resource('website-settings',Admin\AcnooWebSettingController::class);
+    Route::resource('website-settings',Admin\AcnooWebSettingController::class)->only('index', 'update');
 
     // Features
     Route::resource('features',Admin\AcnooFeatureController::class);
-    Route::post('features/filter', [ADMIN\AcnooFeatureController::class, 'acnooFilter'])->name('features.filter');
     Route::post('features/status/{id}', [ADMIN\AcnooFeatureController::class,'status'])->name('features.status');
     Route::post('features/delete-all', [ADMIN\AcnooFeatureController::class, 'deleteAll'])->name('features.delete-all');
 
     // Interface
     Route::resource('interfaces',Admin\AcnooInterfaceController::class);
-    Route::post('interfaces/filter', [ADMIN\AcnooInterfaceController::class, 'acnooFilter'])->name('interfaces.filter');
     Route::put('admin/interfaces/{interface}', [ADMIN\AcnooInterfaceController::class, 'update'])->name('interfaces.update');
     Route::post('interfaces/status/{id}', [ADMIN\AcnooInterfaceController::class,'status'])->name('interfaces.status');
     Route::post('interfaces/delete-all', [ADMIN\AcnooInterfaceController::class, 'deleteAll'])->name('interfaces.delete-all');
 
     // Testimonial
     Route::resource('testimonials',Admin\AcnooTestimonialController::class);
-    Route::post('testimonials/filter', [ADMIN\AcnooTestimonialController::class, 'acnooFilter'])->name('testimonials.filter');
     Route::post('testimonials/delete-all', [ADMIN\AcnooTestimonialController::class, 'deleteAll'])->name('testimonials.delete-all');
 
     // Term And Condition Controller
@@ -44,7 +41,6 @@ Route::group(['as' => 'admin.', 'prefix' => 'admin', 'middleware' => ['auth', 'a
 
     // Blog Controller
     Route::resource('blogs', Admin\AcnooBlogController::class);
-    Route::post('blogs/filter', [ADMIN\AcnooBlogController::class, 'acnooFilter'])->name('blogs.filter');
     Route::post('blogs/status/{id}', [ADMIN\AcnooBlogController::class,'status'])->name('blogs.status');
     Route::post('blogs/delete-all', [ADMIN\AcnooBlogController::class, 'deleteAll'])->name('blogs.delete-all');
     Route::get('blogs/comments/{id}', [ADMIN\AcnooBlogController::class, 'filterComment'])->name('blogs.filter.comment');
@@ -54,56 +50,97 @@ Route::group(['as' => 'admin.', 'prefix' => 'admin', 'middleware' => ['auth', 'a
     Route::post('comments/delete-all', [ADMIN\AcnooCommentController::class, 'deleteAll'])->name('comments.delete-all');
 
     Route::resource('users', ADMIN\UserController::class);
-    Route::post('users/filter', [ADMIN\UserController::class, 'acnooFilter'])->name('users.filter');
     Route::post('users/status/{id}', [ADMIN\UserController::class,'status'])->name('users.status');
     Route::post('users/delete-all', [ADMIN\UserController::class,'deleteAll'])->name('users.delete-all');
 
     Route::resource('banners', ADMIN\AcnooBannerController::class)->except('show', 'edit', 'create');
-    Route::post('banners/filter', [ADMIN\AcnooBannerController::class, 'acnooFilter'])->name('banners.filter');
     Route::post('banners/status/{id}', [ADMIN\AcnooBannerController::class,'status'])->name('banners.status');
     Route::post('banners/delete-all', [ADMIN\AcnooBannerController::class,'deleteAll'])->name('banners.delete-all');
 
     //Subscription Plans
     Route::resource('plans', ADMIN\AcnooPlanController::class)->except('show');
-    Route::post('plans/filter', [ADMIN\AcnooPlanController::class, 'acnooFilter'])->name('plans.filter');
-    Route::post('plans/status/{id}', [ADMIN\AcnooPlanController::class,'status'])->name('plans.status');
+    Route::post('plans/status/{plan}', [ADMIN\AcnooPlanController::class,'status'])->name('plans.status');
     Route::post('plans/delete-all', [ADMIN\AcnooPlanController::class, 'deleteAll'])->name('plans.delete-all');
 
     // Business
     Route::resource('business',ADMIN\AcnooBusinessController::class);
     Route::put('business/upgrade-plan/{id}', [ADMIN\AcnooBusinessController::class, 'upgradePlan'])->name('business.upgrade.plan');
-    Route::post('business/filter', [ADMIN\AcnooBusinessController::class, 'acnooFilter'])->name('business.filter');
     Route::post('business/status/{id}',[ADMIN\AcnooBusinessController::class,'status'])->name('business.status');
     Route::post('business/delete-all', [ADMIN\AcnooBusinessController::class,'deleteAll'])->name('business.delete-all');
 
     // Business Categories
     Route::resource('business-categories',ADMIN\AcnooBusinessCategoryController::class)->except('show');
-    Route::post('business-category/filter', [ADMIN\AcnooBusinessCategoryController::class, 'acnooFilter'])->name('business-categories.filter');
     Route::post('business-categories/status/{id}',[ADMIN\AcnooBusinessCategoryController::class,'status'])->name('business-categories.status');
     Route::post('business-categories/delete-all', [ADMIN\AcnooBusinessCategoryController::class,'deleteAll'])->name('business-categories.delete-all');
 
     Route::resource('profiles', ADMIN\ProfileController::class)->only('index', 'update');
 
     Route::resource('subscription-reports', ADMIN\SubscriptionReport::class)->only('index');
-    Route::post('subscription-reports/filter', [ADMIN\SubscriptionReport::class, 'acnooFilter'])->name('subscription-reports.filter');
-    Route::post('subscription-reports/reject/{id}',[ADMIN\SubscriptionReport::class,'reject'])->name('subscription-reports.reject');
-    Route::post('subscription-reports/paid/{id}',[ADMIN\SubscriptionReport::class,'paid'])->name('subscription-reports.paid');
+
+    Route::resource('subscription-orders', ADMIN\AcnooSubscriptionController::class)->only('index');
+    Route::post('subscription-orders/reject/{id}',[ADMIN\AcnooSubscriptionController::class,'reject'])->name('subscription-orders.reject');
+    Route::post('subscription-orders/paid/{id}',[ADMIN\AcnooSubscriptionController::class,'paid'])->name('subscription-orders.paid');
+    Route::get('subscription-orders/get-invoice/{id}', [ADMIN\AcnooSubscriptionController::class, 'getInvoice'])->name('subscription-orders.invoice');
+
+    // Affiliates
+    Route::resource('affiliates',ADMIN\AcnooAffiliateController::class);
+    Route::post('affiliates/filter', [ADMIN\AcnooAffiliateController::class, 'acnooFilter'])->name('affiliates.filter');
+    Route::post('affiliates/status/{id}',[ADMIN\AcnooAffiliateController::class,'status'])->name('affiliates.status');
+    Route::post('affiliates/delete-all', [ADMIN\AcnooAffiliateController::class,'deleteAll'])->name('affiliates.delete-all');
+
+    // Affiliates Withdraw Request
+    Route::resource('affiliate-withdrawals',ADMIN\AcnooWithdrawRequestController::class)->only('index');
+    Route::post('affiliate-withdrawals/reject/{id}',[ADMIN\AcnooWithdrawRequestController::class,'reject'])->name('affiliate-withdrawals.reject');
+    Route::post('affiliate-withdrawals/paid/{id}',[ADMIN\AcnooWithdrawRequestController::class,'paid'])->name('affiliate-withdrawals.paid');
+    Route::post('affiliate-withdrawals/filter', [ADMIN\AcnooWithdrawRequestController::class, 'acnooFilter'])->name('affiliate-withdrawals.filter');
+    Route::post('affiliate-withdrawals/status/{id}',[ADMIN\AcnooWithdrawRequestController::class,'status'])->name('affiliate-withdrawals.status');
+    Route::post('affiliate-withdrawals/delete-all', [ADMIN\AcnooWithdrawRequestController::class,'deleteAll'])->name('affiliate-withdrawals.delete-all');
+
+    // Affiliates Report
+    Route::resource('affiliate-reports',ADMIN\AcnooAffiliateReportController::class)->only('index');
+    Route::post('affiliate-reports/filter', [ADMIN\AcnooAffiliateReportController::class, 'acnooFilter'])->name('affiliate-reports.filter');
 
     // Roles & Permissions
     Route::resource('roles', ADMIN\RoleController::class)->except('show');
     Route::resource('permissions', ADMIN\PermissionController::class)->only('index', 'store');
 
     // Settings
+    Route::resource('addons', ADMIN\AddonController::class)->only('index', 'store', 'show');
     Route::resource('settings', ADMIN\SettingController::class)->only('index', 'update');
     Route::resource('system-settings', ADMIN\SystemSettingController::class)->only('index', 'store');
 
+    Route::resource('languages', ADMIN\AcnooLanguageController::class)->except('edit', 'create');
+    Route::post('languages/delete-all', [ADMIN\AcnooLanguageController::class, 'deleteAll'])->name('languages.delete-all');
+    Route::post('languages/status/{id}', [ADMIN\AcnooLanguageController::class, 'status'])->name('languages.status');
+    Route::post('languages/default/{id}', [ADMIN\AcnooLanguageController::class, 'isDefault'])->name('languages.default');
+
+    Route::resource('translations', ADMIN\TranslationController::class)->only('store', 'update', 'destroy');
+    Route::post('translations/bulk-update/{lang}', [ADMIN\TranslationController::class, 'bulkUpdate'])->name('translations.bulk-update');
+
     // Gateway
     Route::resource('gateways', ADMIN\GatewayController::class)->only('index', 'update');
+
+    Route::resource('manage-settings', ADMIN\AcnooSettingsManagerController::class)->only('index', 'store');
+    Route::post('manage-setting/domain', [ADMIN\AcnooSettingsManagerController::class,'domain'])->name('domain.setting');
+    Route::post('/theme-settings', [ADMIN\AcnooSettingsManagerController::class, 'updateTheme'])->name('theme.update');
+
+    // Database Backup
+    Route::get('/backup/{filename}/download', [ADMIN\BackupController::class, 'download'])->name('backup.download');
+    Route::resource('/backup', ADMIN\BackupController::class)->except('show')->where(['backup' => '.*']);
+    Route::post('/backup/delete-all', [ADMIN\BackupController::class, 'deleteAll'])->name('backup.delete-all');
 
     Route::resource('currencies', ADMIN\AcnooCurrencyController::class)->except('show');
     Route::post('currencies/filter', [ADMIN\AcnooCurrencyController::class, 'acnooFilter'])->name('currencies.filter');
     Route::match(['get', 'post'], 'currencies/default/{id}', [ADMIN\AcnooCurrencyController::class, 'default'])->name('currencies.default');
     Route::post('currencies/delete-all', [ADMIN\AcnooCurrencyController::class,'deleteAll'])->name('currencies.delete-all');
+
+    Route::resource('countries', ADMIN\AcnooCountryController::class)->except('show');
+    Route::post('countries/status/{id}', [ADMIN\AcnooCountryController::class,'status'])->name('countries.status');
+    Route::post('countries/delete-all', [ADMIN\AcnooCountryController::class,'deleteAll'])->name('countries.delete-all');
+
+    Route::resource('states', ADMIN\AcnooStateController::class)->except('show', 'edit', 'create');
+    Route::post('states/status/{id}', [ADMIN\AcnooStateController::class,'status'])->name('states.status');
+    Route::post('states/delete-all', [ADMIN\AcnooStateController::class,'deleteAll'])->name('states.delete-all');
 
     // Notifications manager
     Route::prefix('notifications')->controller(ADMIN\NotificationController::class)->name('notifications.')->group(function () {

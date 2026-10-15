@@ -24,7 +24,7 @@ class AcnooWebSettingController extends Controller
         Option::updateOrCreate(
             ['key' => 'manage-pages'],
             ['value' => [
-                'headings' => $request->except('_token', '_method', 'contact_img','card_icons','compatible_image','firebase_image','contact_us_icon','footer_socials_icons','footer_scanner_image','footer_apple_app_image','footer_google_app_image','watch_image','about_image','evanto_logo'),
+                'headings' => $request->except('_token', '_method','slider_image','scanner_image','card_icons','compatible_image','firebase_image','contact_us_icon','footer_socials_icons','footer_scanner_image','footer_apple_app_image','footer_google_app_image','watch_image','about_image','evanto_logo', 'slider_bg_img'),
 
                 'slider_image' => $request->slider_image ? $this->upload($request, 'slider_image') : $option->value['slider_image'] ?? null,
                 'scanner_image' => $request->scanner_image ? $this->upload($request, 'scanner_image') : $option->value['scanner_image'] ?? null,
@@ -37,11 +37,10 @@ class AcnooWebSettingController extends Controller
                 'footer_google_app_image' => $request->footer_google_app_image ? $this->upload($request, 'footer_google_app_image') : $option->value['footer_google_app_image'] ?? null,
                 'about_image' => $request->about_image ? $this->upload($request, 'about_image') : $option->value['about_image'] ?? null,
                 'evanto_logo' => $request->evanto_logo ? $this->upload($request, 'evanto_logo') : $option->value['evanto_logo'] ?? null,
-
+                'slider_bg_img' => $request->slider_bg_img ? $this->upload($request, 'slider_bg_img') : $option->value['slider_bg_img'] ?? null,
 
                 'card_icons' => $request->card_icons ? $this->multipleUpload($request, 'card_icons') : $option->value['card_icons'] ?? null,
                 'footer_socials_icons' => $request->footer_socials_icons ? $this->multipleUpload($request, 'footer_socials_icons') : $option->value['footer_socials_icons'] ?? null,
-
             ]
         ]);
 

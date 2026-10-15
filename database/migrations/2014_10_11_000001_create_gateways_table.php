@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->foreignId('currency_id')->constrained()->cascadeOnDelete();
-            $table->string('mode'); // 1 = Sandbox || 0 = Live
+            $table->string('mode'); // Sandbox || Live
             $table->string('status');
             $table->boolean('charge')->default(0);
             $table->string('image')->nullable();

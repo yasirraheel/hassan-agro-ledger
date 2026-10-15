@@ -2,20 +2,22 @@
 
 namespace App\Models;
 
+use App\Traits\ImageUrlTrait;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Banner extends Model
 {
-    use HasFactory;
+    use HasFactory, ImageUrlTrait;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array
-     */
     protected $fillable = [
         'imageUrl',
         'status',
     ];
+
+    protected $casts = [
+        'status' => 'integer',
+    ];
+
+    protected $imageFields = ['imageUrl'];
 }

@@ -16,23 +16,15 @@ class AcnooMessageController extends Controller
 
     public function index(Request $request)
     {
-        $messages = Message::latest()->paginate(20);
-        return view('admin.messages.index', compact('messages'));
-    }
-
-    public function acnooFilter(Request $request)
-    {
-        $messages = Message::when(request('search'), function ($q) {
-            $q->where(function ($q) {
-                $q->where('name', 'like', '%' . request('search') . '%')
-                    ->orWhere('phone', 'like', '%' . request('search') . '%')
-                    ->orWhere('email', 'like', '%' . request('search') . '%')
-                    ->orWhere('company_name', 'like', '%' . request('search') . '%')
-                    ->orWhere('message', 'like', '%' . request('search') . '%');
+        $messages = Message::when($request->search, function ($q) use ($request) {
+            $q->where(function ($q) use ($request) {
+                $q->where('name', 'like', '%' . $request->search . '%')
+                  ->orWhere('phone', 'like', '%' . $request->search . '%')
+                  ->orWhere('email', 'like', '%' . $request->search . '%')
+                  ->orWhere('company_name', 'like', '%' . $request->search . '%')
+                  ->orWhere('message', 'like', '%' . $request->search . '%');
             });
-        })
-            ->latest()
-            ->paginate($request->per_page ?? 10);
+        })->latest()->paginate($request->per_page ?? 20)->appends($request->query());
 
         if ($request->ajax()) {
             return response()->json([
@@ -40,7 +32,7 @@ class AcnooMessageController extends Controller
             ]);
         }
 
-        return redirect(url()->previous());
+        return view('admin.messages.index', compact('messages'));
     }
 
     public function destroy(Message $message)

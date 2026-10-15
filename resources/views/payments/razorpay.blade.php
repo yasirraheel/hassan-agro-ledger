@@ -14,7 +14,7 @@
         </div>
     </div>
 
-    <form action="{{ url('/users/razorpay/status') }}" method="POST" hidden>
+    <form action="{{ url('/razorpay/status') }}" method="POST" hidden>
         <input type="hidden" value="{{ csrf_token() }}" name="_token" />
         <input type="text" class="form-control" id="rzp_paymentid" name="rzp_paymentid">
         <input type="text" class="form-control" id="rzp_orderid" name="rzp_orderid">

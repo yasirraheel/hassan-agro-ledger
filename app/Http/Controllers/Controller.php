@@ -2,13 +2,169 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
-use Illuminate\Foundation\Validation\ValidatesRequests;
 use Illuminate\Routing\Controller as BaseController;
+use Modules\MarketingAddon\App\Services\NotifyService;
+use Illuminate\Foundation\Validation\ValidatesRequests;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
 class Controller extends BaseController
 {
     use AuthorizesRequests, ValidatesRequests;
+
+    public function saleMessage($business, $customer, $sale)
+    {
+        if (!$customer || empty($customer->phone)) {
+            return;
+        }
+
+        app(NotifyService::class)->send(
+            'new_sale',
+            [
+                'phone' => $customer->phone,
+                'email' => $customer->email,
+                'name' => $customer->name,
+                'customer_name' => $customer->name,
+
+                'invoice_no' => $sale->invoiceNumber,
+                'amount' => currency_format($sale->totalAmount),
+                'date' => formatted_date($sale->saleDate),
+                'time' => formatted_time($sale->saleDate),
+                'received_amount' => currency_format($sale->paidAmount),
+                'paid_amount' => currency_format(0),
+                'due_amount' => currency_format($sale->dueAmount),
+
+                'invoice_url' => route('sale.invoice', ['sale_id' => $sale->id, 'phone' => $customer->phone,]),
+                'business_name' => $business->companyName,
+                'business_phone' => $business->phoneNumber
+            ],
+            businessId: $business->id
+        );
+    }
+
+    public function purchaseMessage($business, $supplier, $purchase)
+    {
+        if (!$supplier || empty($supplier->phone)) {
+            return;
+        }
+
+        app(NotifyService::class)->send(
+            'purchase',
+            [
+                'phone' => $supplier->phone,
+                'email' => $supplier->email,
+                'name' => $supplier->name,
+                'supplier_name' => $supplier->name,
+
+                'invoice_no' => $purchase->invoiceNumber,
+                'amount' => currency_format($purchase->totalAmount),
+                'date' => formatted_date($purchase->purchaseDate),
+                'time' => formatted_time($purchase->purchaseDate),
+
+                'received_amount' => currency_format(0),
+                'paid_amount' => currency_format($purchase->paidAmount),
+                'due_amount' => currency_format($purchase->dueAmount),
+                'invoice_url' => route('purchase.invoice', ['purchase_id' => $purchase->id, 'phone' => $supplier->phone,]),
+                'business_name' => $business->companyName,
+                'business_phone' => $business->phoneNumber,
+            ],
+            businessId: $business->id
+        );
+
+    }
+
+    public function dueTransactionMessage($business, $party, $data)
+    {
+        if (!$party || empty($party->phone)) {
+            return;
+        }
+
+        $template_name = $party->type == 'Supplier' ? 'payment_paid' : 'payment_received';
+
+        app(NotifyService::class)->send(
+            $template_name,
+            [
+                'phone' => $party->phone,
+                'email' => $party->email,
+                'name' => $party->name,
+                'customer_name' => $party->name,
+
+                'invoice_no' => $data->invoiceNumber,
+                'amount' => currency_format($data->payDueAmount),
+                'date' => formatted_date($data->paymentDate),
+                'time' => formatted_time($data->paymentDate),
+
+                'received_amount' => $party->type == 'Supplier' ? currency_format(0) : $data->payDueAmount,
+                'paid_amount' => $party->type == 'Supplier' ? $data->payDueAmount : currency_format(0),
+                'due_amount' => currency_format($party->due),
+
+                'invoice_url' => route('due.invoice', ['party_id' => $party->id, 'phone' => $party->phone,]),
+                'business_name' => $business->companyName,
+                'business_phone' => $business->phoneNumber,
+            ],
+            businessId: $business->id
+        );
+    }
+
+    public function paymentReminderMessage($business, $party)
+    {
+        if (!$party) {
+            return;
+        }
+
+        app(NotifyService::class)->send(
+            'payment_reminder',
+            [
+                'phone' => $party->phone,
+                'email' => $party->email,
+                'name' => $party->name,
+                'customer_name' => $party->name,
+                'invoice_no' => 'NONE',
+
+                'amount' => currency_format($party->due),
+                'date' => formatted_date(now()),
+                'time' => formatted_time(now()),
+
+                'received_amount' => currency_format(0),
+                'paid_amount' => currency_format(0),
+                'due_amount' => currency_format(0),
+
+                'invoice_url' => url('/'),
+                'business_name' => $business->companyName,
+                'business_phone' => $business->phoneNumber,
+            ],
+            businessId: $business->id
+        );
+    }
+
+    public function attendanceMessage($business, $attendance, $employee)
+    {
+        app(NotifyService::class)->send(
+            'attendance',
+            [
+                'phone' => $employee->phone,
+                'email' => $employee->email,
+                'employee_name' => $employee->name,
+                'name' => $employee->name,
+                'invoice_no' => 'NONE',
+
+                'amount' => currency_format(0),
+                'date' => formatted_date($attendance->date),
+                'entry_time' => formatted_time($attendance->time_in),
+                'exit_time' => formatted_time($attendance->time_out),
+                'time' => formatted_time(now()),
+
+                'received_amount' => currency_format(0),
+                'paid_amount' => currency_format(0),
+                'due_amount' => currency_format(0),
+
+                'invoice_url' => url('/'),
+                'business_name' => $business->companyName,
+                'business_phone' => $business->phoneNumber,
+            ],
+            businessId: $business->id
+        );
+    }
+
     protected $message =[
         //response success ..0
         [

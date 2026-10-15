@@ -14,20 +14,11 @@ class AcnooFeatureController extends Controller
 
     public function index(Request $request)
     {
-        $features = Feature::latest()->paginate(20);
-        return view('admin.website-setting.features.index', compact('features'));
-    }
-
-
-    public function acnooFilter(Request $request)
-    {
-        $features = Feature::when(request('search'), function ($q) {
-            $q->where(function ($q) {
-                $q->where('title', 'like', '%' . request('search') . '%');
+        $features = Feature::when($request->search, function ($q) use ($request) {
+            $q->where(function ($q) use ($request) {
+                $q->where('title', 'like', '%' . $request->search . '%');
             });
-        })
-            ->latest()
-            ->paginate($request->per_page ?? 20);
+        })->latest()->paginate($request->per_page ?? 20)->appends($request->query());
 
         if ($request->ajax()) {
             return response()->json([
@@ -35,7 +26,7 @@ class AcnooFeatureController extends Controller
             ]);
         }
 
-        return redirect(url()->previous());
+        return view('admin.website-setting.features.index', compact('features'));
     }
 
     public function create()
@@ -49,7 +40,7 @@ class AcnooFeatureController extends Controller
             'status' => 'required',
             'title' => 'required',
             'bg_color' => 'required',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif',
         ]);
 
         Feature::create($request->except('image') + [
@@ -73,7 +64,7 @@ class AcnooFeatureController extends Controller
             'status' => 'required',
             'title' => 'required|string',
             'bg_color' => 'required|string',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif',
         ]);
 
         $feature->update($request->except('image') + [

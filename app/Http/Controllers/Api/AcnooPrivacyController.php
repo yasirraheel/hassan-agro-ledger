@@ -9,7 +9,7 @@ class AcnooPrivacyController extends Controller
 {
     public function index()
     {
-        $policy = Option::where('key', 'policy')->first()->value;
+        $policy = Option::where('key', 'privacy-policy')->first()->value;
         return response()->json([
             'message' => __('Data fetched successfully.'),
             'data' => $policy ?? 'Privacy Policy',

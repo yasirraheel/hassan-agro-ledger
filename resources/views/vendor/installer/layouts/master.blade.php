@@ -6,9 +6,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
         <title>@if (trim($__env->yieldContent('template_title')))@yield('template_title') | @endif {{ trans('installer_messages.welcome.title') }}</title>
-        <link rel="icon" type="image/png" href="{{ asset('installer/img/favicon/favicon-16x16.png') }}" sizes="16x16"/>
-        <link rel="icon" type="image/png" href="{{ asset('installer/img/favicon/favicon-32x32.png') }}" sizes="32x32"/>
-        <link rel="icon" type="image/png" href="{{ asset('installer/img/favicon/favicon-96x96.png') }}" sizes="96x96"/>
+        <link rel="icon" type="image/png" href="{{ asset('installer/img/favicon/favicon.png') }}"/>
         <link href="{{ asset('installer/css/style.min.css') }}" rel="stylesheet"/>
         @yield('style')
         <script>
@@ -19,6 +17,8 @@
     </head>
     <body>
         <div class="master">
+            <img class="girl-img" src="{{ asset('installer/img/girl.png') }}" alt="">
+            <img class="boy-img" src="{{ asset('installer/img/boy.png') }}" alt="">
             <div class="box">
                 <div class="header">
                     <h1 class="header__title">@yield('title')</h1>
@@ -29,7 +29,7 @@
                         <i class="step__icon fa fa-server" aria-hidden="true"></i>
                     </li>
                     <li class="step__divider"></li>
-                    <li class="step__item {{ isActive('LaravelInstaller::environment')}} {{ isActive('LaravelInstaller::environmentWizard')}} {{ isActive('LaravelInstaller::environmentClassic')}}">
+                    <li class="step__item {{ isActive('LaravelInstaller::environment') }} {{ isActive('LaravelInstaller::environmentWizard')}} {{ isActive('LaravelInstaller::environmentClassic')}} {{ isActive('LaravelInstaller::final') }}">
                         @if(Request::is('install/environment') || Request::is('install/environment/wizard') || Request::is('install/environment/classic') )
                             <a href="{{ route('LaravelInstaller::environment') }}">
                                 <i class="step__icon fa fa-cog" aria-hidden="true"></i>
@@ -39,7 +39,7 @@
                         @endif
                     </li>
                     <li class="step__divider"></li>
-                    <li class="step__item {{ isActive('LaravelInstaller::verify') }}">
+                    <li class="step__item {{ isActive('LaravelInstaller::verify') }} {{ isActive('LaravelInstaller::environment') }} {{ isActive('LaravelInstaller::environmentWizard')}} {{ isActive('LaravelInstaller::final') }}">
                         @if(Request::is('install/verify-purchase-code') || Request::is('install/environment') || Request::is('install/environment/wizard') || Request::is('install/environment/classic') )
                             <a href="{{ route('LaravelInstaller::verify') }}">
                                 <i class="step__icon fa fa-check" aria-hidden="true"></i>
@@ -48,18 +48,8 @@
                             <i class="step__icon fa fa-check" aria-hidden="true"></i>
                         @endif
                     </li>
-                    <li class="step__divider"></li>
-                    <li class="step__item {{ isActive('LaravelInstaller::permissions') }}">
-                        @if(Request::is('install/verify-purchase-code') || Request::is('install/permissions') || Request::is('install/environment') || Request::is('install/environment/wizard') || Request::is('install/environment/classic') )
-                            <a href="{{ route('LaravelInstaller::permissions') }}">
-                                <i class="step__icon fa fa-key" aria-hidden="true"></i>
-                            </a>
-                        @else
-                            <i class="step__icon fa fa-key" aria-hidden="true"></i>
-                        @endif
-                    </li>
-                    <li class="step__divider"></li>
-                    <li class="step__item {{ isActive('LaravelInstaller::requirements') }}">
+                    <li class="step__divider"></li> 
+                    <li class="step__item {{ isActive('LaravelInstaller::requirements') }} {{ isActive('LaravelInstaller::verify') }} {{ isActive('LaravelInstaller::environment') }} {{ isActive('LaravelInstaller::environmentWizard')}} {{ isActive('LaravelInstaller::final') }}">
                         @if(Request::is('install') || Request::is('install/requirements') || Request::is('install/permissions') || Request::is('install/verify-purchase-code') || Request::is('install/environment') || Request::is('install/environment/wizard') || Request::is('install/environment/classic') )
                             <a href="{{ route('LaravelInstaller::requirements') }}">
                                 <i class="step__icon fa fa-list" aria-hidden="true"></i>
@@ -69,7 +59,7 @@
                         @endif
                     </li>
                     <li class="step__divider"></li>
-                    <li class="step__item {{ isActive('LaravelInstaller::welcome') }}">
+                    <li class="step__item active">
                         @if(Request::is('install/verify-purchase-code') || Request::is('install') || Request::is('install/requirements') || Request::is('install/permissions') || Request::is('install/environment') || Request::is('install/environment/wizard') || Request::is('install/environment/classic') )
                             <a href="{{ route('LaravelInstaller::welcome') }}">
                                 <i class="step__icon fa fa-home" aria-hidden="true"></i>

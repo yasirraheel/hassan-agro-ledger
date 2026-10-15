@@ -14,7 +14,7 @@ class Mollie
         if (Session::has('fund_callback')) {
             return url(Session::get('fund_callback')['success_url']);
         } else {
-            return url('users/payment/success');
+            return url('payment/success');
         }
     }
 
@@ -23,7 +23,7 @@ class Mollie
         if (Session::has('fund_callback')) {
             return url(Session::get('fund_callback')['cancel_url']);
         } else {
-            return url('users/payment/failed');
+            return url('payment/failed');
         }
     }
 
@@ -32,7 +32,7 @@ class Mollie
         if (Session::get('without_auth')) {
             return url('payment/mollie');
         }
-        return url('users/payment/mollie');
+        return url('payment/mollie');
     }
 
     public static function make_payment($array)
@@ -47,7 +47,7 @@ class Mollie
         $amount = $total_amount;
         $name = $array['name'];
         $billName = $array['billName'];
-        $test_mode = $array['test_mode'];
+        $mode = $array['mode'];
         $data['api_key'] = $array['api_key'];
         $data['payment_mode'] = 'mollie';
         $data['amount'] = $amount;
@@ -56,14 +56,14 @@ class Mollie
         $data['main_amount'] = $array['amount'];
         $data['gateway_id'] = $array['gateway_id'];
         $data['payment_type'] = $array['payment_type'] ?? '';
-        $data['test_mode'] = $test_mode;
+        $data['mode'] = $mode;
 
-        if ($test_mode == 0) {
+        if ($mode == 0) {
             $data['env'] = false;
-            $test_mode = false;
+            $mode = false;
         } else {
             $data['env'] = true;
-            $test_mode = true;
+            $mode = true;
         }
         Session::put('mollie_credentials', $data);
         try {

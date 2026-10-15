@@ -13,6 +13,6 @@ use Illuminate\Support\Facades\Artisan;
 |
 */
 
-Artisan::command('demo:restore-public-images', function () {
+Artisan::command('demo:reset', function () {
     restorePublicImages();
 })->describe('Restore images demo images.');

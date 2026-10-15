@@ -19,9 +19,9 @@ return new class extends Migration
             $table->foreignId('sale_id')->nullable()->constrained()->cascadeOnDelete();
             $table->foreignId('purchase_id')->nullable()->constrained()->cascadeOnDelete();
             $table->string('invoiceNumber')->nullable();
-            $table->double('totalDue')->default(0);
-            $table->double('dueAmountAfterPay')->default(0);
-            $table->double('payDueAmount')->default(0);
+            $table->double('totalDue', 10, 2)->default(0);
+            $table->double('dueAmountAfterPay', 10, 2)->default(0);
+            $table->double('payDueAmount', 10, 2)->default(0);
             $table->string('paymentType')->default('Cash');
             $table->timestamp('paymentDate')->nullable();
             $table->timestamps();

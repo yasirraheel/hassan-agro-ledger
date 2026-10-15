@@ -1,6 +1,8 @@
+@include('layouts.lang-text')
+
 <script src="{{ asset('assets/js/jquery-3.7.1.min.js') }}"></script>
 <script src="{{ asset('assets/js/bootstrap.bundle.min.js') }}"></script>
-<script src="{{ asset('assets/js/theme.js') }}"></script>
+<script src="{{ asset('assets/js/theme.js') }}?v={{ time() }}"></script>
 {{-- jquery confirm --}}
 <script src="{{asset('assets/plugins/jquery-confirm/jquery-confirm.min.js')}}"></script>
 {{-- jquery validation --}}
@@ -8,12 +10,13 @@
 {{-- Custom --}}
 <script src="{{ asset('assets/plugins/validation-setup/validation-setup.js') }}"></script>
 <script src="{{ asset('assets/plugins/custom/notification.js') }}"></script>
-<script src="{{ asset('assets/plugins/custom/form.js') }}"></script>
+<script src="{{ asset('assets/plugins/custom/form.js') }}?v={{ time() }}"></script>
 {{-- Status --}}
 <script src="{{ asset('assets/js/custom-ajax.js') }}"></script>
 {{-- Toaster --}}
 <script src="{{ asset('assets/js/toastr.min.js') }}"></script>
-<script src="{{ asset('assets/js/custom/custom.js') }}"></script>
+<script src="{{ asset('assets/js/custom/custom.js') }}?v={{ time() }}"></script>
+<script src="{{ asset('assets/js/theme-color.js') }}?v={{ time() }}"></script>
 
 @stack('js')
 
@@ -28,6 +31,11 @@
 @if(Session::has('error'))
     <script>
         toastr.error( "{{ Session::get('error') }}");
+    </script>
+@endif
+@if(Session::has('warning'))
+    <script>
+        toastr.warning( "{{ Session::get('warning') }}");
     </script>
 @endif
 @if($errors->any())

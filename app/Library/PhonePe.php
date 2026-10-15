@@ -1,10 +1,10 @@
 <?php
+
 namespace App\Library;
 
-use App\Models\Gateway;
-use Illuminate\Support\Facades\Request;
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Session;
-use Dipesh79\LaravelPhonePe\LaravelPhonePe;
 
 class PhonePe
 {
@@ -13,7 +13,7 @@ class PhonePe
         if (Session::has('fund_callback')) {
             return url(Session::get('fund_callback')['success_url']);
         } else {
-            return url('users/payment/success');
+            return url('payment/success');
         }
     }
 
@@ -22,69 +22,136 @@ class PhonePe
         if (Session::has('fund_callback')) {
             return url(Session::get('fund_callback')['cancel_url']);
         } else {
-            return url('users/payment/failed');
+            return url('payment/failed');
         }
     }
 
     public static function make_payment($array)
     {
-        //Checking Minimum/Maximum amount
-        $gateway = Gateway::findOrFail($array['gateway_id']);
-        $amount = $array['pay_amount'];
+        $clientId = $array['key_id'];
+        $clientSecret = $array['key_secret'];
 
-        $currency = $array['currency'];
-        $email = $array['email'];
-        $amount = round($array['pay_amount']);
-        $name = $array['name'];
-        $test_mode = $array['test_mode'];
-        $billName = $array['billName'];
-        $data['payment_mode'] = 'phonepe';
+        $urlForToken = $array['mode'] == 'Live' ? 'https://api.phonepe.com/apis/identity-manager/v1/oauth/token' : 'https://api-preprod.phonepe.com/apis/pg-sandbox/v1/oauth/token';
 
-        $data['amount'] = $amount;
-        $data['test_mode'] = $test_mode;
-        $data['charge'] = $array['charge'];
-        $data['main_amount'] = $array['amount'];
-        $data['gateway_id'] = $array['gateway_id'];
+        $urlForCreatePayment = $array['mode'] == 'Live' ? 'https://api.phonepe.com/apis/pg/checkout/v2/pay' : 'https://api-preprod.phonepe.com/apis/pg-sandbox/checkout/v2/pay';
 
-        Session::put('phonepe_credentials', $data);
+        $transactionId = 'txn_' . Str::random(8);
 
-        $phonepe = new LaravelPhonePe();
-        //amount, phone number, callback url, unique merchant transaction id
-        $url = $phonepe->makePayment($amount, auth()->user()->phone, url('users/phonepe/status'), uniqid());
-        return redirect()->away($url);
+        // Step 1: Generate Access Token
+        $tokenResponse = Http::asForm()->post($urlForToken, [
+            'client_version' => 1,
+            'client_id' => $clientId,
+            'client_secret' => $clientSecret,
+            'grant_type' => 'client_credentials'
+        ]);
+
+        $tokenData = $tokenResponse->json();
+
+        if (!isset($tokenData['access_token'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unable to get access token',
+                'data' => $tokenData
+            ]);
+        }
+
+        $accessToken = $tokenData['access_token'];
+
+        // Step 2: Create Payment
+        $payload = [
+            "merchantOrderId" => $transactionId,
+            "amount" => $array['pay_amount'] * 100,
+            "expireAfter" => 1200,
+            "metaInfo" => [
+                "udf1" => $array['payment_type']
+            ],
+            "paymentFlow" => [
+                "type" => "PG_CHECKOUT",
+                "message" => "Payment message used for collect requests",
+                "merchantUrls" => [
+                    "redirectUrl" => route('phonepe.status')
+                ]
+            ]
+        ];
+
+        $paymentResponse = Http::withHeaders([
+            'Authorization' => 'O-Bearer ' . $accessToken,
+            'Content-Type' => 'application/json'
+        ])->post($urlForCreatePayment, $payload);
+
+        $paymentData = $paymentResponse->json();
+
+        Session::put('phonepe_credentials', [
+            'mode' => $array['mode'],
+            'clientId' => $clientId,
+            'clientSecret' => $clientSecret,
+            'merchantOrderId' => $transactionId,
+        ]);
+
+        // Redirect to PhonePe payment page
+        if (isset($paymentData['redirectUrl'])) {
+            return redirect()->away($paymentData['redirectUrl']);
+        }
+
+        return $paymentData; // fallback for debugging
     }
 
-    public function status(Request $request)
+    public function status()
     {
-        if (Session::has('phonepe_credentials')) {
-            $order_info = Session::get('phonepe_credentials');
+        $phonepe_credentials = Session('phonepe_credentials');
 
-            $phonepe = new LaravelPhonePe();
-            $response = $phonepe->getTransactionStatus($request->all());
-            if($response == true) {
-                $data['payment_method'] = "Phonepe";
-                $data['gateway_id'] = $order_info['gateway_id'];
-                $data['amount'] = $order_info['amount'];
-                $data['billName'] = $order_info['billName'];
-                $data['charge'] = $order_info['charge'];
-                $data['status'] = 'completed';
-                $data['payment_status'] = 'completed';
-                $data['is_fallback'] = $order_info['is_fallback'];
+        if (!$phonepe_credentials) {
+            session()->put('payment_msg', __('Invalid request, Please contact with admin.'));
+            return redirect(Paytm::redirect_if_payment_faild());
+        }
 
-                Session::put('payment_info', $data);
-                Session::forget('phonepe_credentials');
-                return request()->expectsJson() ?
-                PhonePe::redirect_if_payment_success() :
-                redirect(PhonePe::redirect_if_payment_success());
+        $mode = $phonepe_credentials['mode'];
+        $clientId = $phonepe_credentials['clientId'];
+        $clientSecret = $phonepe_credentials['clientSecret'];
+        $merchantOrderId = $phonepe_credentials['merchantOrderId'];
+
+        $urlForToken = $mode == 'Live' ? 'https://api.phonepe.com/apis/identity-manager/v1/oauth/token' : 'https://api-preprod.phonepe.com/apis/pg-sandbox/v1/oauth/token';
+
+        $statusUrl = $phonepe_credentials['mode'] == 'Live' ? 'https://api.phonepe.com/apis/pg/checkout/v2/order/' . $merchantOrderId . '/status' : 'https://api-preprod.phonepe.com/apis/pg-sandbox/checkout/v2/order/' . $merchantOrderId . '/status';
+
+        // Step 1: Get Access Token (asForm)
+        $tokenResponse = Http::asForm()->post($urlForToken, [
+            'client_version' => 1,
+            'client_id' => $clientId,
+            'client_secret' => $clientSecret,
+            'grant_type' => 'client_credentials'
+        ]);
+
+        $tokenData = $tokenResponse->json();
+        $accessToken = $tokenData['access_token'] ?? null;
+
+        if (!$accessToken) {
+            return response()->json(['error' => 'Unable to get access token', 'data' => $tokenData], 400);
+        }
+
+        // Step 2: Check Order Status
+        $statusResponse = Http::withHeaders([
+            'Authorization' => 'O-Bearer ' . $accessToken,
+            'Content-Type' => 'application/json'
+        ])->get($statusUrl);
+
+        $statusData = $statusResponse->json();
+
+        session()->forget('phonepe_credentials');
+
+        // Step 3: Handle Payment State
+        if (isset($statusData['state'])) {
+            if ($statusData['state'] === 'COMPLETED') {
+
+                return redirect(Paytm::redirect_if_payment_success());
             } else {
-                $data['payment_status'] = 'pending';
-                Session::put('payment_info', $data);
-                Session::forget('phonepe_credentials');
 
-                return request()->expectsJson() ?
-                PhonePe::redirect_if_payment_faild() :
-                redirect(PhonePe::redirect_if_payment_faild());
+                session()->put('payment_msg', __('Payment failed, Please verify your credentials or contact with admin.'));
+                return redirect(Paytm::redirect_if_payment_faild());
             }
         }
+
+        session()->put('payment_msg', 'Payment failed.');
+        return redirect(Paytm::redirect_if_payment_faild());
     }
 }

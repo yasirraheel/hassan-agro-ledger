@@ -5,8 +5,10 @@
 @endsection
 
 @section('main_content')
+
+    @can('dashboard-read')
     <div class="container-fluid m-h-100">
-        <div class="gpt-dashboard-card counter-grid-6 mt-30 mb-30">
+        <div class="gpt-dashboard-card counter-grid-6 mb-24">
             <div class="couter-box">
                 <div class="icons">
                     <img src="{{ asset('assets/images/dashboard/01.png') }}" alt="">
@@ -59,7 +61,7 @@
         <div class="row gpt-dashboard-chart">
             <div class="col-xxl-8 mb-30">
                 <div class="card new-card dashboard-card border-0 p-0 h-100">
-                    <div class="card-header">
+                    <div class="dashboard-chart-header">
                         <h4>{{ __('Finance Overview') }}</h4>
                         <div class="gpt-up-down-arrow position-relative">
                             <select class="form-control yearly-statistics">
@@ -73,6 +75,10 @@
                     </div>
                     <div class="card-body pt-0">
                         <div class="content">
+                            <div class="income-container">
+                                <div class="income-dot"></div>
+                                <div>{{__('Total Subscription')}}: <span class="income-value"></span></div>
+                            </div>
                             <canvas id="monthly-statistics" class="chart-css"></canvas>
                         </div>
                     </div>
@@ -80,7 +86,7 @@
             </div>
             <div class="col-xxl-4 mb-30">
                 <div class="card new-card sms-report border-0 p-0 h-100">
-                    <div class="card-header">
+                    <div class="dashboard-chart-header">
                         <h4>{{ __('Subscription Plan') }}</h4>
                         <div class="gpt-up-down-arrow position-relative">
                             <select class="form-control overview-year">
@@ -114,37 +120,48 @@
                     </div>
                     <div class="erp-box-content">
                         <div class="top-customer-table">
-                            <table class="table table-hover">
+                            <table class="table ">
                                 <thead>
                                     <tr>
-                                        <th> {{ __('SL') }}. </th>
-                                        <th>{{ __('Date & Time') }}</th>
-                                        <th>{{ __('Name') }}</th>
-                                        <th>{{ __('Category') }}</th>
-                                        <th>{{ __('Phone') }}</th>
-                                        <th>{{ __('Subscription Plan') }}</th>
+                                        <th class="text-start"> {{ __('SL') }}. </th>
+                                        <th class="text-start">{{ __('Date & Time') }}</th>
+                                        <th class="text-start">{{ __('Name') }}</th>
+                                        <th class="text-start">{{ __('Category') }}</th>
+                                        <th class="text-start">{{ __('Phone') }}</th>
+                                        <th class="text-center">{{ __('Subscription Plan') }}</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     @foreach ($businesses as $business)
                                         <tr>
-                                            <td>
+                                            <td class="text-start">
                                                 {{ $loop->index + 1 }}
                                             </td>
-                                            <td>
+                                            <td class="text-start">
                                                 {{ formatted_date($business->created_at) }}
                                             </td>
-                                            <td>
+                                            <td class="text-start">
                                                 {{ $business->companyName }}
                                             </td>
-                                            <td>
+                                            <td class="text-start">
                                                 {{ $business->category->name }}
                                             </td>
-                                            <td>
+                                            <td class="text-start">
                                                 {{ $business->phoneNumber }}
                                             </td>
-                                            <td>
-                                                {{ $business->enrolled_plan?->plan?->subscriptionName }}
+                                            <td class="text-center">
+
+                                                @if ($business->enrolled_plan?->plan?->subscriptionName == 'Free')
+                                                    <span
+                                                        class="free-badge">{{ $business->enrolled_plan?->plan?->subscriptionName }}</span>
+                                                @elseif($business->enrolled_plan?->plan?->subscriptionName == 'Premium')
+                                                    <span
+                                                        class="premium-badge">{{ $business->enrolled_plan?->plan?->subscriptionName }}</span>
+                                                @elseif($business->enrolled_plan?->plan?->subscriptionName == 'Standard')
+                                                    <span
+                                                        class="standard-badge">{{ $business->enrolled_plan?->plan?->subscriptionName }}</span>
+                                                @else
+                                                @endif
                                             </td>
                                         </tr>
                                     @endforeach
@@ -157,6 +174,25 @@
         </div>
 
     </div>
+    @else
+    <div class="container-fluid">
+         <div class="empty-screen-container">
+            <div class="empty-screen-content">
+                <img src="{{ asset('assets/images/dashboard/empty.svg') }}" alt="" srcset="">
+                <p>You can not access it!</p>
+            </div>
+         </div>
+    </div>
+    @endcan
+
+    @php
+        $currency = default_currency();
+    @endphp
+    {{-- Hidden input fields to store currency details --}}
+    <input type="hidden" id="currency_symbol" value="{{ $currency->symbol }}">
+    <input type="hidden" id="currency_position" value="{{ $currency->position }}">
+    <input type="hidden" id="currency_code" value="{{ $currency->code }}">
+
 
     <input type="hidden" value="{{ route('admin.dashboard.data') }}" id="get-dashboard">
     <input type="hidden" value="{{ route('admin.dashboard.plans-overview') }}" id="get-plans-overview">

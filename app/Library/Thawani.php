@@ -15,7 +15,7 @@ class Thawani
         if (Session::has('fund_callback')) {
             return url(Session::get('fund_callback')['success_url']);
         } else {
-            return url('users/payment/success');
+            return url('payment/success');
         }
     }
 
@@ -24,7 +24,7 @@ class Thawani
         if (Session::has('fund_callback')) {
             return url(Session::get('fund_callback')['cancel_url']);
         } else {
-            return url('users/payment/failed');
+            return url('payment/failed');
         }
     }
 
@@ -33,7 +33,7 @@ class Thawani
         if (Session::get('without_auth')) {
             return url('payment/thawani');
         }
-        return url('users/payment/thawani');
+        return url('payment/thawani');
     }
 
     public static function make_payment($array)
@@ -50,8 +50,8 @@ class Thawani
         $data['secret_key'] = $array['secret_key'];
         $data['public_key'] = $array['publishable_key'];
         $data['payment_mode'] = 'thawani';
-        $test_mode = $array['test_mode'];
-        $data['test_mode'] = $test_mode;
+        $mode = $array['mode'];
+        $data['mode'] = $mode;
 
         $data['amount'] = $amount;
         $data['charge'] = $array['charge'];
@@ -70,12 +70,12 @@ class Thawani
             'quantity' => 1,
         ]);
 
-        if ($test_mode == 0) {
+        if ($mode == 0) {
             $data['env'] = false;
-            $test_mode = false;
+            $mode = false;
         } else {
             $data['env'] = true;
-            $test_mode = true;
+            $mode = true;
         }
         $curl = curl_init();
         curl_setopt_array($curl, [
@@ -104,7 +104,7 @@ class Thawani
         if ($response['success'] == true) {
             $session_id = $response['data']['session_id'];
             $data['response'] = $response;
-            if ($test_mode == true) {
+            if ($mode == true) {
                 $url = "https://uatcheckout.thawani.om/pay/" . $session_id . "?key=" . $array['publishable_key'];
             } else {
                 $url = "https://checkout.thawani.om/pay/" . $session_id . "?key=" . $array['publishable_key'];
@@ -128,10 +128,10 @@ class Thawani
             return abort(404);
         }
         $info = Session::get('thawani_credentials');
-        $test_mode = Session::get('thawani_credentials')['test_mode'];
+        $mode = Session::get('thawani_credentials')['mode'];
         $secret_key = Session::get('thawani_credentials')['secret_key'];
         $invoice = Session::get('thawani_credentials')['response']['data']['invoice'];
-        $response = $this->getResponse($test_mode, $invoice, $secret_key);
+        $response = $this->getResponse($mode, $invoice, $secret_key);
         $responseArr = json_decode($response, true);
 
         if (array_key_exists('success', $responseArr) && $responseArr['success'] == true) {
@@ -161,9 +161,9 @@ class Thawani
         }
     }
 
-    private function getResponse($test_mode, $invoice_id, $api_key)
+    private function getResponse($mode, $invoice_id, $api_key)
     {
-        if ($test_mode == 1) {
+        if ($mode == 1) {
             $url = "https://uatcheckout.thawani.om/api/v1/payments/?checkout_invoice=$invoice_id";
         } else {
             $url = "https://checkout.thawani.om/api/v1/payments/?checkout_invoice=$invoice_id";
@@ -201,9 +201,9 @@ class Thawani
     {
         $invoice_id = $creds['payment_id'];
         $api_key = $creds['secret_key'];
-        $test_mode = $creds['is_test'];
+        $mode = $creds['is_test'];
 
-        if ($test_mode == 1) {
+        if ($mode == 1) {
             $url = "https://uatcheckout.thawani.om/api/v1/payments/?checkout_invoice=$invoice_id";
         } else {
             $url = "https://checkout.thawani.om/api/v1/payments/?checkout_invoice=$invoice_id";

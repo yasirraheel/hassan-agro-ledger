@@ -4,22 +4,25 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use App\Models\Business;
+use App\Models\PaymentType;
 use Illuminate\Http\Request;
 use App\Models\BusinessCategory;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\Session;
+use Modules\AffiliateAddon\App\Models\Affiliate;
 
 class AcnooBusinessController extends Controller
 {
     public function index()
     {
-        $categories = BusinessCategory::select('id','name')->whereStatus(1)->get();
+        $categories = BusinessCategory::select('id', 'name')->whereStatus(1)->get();
         return response()->json($categories);
     }
 
     public function getBusinessCategories()
     {
-        $categories = BusinessCategory::select('id','name')->whereStatus(1)->get();
+        $categories = BusinessCategory::select('id', 'name')->whereStatus(1)->get();
         return response()->json($categories);
     }
 
@@ -34,7 +37,22 @@ class AcnooBusinessController extends Controller
             'email' => 'required|email|unique:users,email',
         ]);
 
+        if (moduleCheck('AffiliateAddon')) {
+            $refCode = Cookie::get('ref_code');
+            if ($refCode) {
+                $affiliator = Affiliate::where('ref_code', $refCode)->first();
+                if ($affiliator) {
+                    $validate_data['affiliator_id'] = $affiliator->user_id;
+                }
+            }
+        }
+
         $business = Business::create($validate_data);
+
+        PaymentType::create([
+            'name' => "Cash",
+            'business_id' => $business->id
+        ]);
 
         Session::put('plan_id', $request->plan_id);
 
@@ -79,7 +97,6 @@ class AcnooBusinessController extends Controller
                     'is_setup' => $is_setup,
                     'token' => $token,
                 ]);
-
             } else {
                 return response()->json([
                     'error' => __('The verification otp has been expired.')

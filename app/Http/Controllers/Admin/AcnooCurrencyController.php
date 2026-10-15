@@ -16,24 +16,16 @@ class AcnooCurrencyController extends Controller
         $this->middleware('permission:currencies-delete')->only('destroy');
     }
 
-    public function index()
+    public function index(Request $request)
     {
-        $currencies = Currency::orderBy('is_default', 'desc')->orderBy('status', 'desc')->paginate(20);
-        return view('admin.currencies.index', compact('currencies'));
-    }
-
-    public function acnooFilter(Request $request)
-    {
-        $currencies = Currency::orderBy('is_default', 'desc')->orderBy('status', 'desc')->when(request('search'), function ($q) {
-            $q->where(function ($q) {
-                $q->where('name', 'like', '%' . request('search') . '%')
-                    ->orWhere('country_name', 'like', '%' . request('search') . '%')
-                    ->orWhere('code', 'like', '%' . request('search') . '%')
-                    ->orWhere('symbol', 'like', '%' . request('search') . '%');
+        $currencies = Currency::orderBy('is_default', 'desc')->orderBy('status', 'desc')->when($request->search, function ($q) use ($request) {
+            $q->where(function ($q) use ($request) {
+                $q->where('name', 'like', '%' . $request->search . '%')
+                  ->orWhere('country_name', 'like', '%' . $request->search . '%')
+                  ->orWhere('code', 'like', '%' . $request->search . '%')
+                  ->orWhere('symbol', 'like', '%' . $request->search . '%');
             });
-        })
-            ->latest()
-            ->paginate($request->per_page ?? 10);
+        })->latest()->paginate($request->per_page ?? 20)->appends($request->query());
 
         if ($request->ajax()) {
             return response()->json([
@@ -41,7 +33,7 @@ class AcnooCurrencyController extends Controller
             ]);
         }
 
-        return redirect(url()->previous());
+        return view('admin.currencies.index', compact('currencies'));
     }
 
     public function create()
@@ -109,6 +101,7 @@ class AcnooCurrencyController extends Controller
         if ($currency) {
             Currency::where('id', '!=', $id)->update(['is_default' => 0]);
             $currency->update(['is_default' => 1]);
+            cache()->forget('default_currency');
         }
 
         return redirect()->route('admin.currencies.index')->with('message', __('Default currency activated successfully'));

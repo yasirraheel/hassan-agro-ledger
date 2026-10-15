@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers\Admin;
 
-use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Artisan;
 
 class SystemSettingController extends Controller
 {
@@ -17,7 +17,7 @@ class SystemSettingController extends Controller
 
     public function index()
     {
-        return view ('admin.settings.system');
+        return view('admin.settings.system');
     }
 
     public function store(Request $request)
@@ -34,7 +34,8 @@ class SystemSettingController extends Controller
             $file->move($path, $name);
         }
 
-        $APP_NAME = Str::slug($request->APP_NAME);
+        $APP_NAME = '"' . $request->APP_NAME . '"';
+
         $txt = "APP_NAME=" . $APP_NAME . "
 APP_ENV=local
 APP_KEY=" . env('APP_KEY') . "
@@ -136,9 +137,28 @@ VITE_PUSHER_APP_CLUSTER=" . '${PUSHER_APP_CLUSTER}' . "
 
 APILAYER_API_KEY=" . $request->APILAYER_API_KEY . "
 
+GOOGLE_CLIENT_ID=" . $request->GOOGLE_CLIENT_ID . "
+GOOGLE_CLIENT_SECRET=" . $request->GOOGLE_CLIENT_SECRET . "
+GOOGLE_REDIRECT_URI=" . url('login/google/callback') . "
+
+TWITTER_CLIENT_ID=" . $request->TWITTER_CLIENT_ID . "
+TWITTER_CLIENT_SECRET=" . $request->TWITTER_CLIENT_SECRET . "
+TWITTER_REDIRECT_URI=" . url('login/twitter/callback') . "
+
+WKHTMLTOPDF_BINARY=" . $request->WKHTMLTOPDF_BINARY . "
+WKHTMLTOIMAGE_BINARY=" . $request->WKHTMLTOIMAGE_BINARY . "
+WKHTMLTOPDF_TIMEOUT=" . $request->WKHTMLTOPDF_TIMEOUT . "
+
 ";
 
         File::put(base_path('.env'), $txt);
-        return response()->json("System Updated");
+
+        Artisan::call('config:clear');
+        Artisan::call('cache:clear');
+
+        return response()->json([
+            'message' => __('Settings updated successfully.'),
+            'redirect' => route('admin.system-settings.index'),
+        ]);
     }
 }

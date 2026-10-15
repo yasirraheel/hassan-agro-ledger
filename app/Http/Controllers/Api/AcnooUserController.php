@@ -14,7 +14,20 @@ class AcnooUserController extends Controller
      */
     public function index()
     {
-        $data = User::where('business_id', auth()->user()->business_id)->where('role', 'staff')->latest()->get();
+        $user = auth()->user();
+
+        $data = User::with('branch:id,name')
+            ->where('business_id', $user->business_id)
+            ->when($user->role == 'staff', function ($q) use ($user) {
+                $q->where('branch_id', $user->branch_id);
+            })
+            ->when($user->branch_id || $user->active_branch_id, function ($q) use ($user) {
+                $q->where('branch_id', $user->branch_id ?? $user->active_branch_id);
+            })
+            ->where('id', '!=', auth()->id())
+            ->where('role', 'staff')
+            ->latest()
+            ->get();
 
         return response()->json([
             'message' => __('Data fetched successfully.'),
@@ -31,30 +44,18 @@ class AcnooUserController extends Controller
             'name' => 'required|max:30',
             'password' => 'required|min:4|max:15',
             'email' => 'required|email|unique:users,email',
+            'branch_id' => 'nullable|exists:branches,id',
         ]);
 
         $data = User::create([
-                    'role' => 'staff',
-                    'name' => $request->name,
-                    'email' => $request->email,
-                    'password' => Hash::make($request->password),
-                    'business_id' => auth()->user()->business_id,
-                    'visibility' => [
-                        'addExpensePermission' => $request->addExpensePermission == 'true' ? true : false,
-                        'dueListPermission' => $request->dueListPermission == 'true' ? true : false,
-                        'lossProfitPermission' => $request->lossProfitPermission == 'true' ? true : false,
-                        'partiesPermission' => $request->partiesPermission == 'true' ? true : false,
-                        'productPermission' => $request->productPermission == 'true' ? true : false,
-                        'profileEditPermission' => $request->profileEditPermission == 'true' ? true : false,
-                        'purchaseListPermission' => $request->purchaseListPermission == 'true' ? true : false,
-                        'purchasePermission' => $request->purchasePermission == 'true' ? true : false,
-                        'reportsPermission' => $request->reportsPermission == 'true' ? true : false,
-                        'salePermission' => $request->salePermission == 'true' ? true : false,
-                        'salesListPermission' => $request->salesListPermission == 'true' ? true : false,
-                        'stockPermission' => $request->stockPermission == 'true' ? true : false,
-                        'addIncomePermission' => $request->addIncomePermission == 'true' ? true : false,
-                    ]
-                ]);
+            'role' => 'staff',
+            'name' => $request->name,
+            'email' => $request->email,
+            'visibility' => $request->visibility,
+            'password' => Hash::make($request->password),
+            'business_id' => auth()->user()->business_id,
+            'branch_id' => $request->branch_id ?? auth()->user()->branch_id ?? auth()->user()->active_branch_id,
+        ]);
 
         return response()->json([
             'message' => __('Data saved successfully.'),
@@ -70,28 +71,17 @@ class AcnooUserController extends Controller
         $request->validate([
             'name' => 'required|max:30',
             'password' => 'nullable|min:4|max:15',
+            'branch_id' => 'nullable|exists:branches,id',
             'email' => 'required|email|unique:users,email,' . $user->id,
         ]);
 
         $user->update([
             'name' => $request->name,
             'email' => $request->email,
-            'password' => Hash::make($request->password),
+            'visibility' => $request->visibility,
             'business_id' => auth()->user()->business_id,
-            'visibility' => [
-                'addExpensePermission' => $request->addExpensePermission == 'true' ? true : false,
-                'dueListPermission' => $request->dueListPermission == 'true' ? true : false,
-                'lossProfitPermission' => $request->lossProfitPermission == 'true' ? true : false,
-                'partiesPermission' => $request->partiesPermission == 'true' ? true : false,
-                'productPermission' => $request->productPermission == 'true' ? true : false,
-                'profileEditPermission' => $request->profileEditPermission == 'true' ? true : false,
-                'purchaseListPermission' => $request->purchaseListPermission == 'true' ? true : false,
-                'purchasePermission' => $request->purchasePermission == 'true' ? true : false,
-                'reportsPermission' => $request->reportsPermission == 'true' ? true : false,
-                'salePermission' => $request->salePermission == 'true' ? true : false,
-                'salesListPermission' => $request->salesListPermission == 'true' ? true : false,
-                'stockPermission' => $request->stockPermission == 'true' ? true : false,
-            ]
+            'password' => $request->password ? Hash::make($request->password) : $user->password,
+            'branch_id' => $request->branch_id ?? auth()->user()->branch_id ?? auth()->user()->active_branch_id,
         ]);
 
         return response()->json([

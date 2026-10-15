@@ -12,7 +12,7 @@ class StripeGateway
     {
         $gateway = Gateway::findOrFail($array['gateway_id']);
         Stripe::setApiKey($gateway->data['stripe_secret']);
-        $amount = payable($array['pay_amount'], $gateway) * 100;
+        $amount = $array['pay_amount'] * 100;
 
         $session = \Stripe\Checkout\Session::create([
             'line_items'  => [
@@ -28,8 +28,8 @@ class StripeGateway
                 ],
             ],
             'mode' => 'payment',
-            'success_url' => $array['payment_type'] == 'plan_payment' ? route('payment.success') : route('recharge.success'),
-            'cancel_url'  => $array['payment_type'] == 'plan_payment' ? route('payment.failed') : route('recharge.failed'),
+            'success_url' => route('payment.success'),
+            'cancel_url'  => route('payment.failed'),
         ]);
 
         return redirect()->away($session->url);

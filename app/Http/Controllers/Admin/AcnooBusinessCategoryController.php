@@ -8,22 +8,14 @@ use Illuminate\Http\Request;
 
 class AcnooBusinessCategoryController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $categories = BusinessCategory::latest()->paginate(20);
-        return view('admin.business-categories.index', compact('categories'));
-    }
-
-    public function acnooFilter(Request $request)
-    {
-        $categories = BusinessCategory::when(request('search'), function ($q) {
-            $q->where(function ($q) {
-                $q->where('name', 'like', '%' . request('search') . '%')
-                    ->orWhere('description', 'like', '%' . request('search') . '%');
+        $categories = BusinessCategory::when($request->search, function ($q) use ($request) {
+            $q->where(function ($q) use ($request) {
+                $q->where('name', 'like', '%' . $request->search . '%')
+                  ->orWhere('description', 'like', '%' . $request->search . '%');
             });
-        })
-            ->latest()
-            ->paginate($request->per_page ?? 20);
+        })->latest()->paginate($request->per_page ?? 20)->appends($request->query());
 
         if ($request->ajax()) {
             return response()->json([
@@ -31,9 +23,8 @@ class AcnooBusinessCategoryController extends Controller
             ]);
         }
 
-        return redirect(url()->previous());
+        return view('admin.business-categories.index', compact('categories'));
     }
-
 
     public function create()
     {
@@ -44,7 +35,7 @@ class AcnooBusinessCategoryController extends Controller
     {
 
         $request->validate([
-            'status' => 'in:on',
+            'status' => 'nullable|in:on',
             'description' => 'nullable|string|max:255',
             'name' => 'required|string|unique:business_categories|max:255',
         ]);

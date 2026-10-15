@@ -1,9 +1,12 @@
 <?php
+
 namespace App\Library;
 
-use Illuminate\Support\Facades\Request;
+use App\Models\User;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use paytm\paytmchecksum\PaytmChecksum;
 use Illuminate\Support\Facades\Session;
-use Anand\LaravelPaytmWallet\Facades\PaytmWallet;
 
 class Paytm
 {
@@ -12,7 +15,7 @@ class Paytm
         if (Session::has('fund_callback')) {
             return url(Session::get('fund_callback')['success_url']);
         } else {
-            return url('users/payment/success');
+            return url('payment/success');
         }
     }
 
@@ -21,86 +24,63 @@ class Paytm
         if (Session::has('fund_callback')) {
             return url(Session::get('fund_callback')['cancel_url']);
         } else {
-            return url('users/payment/failed');
+            return url('payment/failed');
         }
     }
 
     public static function make_payment($array)
     {
-        //Checking Minimum/Maximum amount
-        // $gateway = Gateway::findOrFail($array['gateway_id']);
-        $amount = $array['pay_amount'];
+        $user = auth()->user();
 
-        $currency = $array['currency'];
-        $email = $array['email'];
-        $amount = round($array['pay_amount']);
-        $name = $array['name'];
-        $test_mode = $array['test_mode'];
-        $billName = $array['billName'];
-        $data['payment_mode'] = 'paytm';
+        $paytmParams = [
+            "MID"             => $array['merchant_id'],
+            "WEBSITE"         => $array['website'] ?? 'WEBSTAGING',
+            "INDUSTRY_TYPE_ID"=> $array['industry_type'],
+            "CHANNEL_ID"      => 'WEB',
+            "ORDER_ID"        => rand(10000, 99999),
+            "CUST_ID"         => $user->email,
+            "TXN_AMOUNT"      => $array['pay_amount'],
+            "CALLBACK_URL"    => route('paytm.status', ['email' => $user->email, 'merchant_key' => $array['merchant_key'], 'plan_id' => $array['plan_id'], 'gateway_id' => $array['gateway_id'], 'business_id' => $array['business_id'], 'platform' => $array['platform']]),
+        ];
 
-        $data['amount'] = $amount;
-        $data['test_mode'] = $test_mode;
-        $data['charge'] = $array['charge'];
-        $data['main_amount'] = $array['amount'];
-        $data['gateway_id'] = $array['gateway_id'];
+        // Generate the Checksum
+        $paytmParams["CHECKSUMHASH"] = PaytmChecksum::generateSignature($paytmParams, $array['merchant_key']); // Replace with your Merchant Key
 
-        $data['merchant_id'] = $array['merchant_id'];
-        $data['merchant_key'] = $array['merchant_key'];
-        $data['merchant_website'] = $array['merchant_website'];
-        $data['channel'] = $array['channel'];
-        $data['industry_type'] = $array['industry_type'];
-        $data['environment'] = $array['environment'];
+        // Paytm transaction URL
+        $paytmUrl = $array['mode'] == 'Live' ? "https://securegw.paytm.in/theia/processTransaction" : "https://securegw-stage.paytm.in/theia/processTransaction";
 
-        Session::put('paytm_credentials', $data);
-
-        $payment = PaytmWallet::with('receive');
-
-        $payment->prepare([
-            'order' => uniqid(),
-            'user' => $billName,
-            'mobile_number' => auth()->user()->phone ?? '54635',
-            'email' => $email,
-            'amount' => $amount,
-            'callback_url' => url('users/paytm/status')
-        ]);
-        return $payment->receive();
+        // Pass data to the blade view
+        return view('payments.paytm', compact('paytmParams', 'paytmUrl'));
     }
 
     public function status(Request $request)
     {
-        $order_info = Session::get('paytm_credentials');
+        // Capture callback data
+        $paytmParams = $request->all();
 
-        $transaction = PaytmWallet::with('receive');
+        $user = User::where('email', request('email'))->first();
+        Auth::login($user);
 
-        $transaction->getResponseMessage(); //Get Response Message If Available
-        //get important parameters via public methods
-        $transaction->getOrderId(); // Get order id
-        $transaction->getTransactionId(); // Get transaction id
+        session()->put('plan_id', request('plan_id'));
+        session()->put('platform', request('platform'));
+        session()->put('gateway_id', request('gateway_id'));
+        session()->put('business_id', request('business_id'));
 
-        if($transaction->isSuccessful()) {
-            $data['payment_method'] = "Paytm";
-            $data['gateway_id'] = $order_info['gateway_id'];
-            $data['amount'] = $order_info['amount'];
-            $data['billName'] = $order_info['billName'];
-            $data['charge'] = $order_info['charge'];
-            $data['status'] = 'completed';
-            $data['payment_status'] = 'completed';
-            $data['is_fallback'] = $order_info['is_fallback'];
-
-            Session::put('payment_info', $data);
-            Session::forget('paytm_credentials');
-            return request()->expectsJson() ?
-            Paytm::redirect_if_payment_success() :
-            redirect(Paytm::redirect_if_payment_success());
-        } else {
-            $data['payment_status'] = 'pending';
-            Session::put('payment_info', $data);
-            Session::forget('paytm_credentials');
-
-            return request()->expectsJson() ?
-            Paytm::redirect_if_payment_faild() :
-            redirect(Paytm::redirect_if_payment_faild());
+        // Verify the checksum
+        if (!isset($paytmParams['CHECKSUMHASH'])) {
+            // Payment failed logic
+            session()->put('payment_msg', __('Invalid checksum, Please verify your credentials or contact with paytm support.'));
+            return redirect(Paytm::redirect_if_payment_faild());
         }
+
+        $isValidChecksum = PaytmChecksum::verifySignature($paytmParams, request('merchant_key'), $paytmParams['CHECKSUMHASH']); // Replace with your Merchant Key
+
+        if ($isValidChecksum && $paytmParams['STATUS'] === 'TXN_SUCCESS') {
+            return redirect(Paytm::redirect_if_payment_success());
+        }
+
+        // Payment failed logic
+        session()->put('payment_msg', $paytmParams['RESPMSG']);
+        return redirect(Paytm::redirect_if_payment_faild());
     }
 }

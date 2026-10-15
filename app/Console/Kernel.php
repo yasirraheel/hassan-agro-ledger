@@ -13,6 +13,7 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule): void
     {
         $schedule->command('demo:restore-public-images')->everyThirtyMinutes();
+        $schedule->command('queue:work --queue=high,medium,low --tries=3 --timeout=60')->everyMinute();
     }
 
     /**

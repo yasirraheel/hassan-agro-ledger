@@ -1,8 +1,8 @@
 <?php
 
-use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Database\Migrations\Migration;
 
 return new class extends Migration
 {
@@ -16,7 +16,7 @@ return new class extends Migration
             $table->string('name')->unique();
             $table->string('country_name')->nullable();
             $table->string('code')->unique();
-            $table->double('rate')->nullable();
+            $table->double('rate', 10, 2)->nullable();
             $table->string('symbol')->nullable();
             $table->string('position')->nullable();
             $table->boolean('status')->default(1);

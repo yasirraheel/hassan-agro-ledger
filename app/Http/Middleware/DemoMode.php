@@ -3,7 +3,6 @@
 namespace App\Http\Middleware;
 
 use Closure;
-use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Symfony\Component\HttpFoundation\Response;
@@ -18,33 +17,279 @@ class DemoMode
     public function handle(Request $request, Closure $next): Response
     {
         if (env('DEMO_MODE', false)) {
-            $disabledRoutes = [
+            $adminDisabledRoutes = [
+                'admin.business.delete-all',
+                'admin.business.update',
+                'admin.business.destroy',
+                'admin.business.status',
+                'admin.business-categories.delete-all',
+                'admin.business-categories.update',
+                'admin.business-categories.destroy',
+                'admin.banners.store',
+                'admin.banners.delete-all',
+                'admin.banners.status',
+                'admin.banners.update',
+                'admin.banners.destroy',
+                'admin.plans.store',
+                'admin.plans.delete-all',
+                'admin.plans.status',
+                'admin.plans.update',
+                'admin.plans.destroy',
+                'admin.users.store',
                 'admin.users.delete-all',
+                'admin.users.status',
+                'admin.users.update',
+                'admin.users.destroy',
+                'admin.affiliate-withdrawals.delete-all',
+                'admin.affiliate-withdrawals.status',
+                'admin.affiliates.store',
+                'admin.affiliates.delete-all',
+                'admin.affiliates.filter',
+                'admin.affiliates.status',
+                'admin.affiliates.update',
+                'admin.affiliates.destroy',
+                'admin.subscription-reports.paid',
+                'admin.subscription-reports.reject',
+                'admin.roles.update',
+                'admin.roles.destroy',
+                'admin.permissions.index',
+                'admin.addons.store',
+                'admin.addons.show',
+                'admin.manage-settings.store',
+                'admin.website-settings.update',
+                'admin.features.delete-all',
+                'admin.features.status',
+                'admin.features.update',
+                'admin.features.destroy',
+                'admin.blogs.delete-all',
+                'admin.blogs.status',
+                'admin.blogs.update',
+                'admin.blogs.destroy',
+                'admin.comments.delete-all',
+                'admin.comments.update',
+                'admin.comments.destroy',
+                'admin.testimonials.delete-all',
+                'admin.testimonials.status',
+                'admin.testimonials.update',
+                'admin.testimonials.destroy',
+                'admin.interfaces.delete-all',
+                'admin.interfaces.status',
+                'admin.interfaces.update',
+                'admin.interfaces.destroy',
+                'admin.term-conditions.store',
+                'admin.privacy-policy.store',
+                'admin.messages.delete-all',
+                'admin.messages.update',
+                'admin.messages.destroy',
+                'admin.currencies.delete-all',
+                'admin.currencies.update',
+                'admin.currencies.destroy',
+                'admin.countries.delete-all',
+                'admin.countries.destroy',
+                'admin.countries.status',
+                'admin.countries.store',
+                'admin.countries.update',
+                'admin.languages.default',
+                'admin.languages.delete-all',
+                'admin.languages.destroy',
+                'admin.languages.status',
+                'admin.languages.store',
+                'admin.languages.update',
+                'admin.gateways.update',
                 'admin.system-settings.store',
+                'admin.settings.update',
+                'admin.profiles.update',
+                'admin.invoice-img-settings.store',
+                'admin.theme.update',
+                'admin.backup.store',
+                'admin.backup.create',
+                'admin.backup.destroy',
+                'admin.backup.delete-all',
             ];
 
-            $except_role = ['superadmin', 'admin', 'user'];
-            $except_email = ['superadmin@superadmin.com', 'admin@admin.com', 'user@user.com'];
-            $response = response()->json(['message' => 'This action is disabled in demo mode.'], 403);
+            $businessDisabledRoutes = [
+                'business.sales.store.customer',
+                'business.purchases.store.supplier',
+                'business.products.store',
+                'business.products.delete-all',
+                'business.products.update',
+                'business.products.destroy',
+                'business.barcodes.store',
+                'business.categories.store',
+                'business.categories.delete-all',
+                'business.categories.update',
+                'business.categories.destroy',
+                'business.units.store',
+                'business.units.delete-all',
+                'business.units.update',
+                'business.units.destroy',
+                'business.brands.store',
+                'business.brands.delete-all',
+                'business.brands.update',
+                'business.brands.destroy',
+                'business.medicine-types.store',
+                'business.medicine-types.delete-all',
+                'business.medicine-types.update',
+                'business.medicine-types.destroy',
+                'business.manufacturers.store',
+                'business.manufacturers.delete-all',
+                'business.manufacturers.update',
+                'business.manufacturers.destroy',
+                'business.product-models.store',
+                'business.product-models.delete-all',
+                'business.product-models.update',
+                'business.product-models.destroy',
+                'business.box-sizes.store',
+                'business.box-sizes.delete-all',
+                'business.box-sizes.update',
+                'business.box-sizes.destroy',
+                'business.parties.store',
+                'business.parties.delete-all',
+                'business.parties.update',
+                'business.parties.destroy',
+                'business.incomes.delete-all',
+                'business.incomes.update',
+                'business.incomes.destroy',
+                'business.expenses.delete-all',
+                'business.expenses.update',
+                'business.expenses.destroy',
+                'business.taxes.store',
+                'business.taxes.deleteAll',
+                'business.taxes.status',
+                'business.taxes.update',
+                'business.taxes.destroy',
+                'business.settings.update',
+                'business.roles.store',
+                'business.roles.update',
+                'business.roles.destroy',
+                'business.roles.delete-all',
+                'business.payment-types.store',
+                'business.payment-types.delete-all',
+                'business.payment-types.status',
+                'business.payment-types.update',
+                'business.payment-types.destroy',
+                'business.vats.store',
+                'business.vats.deleteAll',
+                'business.vats.update',
+                'business.vats.destroy',
+                'business.bulk-uploads.store',
+                'business.profiles.update',
+                'business.manage-settings.store',
+                'business.manage-settings.update',
+                'business.manage-settings.destroy',
+                'business.product.settings.update',
+                'business.theme.update',
+                'business.roles.update',
+                'business.roles.destroy',
+                'multibranch.exit-branch',
+                'multibranch.switch-branch',
+                'brands.store',
+                'brands.update',
+                'brands.destroy',
+                'box-sizes.store',
+                'box-sizes.update',
+                'box-sizes.destroy',
+                'bulk-uploads.store',
+                'business.store',
+                'business.update',
+                'business.delete',
+                'categories.store',
+                'categories.update',
+                'categories.destroy',
+                'api.change-password',
+                'dues.store',
+                'expense-categories.store',
+                'expense-categories.update',
+                'expense-categories.destroy',
+                'expenses.update',
+                'expenses.destroy',
+                'income-categories.store',
+                'income-categories.update',
+                'income-categories.destroy',
+                'incomes.update',
+                'incomes.destroy',
+                'lang.store',
+                'manufacturer.store',
+                'manufacturer.update',
+                'manufacturer.destroy',
+                'medicine-types.store',
+                'medicine-types.update',
+                'medicine-types.destroy',
+                'parties.store',
+                'parties.update',
+                'parties.destroy',
+                'password-reset',
+                'payment-types.store',
+                'payment-types.update',
+                'payment-types.destroy',
+                'products.store',
+                'products.update',
+                'products.destroy',
+                'profile.store',
+                'send-reset-code',
+                'stock-update',
+                'taxes.store',
+                'taxes.update',
+                'taxes.destroy',
+                'units.store',
+                'units.update',
+                'units.destroy',
+                'users.store',
+                'users.update',
+                'users.destroy',
+                'product-settings.store',
+                'product-models.store',
+                'product-models.update',
+                'product-models.destroy',
+                'vats.store',
+                'vats.update',
+                'vats.destroy',
+                'warehouses.store',
+                'warehouses.update',
+                'warehouses.destroy',
+                'multibranch.branches.store',
+                'multibranch.branches.update',
+                'multibranch.branches.status',
+                'multibranch.branches.destroy',
+                'multibranch.branches.delete-all',
+                'business-delete',
+                'api.exit-branch',
+                'api.switch-branch',
+            ];
 
-            if (in_array(Route::currentRouteName(), $disabledRoutes)) {
-                return $response;
-            } elseif (in_array(Route::currentRouteName(), ['admin.profiles.update', 'admin.users.update', 'admin.users.destroy'])) {
-                if ($request->route('profile')) {
-                    $user = User::findOrFail($request->route('profile'));
-                } else {
-                    $user = $request->route('user');
+            if (in_array(Route::currentRouteName(), $adminDisabledRoutes)) {
+                return response()->json(['message' => 'This action is disabled in demo mode.'], 499);
+            }
+            elseif (
+                auth()->check() &&
+                auth()->user()->email == 'shopowner@acnoo.com' &&
+                in_array(Route::currentRouteName(), $businessDisabledRoutes)
+            ) {
+
+                $route = Route::currentRouteName();
+
+                if (in_array($route, [
+                    'multibranch.exit-branch'
+                ])) {
+                    return redirect()->back()->with(
+                        'error',
+                        'This action is disabled in demo account. Please sign up your own account for full access.'
+                    );
                 }
 
-                if (in_array($user->email, $except_email)) {
-                    return $response;
+                if (in_array($route, [
+                    'multibranch.switch-branch'
+                ])) {
+                    return redirect()->back()->with(
+                        'error',
+                        'This action is disabled in demo account. Please sign up your own account for full access.'
+                    );
                 }
-            } elseif (Route::currentRouteName() == 'admin.roles.update') {
-                $role = $request->route('role')->name;
 
-                if (in_array($role, $except_role)) {
-                    return $response;
-                }
+                // fallback (all other business routes)
+                return response()->json([
+                    'message' => 'This action is disabled in demo account. Please sign up your own account for full access.'
+                ], 499);
             }
         }
 

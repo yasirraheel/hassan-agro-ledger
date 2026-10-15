@@ -5,7 +5,7 @@
             <input type="checkbox" name="ids[]" class="checkbox-item" value="{{ $faq->id }}" data-url="{{ route('admin.faqs.delete-all') }}">
         </td>
     @endcan
-    <td>{{ $loop->index + 1 }}</td>
+    <td>{{ ($faqs->currentPage() - 1) * $faqs->perPage() + $loop->iteration  }}</td>
     <td>{{ $faq->question }}</td>
     <td class="text-center w-150">
         <label class="switch">
@@ -14,7 +14,7 @@
             <span class="slider round"></span>
         </label>
     </td>
-    <td class="print-d-none">
+    <td class="d-print-none">
         <div class="dropdown table-action">
             <button type="button" data-bs-toggle="dropdown">
                 <i class="far fa-ellipsis-v"></i>

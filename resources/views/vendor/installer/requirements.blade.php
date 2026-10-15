@@ -39,11 +39,17 @@
     @endforeach
 
     @if ( ! isset($requirements['errors']) && $phpSupportInfo['supported'] )
-        <div class="buttons">
-            <a class="button" href="{{ route('LaravelInstaller::permissions') }}">
-                {{ trans('installer_messages.requirements.next') }}
-                <i class="fa fa-angle-right fa-fw" aria-hidden="true"></i>
-            </a>
+        <div class="center-flex">
+            <div class="btn-wrapper">
+                <div class="btn-glow"></div>
+                <a href="{{ route('LaravelInstaller::verify') }}" class="btn" role="button" title="payment">
+                    {{ __('Verify Your Code') }}
+                    <svg aria-hidden="true" viewBox="0 0 10 10" height="10" width="10" fill="none" class="arrow">
+                        <path d="M0 5h7" class="line1"></path>
+                        <path d="M1 1l4 4-4 4" class="line2"></path>
+                    </svg>
+                </a>
+            </div>
         </div>
     @endif
 

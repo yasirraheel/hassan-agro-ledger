@@ -11,6 +11,6 @@ class TermServiceController extends Controller
         $page_data = get_option('manage-pages');
         $general = Option::where('key','general')->first();
         $term_condition = Option::where('key', 'term-condition')->first();
-        return view('web.term.index',compact('page_data','general','term_condition'));
+        return view('web.term.index', compact('page_data','general','term_condition'));
     }
 }

@@ -13,6 +13,6 @@ class PlanController extends Controller
         $general = Option::where('key','general')->first();
         $plans = Plan::where('status',1)->latest()->get();
 
-        return view('web.plan.index',compact('page_data', 'general','plans'));
+        return view('web.plan.index',compact('page_data', 'general', 'plans'));
     }
 }

@@ -34,6 +34,11 @@
                                         placeholder="{{ __('Enter Code') }}">
                                 </div>
                                 <div class="col-lg-6 mt-2">
+                                    <label>{{ __('Rate') }}</label>
+                                    <input type="number" name="rate" required class="form-control"
+                                           placeholder="{{ __('Enter currency rate') }}">
+                                </div>
+                                <div class="col-lg-6 mt-2">
                                     <label>{{ __('Symbol') }}</label>
                                     <input type="text" name="symbol" class="form-control" placeholder="{{ __('Enter Symbol') }}">
                                 </div>

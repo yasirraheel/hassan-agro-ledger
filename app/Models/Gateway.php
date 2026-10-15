@@ -2,12 +2,13 @@
 
 namespace App\Models;
 
+use App\Traits\ImageUrlTrait;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Gateway extends Model
 {
-    use HasFactory;
+    use HasFactory, ImageUrlTrait;
 
     /**
      * The attributes that are mass assignable.
@@ -21,10 +22,10 @@ class Gateway extends Model
         'image',
         'status',
         'charge',
+        'platform',
         'is_manual',
         'namespace',
         'accept_img',
-        'manual_data',
         'manual_data',
         'currency_id',
         'instructions',
@@ -42,7 +43,15 @@ class Gateway extends Model
      * @var array
      */
     protected $casts = [
+        'currency_id' => 'integer',
+        'phone_required' => 'integer',
         'data' => 'json',
         'manual_data' => 'json',
+        'charge' => 'integer',
+        'is_manual' => 'integer',
+        'accept_img' => 'integer',
     ];
+
+    protected $imageFields = ['image', 'accept_img'];
+
 }

@@ -13,8 +13,8 @@ return new class extends Migration
     {
         Schema::create('incomes', function (Blueprint $table) {
             $table->id();
-            $table->double('amount');
-            $table->foreignId('income_category_id')->constrained()->cascadeOnDelete();
+            $table->double('amount', 10, 2);
+            $table->foreignId('income_category_id')->nullable()->constrained()->nullOnDelete();
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
             $table->foreignId('business_id')->constrained()->cascadeOnDelete();
             $table->string('incomeFor')->nullable();

@@ -23,19 +23,48 @@ class PlanSubscribe extends Model
         'gateway_id',
         'business_id',
         'payment_status',
+        'allow_multibranch',
+        'addon_domain_limit',
+        'subdomain_limit',
+        'user_limit',
+        'product_limit',
+        'customer_limit',
+        'supplier_limit',
+        'warehouse_limit',
+        'branch_limit',
+        'available_modules',
     ];
 
-    public function plan() : BelongsTo
+    protected $casts = [
+        'notes' => 'json',
+        'duration' => 'integer',
+        'price' => 'double',
+        'plan_id' => 'integer',
+        'business_id' => 'integer',
+        'gateway_id' => 'integer',
+        'allow_multibranch' => 'integer',
+        'addon_domain_limit' => 'integer',
+        'subdomain_limit' => 'integer',
+        'user_limit' => 'integer',
+        'product_limit' => 'integer',
+        'customer_limit' => 'integer',
+        'supplier_limit' => 'integer',
+        'warehouse_limit' => 'integer',
+        'branch_limit' => 'integer',
+        'available_modules' => 'json',
+    ];
+
+    public function plan(): BelongsTo
     {
         return $this->belongsTo(Plan::class);
     }
 
-    public function business() : BelongsTo
+    public function business(): BelongsTo
     {
         return $this->belongsTo(Business::class);
     }
 
-    public function gateway() : BelongsTo
+    public function gateway(): BelongsTo
     {
         return $this->belongsTo(Gateway::class);
     }

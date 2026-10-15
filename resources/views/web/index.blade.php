@@ -1,21 +1,17 @@
 @extends('layouts.web.master')
 
-@section('title')
-    {{ __(env('APP_NAME')) }}
-@endsection
-
 @section('main_content')
-    <section class="home-banner-section">
+    <section class="home-banner-section" style="background-image: url('{{ asset($page_data['slider_bg_img'] ?? 'assets/web/images/banner/banner1.png') }}');">
         <div class="container">
             <div class="row align-items-center pb-5 py-lg-5">
                 <div class="col-lg-6 order-2 order-lg-1 mt-5 mt-lg-0">
                     <div class="banner-content">
                         <h1>
                             {{ $page_data['headings']['slider_title'] ?? '' }}
-                            <span data-typer-targets='{"targets": [
-                                @foreach ($page_data['headings']['silder_shop_text'] ?? '' as $key => $shop)
-                                    "{{ $shop }}"@if (!$loop->last),@endif
-                                @endforeach
+                            <span
+                                data-typer-targets='{"targets": [
+                                @foreach ($page_data['headings']['silder_shop_text'] ?? [] as $key => $shop)
+                                    "{{ $shop }}"@if (!$loop->last),@endif @endforeach
                             ]}'>
                             </span>
 
@@ -38,8 +34,7 @@
                         </div>
 
                         <div class="banner-scan">
-                            <img src="{{ asset($page_data['scanner_image'] ?? 'assets/images/icons/img-upload.png') }}"
-                                alt=""  />
+                            <img src="{{ Storage::url($page_data['scanner_image'] ?? 'assets/images/icons/img-upload.png') }}" alt="" />
                             <p>
                                 {{ $page_data['headings']['slider_scanner_text'] ?? '' }}
                             </p>
@@ -47,21 +42,19 @@
 
                         <div class="play-store mt-3">
                             <a href="{{ $page_data['headings']['footer_apple_app_link'] ?? '' }}" target="_blank">
-                                <img src="{{ asset($page_data['footer_apple_app_image'] ?? 'assets/images/icons/img-upload.png') }}"
+                                <img src="{{ Storage::url($page_data['footer_apple_app_image'] ?? 'assets/images/icons/img-upload.png') }}"
                                     alt="image" />
                             </a>
                             <a href="{{ $page_data['headings']['footer_google_play_app_link'] ?? '' }}" target="_blank">
-                                <img src="{{ asset($page_data['footer_google_app_image'] ?? 'assets/images/icons/img-upload.png') }}"
+                                <img src="{{ Storage::url($page_data['footer_google_app_image'] ?? 'assets/images/icons/img-upload.png') }}"
                                     alt="image" />
                             </a>
                         </div>
-
-
                     </div>
                 </div>
                 <div class="col-lg-6 order-1 order-lg-2">
                     <div class="banner-img text-center">
-                        <img src="{{ asset($page_data['slider_image'] ?? 'assets/images/icons/img-upload.png') }}"
+                        <img src="{{ Storage::url($page_data['slider_image'] ?? 'assets/images/icons/img-upload.png') }}"
                             alt="banner-img" class=" move-image" />
                     </div>
                 </div>
@@ -120,7 +113,7 @@
                 </p>
             </div>
             <div class="video-wrapper shadow">
-                <img src="{{ asset($page_data['watch_image'] ?? 'assets/images/icons/img-upload.png') }}" alt="watch" />
+                <img src="{{ Storage::url($page_data['watch_image'] ?? 'assets/images/icons/img-upload.png') }}" alt="watch" />
                 <a class="play-btn" data-bs-toggle="modal" data-bs-target="#play-video-modal"><i class="fa fa-play"
                         aria-hidden="true"></i></a>
             </div>
@@ -157,21 +150,21 @@
             <div class="customer-slider-section">
                 <div class="row">
                     @foreach ($testimonials as $testimonial)
-                    <div>
-                        <div class="customer-card">
-                            <img src="{{ asset($testimonial->client_image) }}" alt="" />
-                            <p>{{ $testimonial->text }}</p>
-                            <div class="w-100 pt-3 d-flex align-items-center flex-column border-top">
-                                <h5 class="m-0">{{ $testimonial->client_name }}</h5>
-                                <small>{{ $testimonial->work_at }}</small>
-                                <ul class="d-flex align-items-center justify-content-center gap-2">
-                                    @for ($i = 0; $i < 5; $i++)
-                                    <li><i class="fa fa-star" aria-hidden="true"></i></li>
-                                    @endfor
-                                </ul>
+                        <div>
+                            <div class="customer-card">
+                                <img src="{{ asset($testimonial->client_image) }}" alt="" />
+                                <p>{{ $testimonial->text }}</p>
+                                <div class="w-100 pt-3 d-flex align-items-center flex-column border-top">
+                                    <h5 class="m-0">{{ $testimonial->client_name }}</h5>
+                                    <small>{{ $testimonial->work_at }}</small>
+                                    <ul class="d-flex align-items-center justify-content-center gap-2">
+                                        @for ($i = 0; $i < 5; $i++)
+                                            <li><i class="fa fa-star" aria-hidden="true"></i></li>
+                                        @endfor
+                                    </ul>
+                                </div>
                             </div>
                         </div>
-                    </div>
                     @endforeach
                 </div>
             </div>
@@ -193,5 +186,5 @@
         @include('web.components.blog')
     </section>
 
+    @include('web.components.signup')
 @endsection
-

@@ -32,7 +32,7 @@
             <div class="col-lg-6 align-self-center">
               <div class="w-90 position-relative ms-auto">
                 <img
-                  src="{{ asset($page_data['about_image'] ?? 'assets/images/icons/img-upload.png') }}"
+                  src="{{ Storage::url($page_data['about_image'] ?? 'assets/images/icons/img-upload.png') }}"
                   alt="image"
                   class="about-img"
                 />
@@ -48,7 +48,7 @@
             @endforeach
           </ul>
         </div>
-</section>
+    </section>
 
       {{-- Feature section Start Here --}}
 
@@ -56,5 +56,7 @@
 
       {{-- Pricing Plan --}}
       @include('web.components.plan')
+
+      @include('web.components.signup')
 
 @endsection

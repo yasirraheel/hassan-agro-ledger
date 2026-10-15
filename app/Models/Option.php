@@ -13,5 +13,6 @@ class Option extends Model
 
     protected $casts = [
         'value' => 'json',
+        'status' => 'integer'
     ];
 }

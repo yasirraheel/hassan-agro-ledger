@@ -2,12 +2,13 @@
 
 namespace App\Models;
 
+use App\Traits\ImageUrlTrait;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Category extends Model
 {
-    use HasFactory;
+    use HasFactory, ImageUrlTrait;
 
     /**
      * The attributes that are mass assignable.
@@ -22,6 +23,7 @@ class Category extends Model
         'variationSize',
         'variationType',
         'variationWeight',
+        'icon',
         'status',
     ];
 
@@ -31,10 +33,15 @@ class Category extends Model
      * @var array
      */
     protected $casts = [
+        'business_id' => 'integer',
         'variationSize' => 'boolean',
         'variationColor' => 'boolean',
         'variationCapacity' => 'boolean',
         'variationType' => 'boolean',
         'variationWeight' => 'boolean',
+        'status' => 'integer',
     ];
+
+    protected $imageFields = ['icon'];
+
 }

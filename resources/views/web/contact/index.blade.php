@@ -25,7 +25,7 @@
             <div class="row">
                 <div class="col-lg-6 mb-3 align-self-center">
                     <div class="contact-image">
-                        <img src="{{ asset($page_data['contact_us_icon'] ?? 'assets/images/icons/img-upload.png') }}"
+                        <img src="{{ Storage::url($page_data['contact_us_icon'] ?? 'assets/images/icons/img-upload.png') }}"
                             alt="image" class="w-100 object-fit-cover rounded-2" />
                     </div>
                 </div>
@@ -52,7 +52,7 @@
                             </div>
                             <div class="col-md-12 mb-2">
                                 <label for="company-name" class="col-form-label fw-medium">{{ __('Company') }}
-                                    <small class="text-body-secondary">(Optional)</small></label>
+                                    <small class="text-body-secondary">{{__('(Optional)')}}</small></label>
                                 <input type="text" name="company_name" class="form-control"
                                     placeholder="{{ __('Enter company name') }}" />
                             </div>

@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('expenses', function (Blueprint $table) {
             $table->id();
             $table->double('amount');
-            $table->foreignId('expense_category_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('expense_category_id')->nullable()->constrained()->nullOnDelete();
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
             $table->foreignId('business_id')->constrained()->cascadeOnDelete();
             $table->string('expanseFor')->nullable();

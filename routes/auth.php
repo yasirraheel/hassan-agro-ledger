@@ -1,12 +1,17 @@
 <?php
 
-use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\VerifyEmailController;
+use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\EmailVerificationNotificationController;
+
+Route::post('register', [RegisteredUserController::class, 'store'])->name('register');
+Route::post('business-setup', [RegisteredUserController::class, 'businessSetup'])->name('business-setup');
+Route::post('/otp-resend', [RegisteredUserController::class, 'otpResend'])->name('otp-resend');
+Route::post('/otp-submit', [RegisteredUserController::class, 'otpSubmit'])->name('otp-submit');
 
 Route::middleware('guest')->group(function () {
 

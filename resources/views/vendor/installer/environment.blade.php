@@ -11,14 +11,21 @@
 
 @section('container')
 
-    <p class="text-center">
+    <b class="text-center d-block environment-desc">
         {{ trans('installer_messages.environment.menu.desc') }}
-    </p>
-    <div class="buttons">
-        <a href="{{ route('LaravelInstaller::environmentWizard') }}" class="button button-wizard">
-            {{ __('Next') }}
-            <i class="fa fa-angle-right fa-fw" aria-hidden="true"></i>
-        </a>
-    </div>
+    </b>
 
+    <div class="center-flex">
+        <div class="btn-wrapper">
+            <div class="btn-glow"></div>
+            <a href="{{ route('LaravelInstaller::environmentWizard') }}" class="btn" role="button" title="payment">
+                {{ trans('installer_messages.next') }}
+                <svg aria-hidden="true" viewBox="0 0 10 10" height="10" width="10" fill="none" class="arrow">
+                    <path d="M0 5h7" class="line1"></path>
+                    <path d="M1 1l4 4-4 4" class="line2"></path>
+                </svg>
+            </a>
+        </div>
+    </div>
+    
 @endsection

@@ -24,22 +24,14 @@ class UserController extends Controller
 
     public function index(Request $request)
     {
-        $users = User::whereNotIn('role', ['superadmin', 'staff', 'shop-owner'])->latest()->paginate(20);
-        return view('admin.users.index', compact('users'));
-    }
-
-    public function acnooFilter(Request $request)
-    {
-        $users = User::whereNotIn('role', ['superadmin', 'staff', 'shop-owner'])->when(request('search'), function ($q) {
-            $q->where(function ($q) {
-                $q->where('name', 'like', '%' . request('search') . '%')
-                    ->orWhere('email', 'like', '%' . request('search') . '%')
-                    ->orWhere('role', 'like', '%' . request('search') . '%')
-                    ->orWhere('phone', 'like', '%' . request('search') . '%');
+        $users = User::whereNotIn('role', ['superadmin', 'staff', 'shop-owner'])->when($request->search, function ($q) use ($request) {
+            $q->where(function ($q) use ($request) {
+                $q->where('name', 'like', '%' . $request->search . '%')
+                  ->orWhere('email', 'like', '%' . $request->search . '%')
+                  ->orWhere('role', 'like', '%' . $request->search . '%')
+                  ->orWhere('phone', 'like', '%' . $request->search . '%');
             });
-        })
-            ->latest()
-            ->paginate($request->per_page ?? 20);
+        })->latest()->paginate($request->per_page ?? 20)->appends($request->query());
 
         if ($request->ajax()) {
             return response()->json([
@@ -47,7 +39,7 @@ class UserController extends Controller
             ]);
         }
 
-        return redirect(url()->previous());
+        return view('admin.users.index', compact('users'));
     }
 
     public function create()
@@ -82,12 +74,15 @@ class UserController extends Controller
         ]);
     }
 
-    public function edit(User $user)
+    public function edit(string $id)
     {
+        $user = User::findOrFail($id);
+        $roles = Role::latest()->get();
+
         if ($user->role == 'superadmin') {
             abort(403);
         }
-        $roles = Role::latest()->get();
+
         return view('admin.users.edit', compact('user', 'roles'));
     }
 

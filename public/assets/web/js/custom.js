@@ -335,3 +335,29 @@ $('.choose-plan-btn').on('click', function () {
     });
 
 });
+
+// Custom file input preview start
+$(document).ready(function () {
+    $('.custom-file-box').each(function () {
+        let preview = $(this).find('.preview-file');
+        let content = $(this).find('.custom-file-content');
+
+        if (!preview.text().trim() || preview.hasClass('d-none')) {
+            preview.addClass('d-none');
+            content.removeClass('d-none');
+        }
+    });
+
+    $(document).on('change', '.preview-file-input', function () {
+        let box = $(this).parent();
+        let preview = box.find('.preview-file');
+        let content = box.find('.custom-file-content');
+
+        if (!this.files || !this.files[0]) return;
+
+        preview.text(this.files[0].name) .removeClass('d-none');
+
+        content.addClass('d-none');
+    });
+});
+// Custom file input preview end

@@ -5,43 +5,42 @@ namespace App\Http\Controllers\Admin;
 use Illuminate\Http\Request;
 use App\Models\PlanSubscribe;
 use App\Http\Controllers\Controller;
+use App\Traits\DateFilterTrait;
 
 class SubscriptionReport extends Controller
 {
+    use DateFilterTrait;
+
     public function index(Request $request)
     {
-        $subscribers = PlanSubscribe::with(['plan:id,subscriptionName','business:id,companyName,business_category_id','business.category:id,name'])->latest()->paginate(20);
-        return view('admin.subscribers.index', compact('subscribers'));
-    }
+        $subscribeQuery = PlanSubscribe::with(['plan:id,subscriptionName,offerPrice,subscriptionPrice', 'business:id,companyName,business_category_id,pictureUrl', 'business.category:id,name', 'gateway:id,name']);
 
-    public function acnooFilter(Request $request)
-    {
-        $search = $request->input('search');
+        // Date Filter
+        $duration = $request->custom_days ?: 'today';
+        $this->applyDateFilter($subscribeQuery, $duration, 'created_at', $request->from_date, $request->to_date);
 
-        $subscribers = PlanSubscribe::with([
-            'plan:id,subscriptionName',
-            'business:id,companyName,business_category_id',
-            'business.category:id,name'
-        ])
-            ->when($search, function ($q) use ($search) {
-                $q->where(function ($q) use ($search) {
-                    $q->where('duration', 'like', '%' . $search . '%')
-                        ->orWhereHas('plan', function ($q) use ($search) {
-                            $q->where('subscriptionName', 'like', '%' . $search . '%');
-                        })
-                        ->orWhereHas('gateway', function ($q) use ($search) {
-                            $q->where('name', 'like', '%' . $search . '%');
-                        })
-                        ->orWhereHas('business', function ($q) use ($search) {
-                            $q->where('companyName', 'like', '%' . $search . '%')
-                                ->orWhereHas('category', function ($q) use ($search) {
-                                    $q->where('name', 'like', '%' . $search . '%');
-                                });
-                        });
-                });
-            })
-            ->latest()
-            ->paginate($request->per_page ?? 20);
+        // Search filter
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $subscribeQuery->where(function ($query) use ($search) {
+                $query->where('duration', 'like', '%' . $search . '%')
+                    ->orWhereHas('plan', function ($q) use ($search) {
+                        $q->where('subscriptionName', 'like', '%' . $search . '%');
+                    })
+                    ->orWhereHas('gateway', function ($q) use ($search) {
+                        $q->where('name', 'like', '%' . $search . '%');
+                    })
+                    ->orWhereHas('business', function ($q) use ($search) {
+                        $q->where('companyName', 'like', '%' . $search . '%')
+                            ->orWhereHas('category', function ($q) use ($search) {
+                                $q->where('name', 'like', '%' . $search . '%');
+                            });
+                    });
+            });
+        }
+
+        $perPage = $request->input('per_page', 20);
+        $subscribers = $subscribeQuery->latest()->paginate($perPage)->appends($request->query());
 
         if ($request->ajax()) {
             return response()->json([
@@ -49,57 +48,7 @@ class SubscriptionReport extends Controller
             ]);
         }
 
-        return redirect(url()->previous());
+        return view('admin.subscribers.index', compact('subscribers'));
     }
 
-
-    public function reject(Request $request, string $id)
-    {
-
-        $request->validate([
-            'notes' => 'required|string|max:255',
-        ]);
-
-        $reject = PlanSubscribe::findOrFail($id);
-
-        if ($reject) {
-
-            $reject->update([
-                'payment_status' => 'unpaid',
-                'notes' => $request->notes,
-            ]);
-
-            return response()->json([
-                'message' => 'Status Unpaid',
-                'redirect' => route('admin.subscription-reports.index'),
-            ]);
-        } else {
-            return response()->json(['message' => 'request not found'], 404);
-        }
-    }
-
-    public function paid(Request $request, string $id)
-    {
-
-        $request->validate([
-            'notes' => 'required|string|max:255',
-        ]);
-
-        $approve = PlanSubscribe::findOrFail($id);
-
-        if ($approve) {
-
-            $approve->update([
-                'payment_status' => 'paid',
-                'notes' => $request->notes,
-            ]);
-
-            return response()->json([
-                'message' => 'Status Paid',
-                'redirect' => route('admin.subscription-reports.index'),
-            ]);
-        } else {
-            return response()->json(['message' => 'request not found'], 404);
-        }
-    }
 }

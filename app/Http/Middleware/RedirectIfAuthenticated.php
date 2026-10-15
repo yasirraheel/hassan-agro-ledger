@@ -2,9 +2,9 @@
 
 namespace App\Http\Middleware;
 
-use App\Providers\RouteServiceProvider;
 use Closure;
 use Illuminate\Http\Request;
+use Nwidart\Modules\Facades\Module;
 use Illuminate\Support\Facades\Auth;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -21,7 +21,41 @@ class RedirectIfAuthenticated
 
         foreach ($guards as $guard) {
             if (Auth::guard($guard)->check()) {
-                return redirect(RouteServiceProvider::HOME);
+                $user = auth()->user();
+
+                if ($user->role == 'shop-owner' || $user->role == 'staff') {
+
+                    $module = Module::find('Business');
+
+                    if ($module) {
+                        if ($module->isEnabled()) {
+                            return redirect(route('business.dashboard.index'))->with('warning', 'You are already logged in!');
+                        } else {
+                            Auth::logout();
+                            return redirect(route('login'))->with('warning', 'Web addon is not active.');
+                        }
+                    } else {
+                        Auth::logout();
+                        return redirect(route('login'))->with('warning', 'Web addon is not installed.');
+                    }
+                } else if ($user->role == 'affiliator') {
+
+                    $module = Module::find('AffiliateAddon');
+
+                    if ($module) {
+                        if ($module->isEnabled()) {
+                            return redirect(route('affiliate.dashboard.index'))->with('warning', 'You are already logged in!');
+                        } else {
+                            Auth::logout();
+                            return redirect(route('login'))->with('warning', 'Affiliate addon is not active.');
+                        }
+                    } else {
+                        Auth::logout();
+                        return redirect(route('login'))->with('warning', 'Affiliate addon is not installed.');
+                    }
+                } else {
+                    return redirect(route('admin.dashboard.index'))->with('warning', 'You are already logged in!');
+                }
             }
         }
 

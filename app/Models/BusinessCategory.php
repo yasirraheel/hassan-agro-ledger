@@ -19,4 +19,8 @@ class BusinessCategory extends Model
         'status',
         'description',
     ];
+
+    protected $casts = [
+        'status' => 'integer'
+    ];
 }

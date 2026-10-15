@@ -1,5 +1,5 @@
 
-<link rel="shortcut icon" type="image/x-icon" href="{{ asset(get_option('general')['favicon'] ?? 'assets/images/logo/favicon.png')}}">
+<link rel="shortcut icon" type="image/x-icon" href="{{ Storage::url(get_option('general')['favicon'] ?? 'assets/images/logo/favicon.png')}}">
 <!-- Bootstrap -->
 <link rel="stylesheet" href="{{ asset('assets/css/bootstrap.min.css') }}">
 <!-- Fontawesome -->
@@ -10,13 +10,13 @@
 <!-- Lily -->
 <link rel="stylesheet" href="{{ asset('assets/css/lity.css') }}">
 <!-- Style -->
-<link rel="stylesheet" href="{{ asset('assets/css/style.css') }}">
-<link rel="stylesheet" href="{{ asset('assets/css/custom.css') }}">
+<link rel="stylesheet" href="{{ asset('assets/css/style.css') }}?v={{ time() }}">
+<link rel="stylesheet" href="{{ asset('assets/css/custom.css') }}?v={{ time() }}">
 <!-- Toaster -->
 <link rel="stylesheet" href="{{ asset('assets/css/toastr.min.css') }}">
 @stack('css')
 
 @if (app()->getLocale() == 'ar')
-<link rel="stylesheet" href="{{ asset('assets/css/arabic.css') }}">
+<link rel="stylesheet" href="{{ asset('assets/css/arabic.css') }}?v={{ time() }}">
 <link rel="stylesheet" href="{{ asset('assets/css/bootstrap.rtl.min.css') }}">
 @endif

@@ -7,6 +7,7 @@ use App\Models\DueCollect;
 use App\Models\Party;
 use App\Models\Purchase;
 use App\Models\Sale;
+use App\Models\SaleReturn;
 use Illuminate\Http\Request;
 
 class AcnooInvoiceController extends Controller
@@ -35,7 +36,7 @@ class AcnooInvoiceController extends Controller
     public function newInvoice(Request $request)
     {
         $request->validate([
-            'platform' => 'required|in:sales,purchases,due_collects'
+            'platform' => 'required|in:sales,purchases,due_collects,sales_return,purchases_return'
         ]);
 
         if ($request->platform == 'sales') {
@@ -44,7 +45,14 @@ class AcnooInvoiceController extends Controller
         } elseif ($request->platform == 'purchases') {
             $prefix = 'P-';
             $id = Purchase::where('business_id', auth()->user()->business_id)->count();
-        } else {
+        } elseif ($request->platform == 'sales_return') {
+            $prefix = 'SR-';
+            $id = SaleReturn::where('business_id', auth()->user()->business_id)->count();
+        } elseif ($request->platform == 'purchases_return') {
+            // $prefix = 'PR-';
+            // $id = Purchase::where('business_id', auth()->user()->business_id)->count();
+        }
+         else {
             $prefix = 'D-';
             $id = DueCollect::where('business_id', auth()->user()->business_id)->count();
         }

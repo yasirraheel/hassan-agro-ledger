@@ -13,7 +13,7 @@ class Paystack
         if (Session::has('fund_callback')) {
             return url(Session::get('fund_callback')['success_url']);
         } else {
-            return url('users/payment/success');
+            return url('payment/success');
         }
     }
 
@@ -22,7 +22,7 @@ class Paystack
         if (Session::has('fund_callback')) {
             return url(Session::get('fund_callback')['cancel_url']);
         } else {
-            return url('users/payment/failed');
+            return url('payment/failed');
         }
     }
 
@@ -31,7 +31,7 @@ class Paystack
         if (Session::get('without_auth')) {
             return url('payment/paystack');
         } else {
-            return url('users/payment/paystack');
+            return url('payment/paystack');
         }
     }
 
@@ -42,7 +42,7 @@ class Paystack
             $gateway = Gateway::where('status', 1)->findOrFail($Info['gateway_id']);
             $promotion = Session::get('promotion');
             $product = Session::get('product');
-            return view('users.payments.paystack', compact('Info', 'gateway'));
+            return view('payments.paystack', compact('Info', 'gateway'));
         }
         abort(404);
     }
@@ -66,7 +66,7 @@ class Paystack
         $data['charge'] = $array['charge'];
         $data['phone'] = $array['phone'];
         $data['payment_type'] = $array['payment_type'] ?? '';
-        $test_mode = $array['test_mode'];
+        $mode = $array['mode'];
 
         $data['gateway_id'] = $array['gateway_id'];
         $data['main_amount'] = $array['amount'];
@@ -76,17 +76,17 @@ class Paystack
         $data['currency'] = $currency;
         $data['is_fallback'] = $array['is_fallback'] ?? 0;
 
-        if ($test_mode == 0) {
+        if ($mode == 0) {
             $data['env'] = false;
-            $test_mode = false;
+            $mode = false;
         } else {
             $data['env'] = true;
-            $test_mode = true;
+            $mode = true;
         }
 
         Session::put('paystack_credentials', $data);
 
-        return request()->expectsJson() ? route('users.paystack.view') : redirect()->route('users.paystack.view');
+        return request()->expectsJson() ? route('paystack.view') : redirect()->route('paystack.view');
     }
 
     public function status(Request $request)

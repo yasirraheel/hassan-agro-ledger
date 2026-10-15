@@ -5,16 +5,20 @@
     <div class="container">
         <div class="payment-method-wrp">
             <div class="row">
-                <div class="col-md-4">
+                <div class="col-lg-5">
                     <div class="nav d-block payment-method-nav">
-                        @foreach ($gateways as $gateway)
-                        <a href="#{{ str_replace(' ', '-', $gateway->name) }}" data-bs-toggle="pill" @class(['add-report-btn payment-items', 'active' => $loop->first ? true : false])>
-                            {{ ucfirst($gateway->name) }}
-                        </a>
-                        @endforeach
+                        <div class="row">
+                            @foreach ($gateways as $gateway)
+                            <div class="col-lg-6">
+                                <a href="#{{ str_replace(' ', '-', $gateway->name) }}" data-bs-toggle="pill" @class(['add-report-btn payment-items', 'active' => $loop->first ? true : false])>
+                                    {{ ucfirst($gateway->name) }}
+                                </a>
+                            </div>
+                            @endforeach
+                        </div>
                     </div>
                 </div>
-                <div class="col-md-8">
+                <div class="col-lg-7 mt-3 mt-sm-0">
                     <div class="tab-content">
                         @foreach ($gateways as $gateway)
                         <div @class(['tab-pane fade', 'show active' => $loop->first ? true : false]) id="{{ str_replace(' ', '-', $gateway->name) }}">
@@ -34,45 +38,78 @@
                                     <h5 class="payment-title mb-3">{{ ucfirst($gateway->name) }} ({{ optional($gateway->currency)->code }})</h5>
                                     <table class="table table-striped">
                                         <tbody>
+
+                                            @php
+                                                $amount = convert_money($plan->offerPrice ?? $plan->subscriptionPrice, $gateway->currency);
+                                            @endphp
+
                                             <tr>
-                                                <td>{{ __('Gateway Name') }}</td>
-                                                <td>{{ $gateway->name }}</td>
+                                                <th class="text-start ">{{ __('Gateway Name') }}</th>
+                                                <td class="text-end">{{ $gateway->name }}</td>
                                             </tr>
                                             <tr>
-                                                <td>{{ __('Subscription Name') }}</td>
-                                                <td>{{ $plan->subscriptionName }}</td>
+                                                <th class="text-start">{{ __('Gateway Currency') }}</th>
+                                                <td class="text-end">{{ optional($gateway->currency)->code }}</td>
                                             </tr>
                                             <tr>
-                                                <td>{{ __('Gateway Currency') }}</td>
-                                                <td>{{ optional($gateway->currency)->code }}</td>
+                                                <th class="text-start">{{ __('Gateway Rate') }}</th>
+                                                <td class="text-end">{{ currency_format($gateway->currency->rate, currency:$gateway->currency) }}</td>
                                             </tr>
                                             <tr>
-                                                <td>{{ __('Gateway Charge') }}</td>
-                                                <td>{{ currency_format($gateway->charge, currency: $gateway->currency) }}</td>
+                                                <th class="text-start">{{ __('Subscription Name') }}</th>
+                                                <td class="text-end">{{ $plan->subscriptionName }}</td>
                                             </tr>
                                             <tr>
-                                                <td>{{ __('Payable Amount') }}</td>
-                                                <td>{{ currency_format(payable($plan->offerPrice ?? $plan->subscriptionPrice, $gateway), 'icon', currency: $gateway->currency) }}</td>
+                                                <th class="text-start">{{ __('Subscription Price') }}</th>
+                                                <td class="text-end">{{ currency_format($amount, currency : $gateway->currency) }}</td>
+                                            </tr>
+                                            <tr>
+                                                <th class="text-start">{{ __('Gateway Charge') }}</th>
+                                                <td class="text-end">{{ currency_format($gateway->charge, currency: $gateway->currency) }}</td>
+                                            </tr>
+                                            <tr>
+                                                <th class="text-start">{{ __('Payable Amount') }}</th>
+                                                <td class="text-end">{{ currency_format($amount + $gateway->charge, currency: $gateway->currency) }}</td>
                                             </tr>
                                             @if ($gateway->phone_required == 1)
                                             <tr>
-                                                <td>
+                                                <th>
                                                     <label for="phone" class="required">{{ __('Phone Number') }}</label>
-                                                </td>
+                                                </th>
                                                 <td>
-                                                    <input type="text" name="phone" id="phone" class="form-control" placeholder="{{ __('Enter your phone number') }}" required>
+                                                    <input type="text" name="phone" id="phone" class="form-control w-100" placeholder="{{ __('Enter your phone number with country code') }}" required>
                                                 </td>
                                             </tr>
                                             @endif
                                         </tbody>
                                     </table>
+
+                                    @if ($gateway->instructions)
+                                    <div class="mb-3">
+                                        <h5 class="payment-title mb-3">{{ __('Instructions') }}</h5>
+                                        <p>{!! $gateway->instructions !!}</p>
+                                    </div>
+                                    @endif
+
                                     @if ($gateway->is_manual)
                                     <div class="row mb-3">
                                         <div class="col-12">
                                             @if ($gateway->accept_img)
                                             <div class="form-group">
                                                 <label for="">{{ __('Screenshot/Proof Image') }}</label>
-                                                <input type="file" name="attachment" class="form-control" required>
+                                                <div class="custom-upload-wrapper">
+                                                    <div class="custom-file-box">
+                                                        <div class="custom-file-content">
+                                                            <svg width="30" height="30" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                                <path d="M12 5V19M5 12H19" stroke="#4B5563" stroke-width="1.5" stroke-linecap="round"/>
+                                                            </svg>
+                                                            <span class="custom-upload-text">{{ __('Add File') }}</span>
+                                                        </div>
+
+                                                        <p class="preview-file d-none"></p>
+                                                        <input type="file" name="attachment" class="preview-file-input">
+                                                    </div>
+                                                </div>
                                             </div>
                                             @endif
                                             @foreach ($gateway->manual_data['label'] ?? [] as $key => $row)

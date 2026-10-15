@@ -2,22 +2,32 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Events\MultiPaymentProcessed;
 use App\Models\Sale;
 use App\Models\Party;
 use App\Models\Business;
 use App\Models\Purchase;
 use App\Models\DueCollect;
 use Illuminate\Http\Request;
+use App\Traits\DateFilterTrait;
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\DB;
 
 class AcnooDueController extends Controller
 {
+    Use DateFilterTrait;
+
     public function index()
     {
-        $data = DueCollect::with('user:id,name', 'party:id,name,email,phone,type')
-                ->where('business_id', auth()->user()->business_id)
-                ->latest()
-                ->get();
+        $query = DueCollect::with('user:id,name,role', 'party:id,name,email,phone,type,address','sale:id,invoiceNumber','purchase:id,invoiceNumber', 'branch:id,name,phone,address','transactions:id,platform,transaction_type,amount,date,invoice_no,reference_id,payment_type_id,meta', 'transactions.paymentType:id,name')
+                ->where('business_id', auth()->user()->business_id);
+
+        // Apply date filter
+        if(request('duration')){
+            $this->applyDateFilter($query, request('duration'), 'paymentDate', request('from_date'), request('to_date'));
+        }
+
+        $data = $query->latest()->get();
 
         return response()->json([
             'message' => __('Data fetched successfully.'),
@@ -30,13 +40,22 @@ class AcnooDueController extends Controller
         $party = Party::find($request->party_id);
 
         $request->validate([
-            'paymentType' => 'required|string',
             'paymentDate' => 'required|string',
-            'payDueAmount' => 'required|numeric',
+            'payDueAmount' => 'nullable|numeric',
             'party_id' => 'required|exists:parties,id',
             'invoiceNumber' => 'nullable|exists:' . ($party->type == 'Supplier' ? 'purchases' : 'sales') . ',invoiceNumber',
         ]);
 
+        $user = auth()->user();
+        $business = Business::findOrFail($user->business_id);
+        $action_branch_id = $user->branch_id ?? $user->active_branch_id;
+        $payments = $request->payments ?? [];
+
+        $payDueAmount = collect($payments)
+            ->reject(fn($p) => strtolower($p['type'] ?? '') === 'cheque')
+            ->sum(fn($p) => $p['amount'] ?? 0);
+
+        $branch_id = null;
         if ($request->invoiceNumber) {
             if ($party->type == 'Supplier') {
                 $invoice = Purchase::where('invoiceNumber', $request->invoiceNumber)->where('party_id', $request->party_id)->first();
@@ -48,6 +67,12 @@ class AcnooDueController extends Controller
                 return response()->json([
                     'message' => 'Invoice Not Found.'
                 ], 404);
+            }
+
+            if (!auth()->user()->active_branch) {
+                if (isset($invoice) && isset($invoice->branch_id)) {
+                    $branch_id = $invoice->branch_id;
+                }
             }
 
             if ($invoice->dueAmount < $request->payDueAmount) {
@@ -69,40 +94,153 @@ class AcnooDueController extends Controller
                     'message' => __('You can pay only '. $party->due - $all_invoice_due .', without selecting an invoice.')
                 ], 400);
             }
+
+            if ($party->opening_balance_type == 'due') {
+                $party->update([
+                    'opening_balance' => max(0, $party->opening_balance - $payDueAmount),
+                ]);
+            }
+
         }
 
         $data = DueCollect::create($request->all() + [
                     'user_id' => auth()->id(),
-                    'business_id' => auth()->user()->business_id,
+                    'business_id' => $user->business_id,
                     'sale_id' => $party->type != 'Supplier' && isset($invoice) ? $invoice->id : NULL,
                     'purchase_id' => $party->type == 'Supplier' && isset($invoice) ? $invoice->id : NULL,
                     'totalDue' => isset($invoice) ? $invoice->dueAmount : $party->due,
-                    'dueAmountAfterPay' => isset($invoice) ? ($invoice->dueAmount - $request->payDueAmount) : ($party->due - $request->payDueAmount),
+                    'dueAmountAfterPay' => isset($invoice) ? ($invoice->dueAmount - $payDueAmount) : ($party->due - $payDueAmount),
                 ]);
 
         if (isset($invoice)) {
             $invoice->update([
-                'dueAmount' => $invoice->dueAmount - $request->payDueAmount
+                'dueAmount' => $invoice->dueAmount - $payDueAmount
             ]);
         }
 
-        $business = Business::findOrFail(auth()->user()->business_id);
-        $business_name = $business->companyName;
-        $business->update([
-            'remainingShopBalance' => $party->type == 'Supplier' ? ($business->remainingShopBalance - $request->payDueAmount) : ($business->remainingShopBalance + $request->payDueAmount)
-        ]);
+        $party->type == 'Supplier' ? updateBalance($payDueAmount, 'decrement', $branch_id) : updateBalance($payDueAmount, 'increment', $branch_id);
 
         $party->update([
-            'due' => $party->due - $request->payDueAmount
+            'due' => $party->due - $payDueAmount
         ]);
 
-        if (env('MESSAGE_ENABLED')) {
-            sendMessage($party->phone, dueCollectMessage($data, $party, $business_name, $request->invoiceNumber));
+        // MultiPaymentProcessed Event
+        event(new MultiPaymentProcessed(
+            $payments,
+            $data->id,
+            'due_collect',
+            $payDueAmount,
+            $party->id
+        ));
+
+        if (moduleCheck('MarketingAddon')) {
+            $this->dueTransactionMessage($business, $party, $data);
         }
 
         return response()->json([
             'message' => __('Data fetched successfully.'),
-            'data' => $data->load('user:id,name', 'party:id,name,email,phone,type'),
+            'data' => $data->load('user:id,name,role', 'party:id,name,email,phone,type,address', 'sale:id,invoiceNumber','purchase:id,invoiceNumber','branch:id,name,phone,address','transactions:id,platform,transaction_type,amount,date,invoice_no,reference_id,payment_type_id,meta', 'transactions.paymentType:id,name'),
         ]);
     }
+
+    public function invoiceWiseDue()
+    {
+        $data = Sale::where('business_id', auth()->user()->business_id)
+            ->with('dueCollect')
+            ->whereNull('party_id')
+            ->where('dueAmount', '>', 0)
+            ->latest()->get();
+
+        $total_receivable = $data->sum('dueAmount');
+
+        return response()->json([
+            'message' => __('Data fetched successfully.'),
+            'total_receivable' => (float) $total_receivable,
+            'data' => $data,
+        ]);
+    }
+
+    public function collectInvoiceDue(Request $request)
+    {
+        $business_id = auth()->user()->business_id;
+
+        $request->validate([
+            'paymentDate' => 'required|string',
+            'payDueAmount' => 'nullable|numeric',
+            'invoiceNumber' => 'required|string|exists:sales,invoiceNumber',
+        ]);
+
+        DB::beginTransaction();
+        try {
+            $invoice = Sale::where('business_id', $business_id)->where('invoiceNumber', $request->invoiceNumber)->whereNull('party_id')->first();
+
+            if (!$invoice) {
+                return response()->json([
+                    'message' => 'Invoice Not Found.'
+                ], 404);
+            }
+            $payments = $request->payments ?? [];
+
+            $payDueAmount = collect($payments)
+                ->reject(fn($p) => strtolower($p['type'] ?? '') === 'cheque')
+                ->sum(fn($p) => $p['amount'] ?? 0);
+
+            if ($invoice->dueAmount < $payDueAmount) {
+                return response()->json([
+                    'message' => 'Invoice due is ' . $invoice->dueAmount . '. You cannot pay more than the invoice due amount.'
+                ], 400);
+            }
+
+            $data = DueCollect::create([
+                'user_id' => auth()->id(),
+                'business_id' => $business_id,
+                'sale_id' => $invoice->id,
+                'invoiceNumber' => $request->invoiceNumber,
+                'totalDue' => $invoice->dueAmount,
+                'dueAmountAfterPay' => $invoice->dueAmount - $payDueAmount,
+                'payDueAmount' => $payDueAmount,
+                'payment_type_id' => $request->payment_type_id,
+                'paymentDate' => $request->paymentDate,
+            ]);
+
+            $invoice->update([
+                'dueAmount' => $invoice->dueAmount - $payDueAmount
+            ]);
+
+            $branch_id = null;
+            if (!auth()->user()->active_branch) {
+                if (isset($invoice) && isset($invoice->branch_id)) {
+                    $branch_id = $invoice->branch_id;
+                }
+            }
+
+            updateBalance($payDueAmount, 'increment', $branch_id);
+
+            sendNotifyToUser($data->id, route('business.dues.index', ['id' => $data->id]), __('Due Collection has been created.'), $business_id, 'dues.read');
+
+            // MultiPaymentProcessed Event
+            event(new MultiPaymentProcessed(
+                $payments,
+                $data->id,
+                'due_collect',
+                $payDueAmount,
+            ));
+
+            DB::commit();
+
+            return response()->json([
+                'message' => __('Due collected successfully.'),
+                'data' => $data->load('user:id,name', 'sale:id,invoiceNumber', 'transactions:id,platform,transaction_type,amount,date,invoice_no,reference_id,payment_type_id,meta', 'transactions.paymentType:id,name'),
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'message' => 'Something went wrong!',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+
+    }
+
 }

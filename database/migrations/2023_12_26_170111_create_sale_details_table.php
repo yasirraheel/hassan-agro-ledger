@@ -15,8 +15,8 @@ return new class extends Migration
             $table->id();
             $table->foreignId('sale_id')->constrained()->cascadeOnDelete();
             $table->foreignId('product_id')->constrained()->cascadeOnDelete();
-            $table->double('price')->default(0);
-            $table->double('lossProfit')->default(0);
+            $table->double('price', 10, 2)->default(0);
+            $table->double('lossProfit', 10, 2)->default(0);
             $table->integer('quantities')->default(0);
         });
     }

@@ -9,7 +9,7 @@ class AcnooBannerController extends Controller
 {
     public function index()
     {
-        $banners = Banner::latest()->get();
+        $banners = Banner::where('status', 1)->latest()->get();
 
         return response()->json([
             'message' => __('Data fetched successfully.'),

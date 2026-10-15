@@ -25,5 +25,7 @@ class BusinessCategorySeeder extends Seeder
         );
 
         BusinessCategory::insert($business_categories);
+
+        // BusinessCategory::factory()->count(100)->create();
     }
 }

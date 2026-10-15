@@ -16,19 +16,11 @@ class AcnooBlogController extends Controller
 
     public function index(Request $request)
     {
-        $blogs = Blog::latest()->paginate(20);
-        return view('admin.website-setting.blogs.index', compact('blogs'));
-    }
-
-    public function acnooFilter(Request $request)
-    {
-        $blogs = Blog::when(request('search'), function ($q) {
-            $q->where(function ($q) {
-                $q->where('title', 'like', '%' . request('search') . '%');
+        $blogs = Blog::when($request->search, function ($q) use ($request) {
+            $q->where(function ($q) use ($request) {
+                $q->where('title', 'like', '%' . $request->search . '%');
             });
-        })
-            ->latest()
-            ->paginate($request->per_page ?? 20);
+        })->latest()->paginate($request->per_page ?? 20)->appends($request->query());
 
         if ($request->ajax()) {
             return response()->json([
@@ -36,7 +28,7 @@ class AcnooBlogController extends Controller
             ]);
         }
 
-        return redirect(url()->previous());
+        return view('admin.website-setting.blogs.index', compact('blogs'));
     }
 
     public function create()
@@ -127,10 +119,22 @@ class AcnooBlogController extends Controller
         ]);
     }
 
-    public function filterComment($id)
+    public function filterComment($id, Request $request)
     {
         $blog = Blog::findOrFail($id);
-        $comments = Comment::with('blog:id')->whereStatus(1)->where('blog_id', $blog->id)->latest()->paginate(20);
-        return view('admin.website-setting.blogs.comments.index', compact('comments'));
+        $comments = Comment::with('blog:id')->whereStatus(1)->where('blog_id', $blog->id)->when($request->search, function ($q) use ($request) {
+            $q->where(function ($q) use ($request) {
+                $q->where('name', 'like', '%' . $request->search . '%')
+                ->orwhere('email', 'like', '%' . $request->search . '%')
+                ->orwhere('comment', 'like', '%' . $request->search . '%');
+            });
+        })->latest()->paginate($request->per_page ?? 20)->appends($request->query());
+
+        if ($request->ajax()) {
+            return response()->json([
+                'data' => view('admin.website-setting.blogs.comments.datas', compact('comments','blog'))->render()
+            ]);
+        }
+        return view('admin.website-setting.blogs.comments.index', compact('comments','blog'));
     }
 }

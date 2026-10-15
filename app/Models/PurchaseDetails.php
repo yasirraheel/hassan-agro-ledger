@@ -20,13 +20,50 @@ class PurchaseDetails extends Model
         'product_id',
         'productDealerPrice',
         'productPurchasePrice',
+        'profit_percent',
         'productSalePrice',
+        'price_without_tax',
         'productWholeSalePrice',
         'quantities',
+        'stock_id',
+        'mfg_date',
+        'expire_date',
+        'serial_numbers',
     ];
 
-    public function product() : BelongsTo
+    /**
+     * Indicates if the model should be timestamped.
+     *
+     * @var bool
+     */
+    public $timestamps = false;
+
+    public function purchase(): BelongsTo
+    {
+        return $this->belongsTo(Purchase::class, 'purchase_id');
+    }
+
+    public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class, 'product_id');
     }
+
+    public function stock(): BelongsTo
+    {
+        return $this->belongsTo(Stock::class);
+    }
+
+    protected $casts = [
+        'stock_id' => 'integer',
+        'purchase_id' => 'integer',
+        'product_id' => 'integer',
+        'price_without_tax' => 'double',
+        'productDealerPrice' => 'double',
+        'productPurchasePrice' => 'double',
+        'productSalePrice' => 'double',
+        'productWholeSalePrice' => 'double',
+        'quantities' => 'double',
+        'profit_percent' => 'double',
+        'serial_numbers' => 'json'
+    ];
 }

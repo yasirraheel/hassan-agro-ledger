@@ -19,4 +19,9 @@ class Unit extends Model
         'business_id',
         'unitName',
     ];
+
+    protected $casts = [
+        'business_id' => 'integer',
+        'status' => 'integer',
+    ];
 }

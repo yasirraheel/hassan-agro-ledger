@@ -25,8 +25,17 @@
 	<p><strong><small>{{ trans('installer_messages.final.env') }}</small></strong></p>
 	<pre><code>{{ $finalEnvFile }}</code></pre>
 
-    <div class="buttons">
-        <a href="{{ url('/') }}" class="button">{{ trans('installer_messages.final.exit') }}</a>
+	<div class="center-flex">
+        <div class="btn-wrapper">
+            <div class="btn-glow"></div>
+            <a href="{{ url('/') }}" class="btn" role="button" title="payment">
+                {{ trans('installer_messages.final.exit') }}
+                <svg aria-hidden="true" viewBox="0 0 10 10" height="10" width="10" fill="none" class="arrow">
+                    <path d="M0 5h7" class="line1"></path>
+                    <path d="M1 1l4 4-4 4" class="line2"></path>
+                </svg>
+            </a>
+        </div>
     </div>
 
 @endsection

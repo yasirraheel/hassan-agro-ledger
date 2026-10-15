@@ -2,70 +2,112 @@
 
 namespace App\Library;
 
-use App\Models\Gateway;
-use App\Library\SslCommerz\SslCommerzNotification;
+use App\Models\User;
+use GuzzleHttp\Client;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Session;
 
 class SslCommerz
 {
+    public static function redirect_if_payment_success()
+    {
+        if (Session::has('fund_callback')) {
+            return url(Session::get('fund_callback')['success_url']);
+        } else {
+            return url('payment/success');
+        }
+    }
+
+    public static function redirect_if_payment_faild()
+    {
+        if (Session::has('fund_callback')) {
+            return url(Session::get('fund_callback')['cancel_url']);
+        } else {
+            return url('payment/failed');
+        }
+    }
+
     public static function make_payment($array)
     {
-        # Here you have to receive all the order data to initate the payment.
-        # Let's say, your oder transaction informations are saving in a table called "orders"
-        # In "orders" table, order unique identity is "transaction_id". "status" field contain status of the transaction, "amount" is the order amount to be paid and "currency" is for storing Site Currency which will be checked with paid currency.
+        $url = $array['mode'] == 'Live'
+            ? 'https://securepay.sslcommerz.com/gwprocess/v4/api.php'
+            : 'https://sandbox.sslcommerz.com/gwprocess/v4/api.php';
 
-        $gateway = Gateway::findOrFail($array['gateway_id']);
+        $callback_url = ['email' => auth()->user()?->email ?? NULL, 'plan_id' => $array['plan_id'], 'business_id' => $array['business_id'], 'gateway_id' => $array['gateway_id'], 'platform' => session('platform')];
 
-        $post_data = array();
-        $post_data['total_amount'] = $array['pay_amount']; # You cant not pay less than 10
-        $post_data['currency'] = "BDT";
-        $post_data['tran_id'] = uniqid(); // tran_id must be unique
+        $post_data = [
+            'store_id'       => $array['store_id'],
+            'store_passwd'   => $array['store_password'],
+            'total_amount'   => $array['pay_amount'],
+            'currency'       => $array['currency'] ?? 'BDT',
+            'tran_id'        => uniqid(),
+            'success_url'    => route('sslcommerz.status', $callback_url),
+            'fail_url'       => route('sslcommerz.status', $callback_url),
+            'cancel_url'     => route('sslcommerz.status', $callback_url),
+            'cus_name'       => $array['name'],
+            'cus_email'      => $array['email'],
+            'cus_add1'       => $array['address'] ?? 'Dhaka',
+            'cus_phone'      => $array['phone'] ?? '01700000000',
+            'cus_city'      => 'Dhaka',
+            'cus_country'      => 'Bangladesh',
+            'shipping_method'      => 'NO',
+            'product_name'   => $array['billName'],
+            'product_category' => 'general',
+            'product_profile'  => 'general',
+        ];
 
-        # CUSTOMER INFORMATION
-        $post_data['cus_name'] = 'Customer Name';
-        $post_data['cus_email'] = 'customer@mail.com';
-        $post_data['cus_add1'] = 'Customer Address';
-        $post_data['cus_add2'] = "";
-        $post_data['cus_city'] = "";
-        $post_data['cus_state'] = "";
-        $post_data['cus_postcode'] = "";
-        $post_data['cus_country'] = "Bangladesh";
-        $post_data['cus_phone'] = '0564654156';
-        $post_data['cus_fax'] = "";
+        try {
+            $client = new Client();
+            $response = $client->post($url, [
+                'form_params' => $post_data,
+            ]);
 
-        # SHIPMENT INFORMATION
-        $post_data['ship_name'] = "Store Test";
-        $post_data['ship_add1'] = "Dhaka";
-        $post_data['ship_add2'] = "Dhaka";
-        $post_data['ship_city'] = "Dhaka";
-        $post_data['ship_state'] = "Dhaka";
-        $post_data['ship_postcode'] = "1000";
-        $post_data['ship_phone'] = "";
-        $post_data['ship_country'] = "Bangladesh";
+            $responseBody = json_decode($response->getBody(), true);
 
-        $post_data['shipping_method'] = "NO";
-        $post_data['product_name'] = $array['billName'];
-        $post_data['product_category'] = "Goods";
-        $post_data['product_profile'] = "physical-goods";
+            if (isset($responseBody['GatewayPageURL'])) {
+                return redirect($responseBody['GatewayPageURL']);
+            }
 
-        $post_data['value_a'] = session('plan')->id ?? session('amount');
-        $post_data['value_b'] = $gateway->id;
-        $post_data['value_c'] = auth()->id();
+            return response()->json(['error' => $responseBody['failedreason'] ?? 'Payment failed'], 500);
 
-        if ($array['payment_type'] == 'plan_payment') {
-            $success_url = '/ssl-commerz/payment/success';
-            $failed_url = '/ssl-commerz/payment/failed';
-        } else {
-            $success_url = '/ssl-commerz/recharge/success';
-            $failed_url = '/ssl-commerz/recharge/failed';
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    public function status(Request $request)
+    {
+        if ($request->email) {
+            $user = User::where('email', request('email'))->first();
+            Auth::login($user);
         }
 
-        $sslc = new SslCommerzNotification($gateway, $success_url, $failed_url);
-        # initiate(Transaction Data , false: Redirect to SSLCOMMERZ gateway/ true: Show all the Payement gateway here )
-        $payment_options = $sslc->makePayment($post_data, 'hosted');
+        $status  = $request->status;
+        $tran_id = $request->tran_id;
 
-        if (!is_array($payment_options)) {
-            print_r($payment_options);
-            $payment_options = array();
+        session()->put('plan_id', $request->plan_id);
+        session()->put('business_id', $request->business_id);
+        session()->put('gateway_id', $request->gateway_id);
+        session()->put('platform', $request->platform);
+
+        if (!$tran_id || !$status) {
+            session()->put('payment_msg', 'Invalid callback data');
+            return redirect(self::redirect_if_payment_faild());
+        }
+
+        try {
+
+            if ($status == 'VALID') {
+                return redirect(self::redirect_if_payment_success());
+            }
+
+            session()->put('payment_msg', $validationData['error'] ?? 'Transaction not valid');
+            return redirect(self::redirect_if_payment_faild());
+
+        } catch (\Exception $e) {
+            session()->put('payment_msg', $e->getMessage());
+            return redirect(self::redirect_if_payment_faild());
         }
     }
 }

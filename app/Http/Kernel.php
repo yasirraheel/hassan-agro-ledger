@@ -32,18 +32,22 @@ class Kernel extends HttpKernel
         'web' => [
             \App\Http\Middleware\EncryptCookies::class,
             \Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse::class,
+            // \Laravel\LaravelInstaller\Middleware\CheckToken::class,
             \Illuminate\Session\Middleware\StartSession::class,
             \Illuminate\View\Middleware\ShareErrorsFromSession::class,
             \App\Http\Middleware\VerifyCsrfToken::class,
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
             \App\Http\Middleware\SetLocale::class,
             \App\Http\Middleware\DemoMode::class,
+            \App\Http\Middleware\CheckActiveBranch::class,
+            \App\Http\Middleware\CheckDomain::class,
         ],
 
         'api' => [
             // \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
-            \Illuminate\Routing\Middleware\ThrottleRequests::class.':api',
+            \Illuminate\Routing\Middleware\ThrottleRequests::class . ':api',
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
+            \App\Http\Middleware\DemoMode::class
         ],
     ];
 
@@ -70,6 +74,11 @@ class Kernel extends HttpKernel
         'permission' => \Spatie\Permission\Middleware\PermissionMiddleware::class,
         'role_or_permission' => \Spatie\Permission\Middleware\RoleOrPermissionMiddleware::class,
         'admin' => \App\Http\Middleware\AdminMiddleware::class,
-        // 'token_expired' => \App\Http\Middleware\TokenExpired::class,
+        'users' =>  \App\Http\Middleware\UserMiddleware::class,
+        'expired' => \App\Http\Middleware\ExpiredMiddleware::class,
+        'affiliator' =>  \App\Http\Middleware\AffiliatorMiddleware::class,
+        'resolve.business' => \App\Http\Middleware\ResolveBusiness::class,
+        'check.permission' => \App\Http\Middleware\CheckPermission::class,
+        'module' => \App\Http\Middleware\CheckModuleAccess::class,
     ];
 }

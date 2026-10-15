@@ -16,7 +16,14 @@
                                         <p class="ms-1 mb-0">{{ formatted_date($blog->updated_at) }}</p>
                                     </div>
                                     <h6 class="h6-line-clamp">{{ $blog->title }}</h6>
-                                    <p> {{ $blog->descriptions }} </p>
+                                    <p>
+                                        {!! Str::limit(strip_tags($blog->descriptions), 120) !!}
+                                        @if (strpos($blog->descriptions, '<img') !== false)
+                                            <span class="text-muted"></span>
+                                        @endif
+                                    </p>
+
+                                    <br>
                                     <a href="{{ route('blogs.show', $blog->slug) }}"
                                         class="custom-clr-primary">{{ $page_data['headings']['blog_btn_text'] ?? '' }}<span
                                             class="font-monospace">></span></a>

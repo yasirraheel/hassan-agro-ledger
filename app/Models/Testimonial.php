@@ -2,12 +2,14 @@
 
 namespace App\Models;
 
+use App\Traits\ImageUrlTrait;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Testimonial extends Model
 {
-    use HasFactory;
+    use HasFactory, ImageUrlTrait;
+
     protected $fillable = [
         'text',
         'star',
@@ -15,4 +17,11 @@ class Testimonial extends Model
         'client_image',
         'work_at'
     ];
+
+    protected $casts = [
+        'star' => 'integer',
+    ];
+
+    protected $imageFields = ['client_image'];
+
 }

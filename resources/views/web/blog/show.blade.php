@@ -30,7 +30,7 @@
                             </div>
                             <h6 class="mt-2">{{ $blog->title }}</h6>
                             <p>
-                                {{ $blog->descriptions }}
+                                {!! $blog->descriptions !!}
                             </p>
 
                             <div class="comments">

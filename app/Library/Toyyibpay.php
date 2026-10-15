@@ -14,7 +14,7 @@ class Toyyibpay
         if (Session::has('fund_callback')) {
             return url(Session::get('fund_callback')['success_url']);
         } else {
-            return url('users/payment/success');
+            return url('payment/success');
         }
     }
 
@@ -23,7 +23,7 @@ class Toyyibpay
         if (Session::has('fund_callback')) {
             return url(Session::get('fund_callback')['cancel_url']);
         } else {
-            return url('users/payment/failed');
+            return url('payment/failed');
         }
     }
 
@@ -32,7 +32,7 @@ class Toyyibpay
         if (Session::get('without_auth')) {
             return url('payment/toyyibpay');
         }
-        return url('users/payment/toyyibpay');
+        return url('payment/toyyibpay');
     }
 
     public static function make_payment($array)
@@ -46,8 +46,8 @@ class Toyyibpay
         $amount = $array['pay_amount'];
         $name = $array['name'];
         $billName = $array['billName'];
-        $test_mode = $array['test_mode'];
-        $data['test_mode'] = $test_mode;
+        $mode = $array['mode'];
+        $data['mode'] = $mode;
 
         $data['user_secret_key'] = $array['user_secret_key'];
         $data['cateogry_code'] = $array['cateogry_code'];
@@ -63,17 +63,17 @@ class Toyyibpay
         $data['email'] = $email;
         $data['currency'] = $currency;
 
-        if ($test_mode == 0) {
+        if ($mode == 0) {
             $data['env'] = false;
-            $test_mode = false;
+            $mode = false;
         } else {
             $data['env'] = true;
-            $test_mode = true;
+            $mode = true;
         }
 
         Session::put('toyyibpay_credentials', $data);
 
-        if ($test_mode == false) {
+        if ($mode == false) {
             $url = 'https://toyyibpay.com/';
         } else {
             $url = 'https://dev.toyyibpay.com/';

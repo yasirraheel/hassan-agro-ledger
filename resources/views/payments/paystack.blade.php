@@ -6,14 +6,14 @@
             <div class="col-md-6">
                 <div class="card">
                     <div class="card-body text-center">
-                        <a class="theme-btn d-block" href="{{ route('users.dashboard.index') }}"><i class="fas fa-arrow-left"></i> {{ __('Go Back') }}</a>
+                        <a class="theme-btn d-block" href="{{ route('business.subscriptions.index') }}"><i class="fas fa-arrow-left"></i> {{ __('Go Back') }}</a>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <form method="post" class="status" action="{{ route('users.paystack.status') }}">
+    <form method="post" class="status" action="{{ route('paystack.status') }}">
         @csrf
         <input type="hidden" name="ref_id" id="ref_id">
         <input type="hidden" value="{{ $Info['currency'] }}" id="currency">

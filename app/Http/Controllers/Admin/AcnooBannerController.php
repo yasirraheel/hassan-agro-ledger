@@ -23,21 +23,15 @@ class AcnooBannerController extends Controller
 
     public function index(Request $request)
     {
-        $banners = Banner::latest()->paginate(20);
-        return view('admin.banners.index', compact('banners'));
-    }
-
-    public function acnooFilter(Request $request)
-    {
-        $banners = Banner::latest()->paginate($request->per_page ?? 20);
+        $banners = Banner::latest()->paginate($request->per_page ?? 20)->appends($request->query());
 
         if ($request->ajax()) {
             return response()->json([
-                'data' => view('admin.banners.search', compact('banners'))->render()
+                'data' => view('admin.banners.datas', compact('banners'))->render()
             ]);
         }
 
-        return redirect(url()->previous());
+        return view('admin.banners.index', compact('banners'));
     }
 
     public function create()
@@ -136,7 +130,7 @@ class AcnooBannerController extends Controller
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
-            return response()->json(__('Something was wrong.'), 400);
+            return response()->json(__('Something went wrong.'), 400);
         }
 
     }

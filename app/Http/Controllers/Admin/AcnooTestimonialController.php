@@ -22,21 +22,13 @@ class AcnooTestimonialController extends Controller
 
     public function index(Request $request)
     {
-        $testimonials = Testimonial::latest()->paginate(20);
-        return view('admin.testimonials.index', compact('testimonials'));
-    }
-
-    public function acnooFilter(Request $request)
-    {
-        $testimonials = Testimonial::when(request('search'), function ($q) {
-            $q->where(function ($q) {
-                $q->where('text', 'like', '%' . request('search') . '%')
-                    ->orWhere('client_name', 'like', '%' . request('search') . '%')
-                    ->orWhere('work_at', 'like', '%' . request('search') . '%');
+        $testimonials = Testimonial::when($request->search, function ($q) use ($request) {
+            $q->where(function ($q) use ($request) {
+                $q->where('text', 'like', '%' . $request->search . '%')
+                  ->orWhere('client_name', 'like', '%' . $request->search . '%')
+                  ->orWhere('work_at', 'like', '%' . $request->search . '%');
             });
-        })
-            ->latest()
-            ->paginate($request->per_page ?? 20);
+        })->latest()->paginate($request->per_page ?? 20)->appends($request->query());
 
         if ($request->ajax()) {
             return response()->json([
@@ -44,7 +36,8 @@ class AcnooTestimonialController extends Controller
             ]);
         }
 
-        return redirect(url()->previous());
+        return view('admin.testimonials.index', compact('testimonials'));
+
     }
 
     public function create()
@@ -59,7 +52,7 @@ class AcnooTestimonialController extends Controller
             'text' => 'nullable',
             'star' => 'nullable',
             'client_name' => 'required|string',
-            'client_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'client_image' => 'nullable|image|mimes:jpeg,png,jpg,gif',
         ]);
 
         Testimonial::create($request->except('client_image') + [
@@ -72,8 +65,9 @@ class AcnooTestimonialController extends Controller
         ]);
     }
 
-    public function edit(Testimonial $testimonial)
+    public function edit(string $id)
     {
+        $testimonial = Testimonial::findOrFail($id);
         return view('admin.testimonials.edit', compact('testimonial'));
     }
 
@@ -84,7 +78,7 @@ class AcnooTestimonialController extends Controller
             'text' => 'nullable|string',
             'star' => 'nullable|integer',
             'client_name' => 'required|string',
-            'client_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'client_image' => 'nullable|image|mimes:jpeg,png,jpg,gif',
         ]);
 
         $testimonial->update($request->except('client_image') + [

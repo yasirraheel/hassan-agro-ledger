@@ -5,10 +5,10 @@
                 <input type="checkbox" name="ids[]" class="checkbox-item" value="{{ $newsletter->id }}" data-url="{{ route('admin.newsletters.delete-all') }}">
             </td>
         @endcan
-        <td>{{ $loop->index + 1 }}</td>
+        <td>{{ ($newsletters->currentPage() - 1) * $newsletters->perPage() + $loop->iteration }}</td>
         <td>{{ $newsletter->email }}</td>
         <td>{{ formatted_date($newsletter->created_at) }}</td>
-        <td class="print-d-none">
+        <td class="d-print-none">
             <div class="dropdown table-action">
                 <button type="button" data-bs-toggle="dropdown">
                     <i class="far fa-ellipsis-v"></i>

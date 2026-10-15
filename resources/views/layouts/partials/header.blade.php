@@ -1,4 +1,4 @@
-<header class="main-header-section">
+<header class="main-header-section sticky-top">
     <div class="header-wrapper">
         <div class="header-left">
             <div class="sidebar-opner"><i class="fal fa-bars" aria-hidden="true"></i></div>
@@ -10,38 +10,38 @@
         <div class="header-middle"></div>
         <div class="header-right">
             <div class="language-change">
-                {{-- <div class="dropdown">
-                    <button class="btn btn-light dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        {{ languages()[app()->getLocale()] }}
-                    </button>
-                    <ul class="dropdown-menu">
-                        @foreach (languages() as $key => $language)
-                        <li><a class="dropdown-item" href="{{ request()->fullUrlWithQuery(['lang' => $key]) }}">{{ $language }}</a></li>
-                        @endforeach
-                    </ul>
-                </div> --}}
-
                 <div class="dropdown">
+                    @php
+                        if (app()->getLocale()) {
+                            $lang = languages()->where('code', app()->getLocale())->first();
+                        }
+
+                        if (!$lang) {
+                            $lang = languages()->where('is_default', 1)->first();
+                        }
+                    @endphp
                     <button class="btn btn-light dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        <img src="{{ asset('flags/' . languages()[app()->getLocale()]['flag'] . '.svg') }}" alt="" class="flag-icon me-2">
-                        {{ languages()[app()->getLocale()]['name'] }}
+                        <img src="{{ asset($lang->icon ?? 'assets/img/default-flag.svg') }}" alt="" class="flag-icon me-2">
+                        <span class="lang-name">
+                            {{ $lang->name ?? 'English' }}
+                        </span>
                     </button>
                     <ul class="dropdown-menu dropdown-menu-scroll">
-                        @foreach (languages() as $key => $language)
+                        @foreach (languages() as $language)
                             <li class="language-li">
-                                <a class="dropdown-item" href="{{ request()->fullUrlWithQuery(['lang' => $key]) }}">
-                                    <img src="{{ asset('flags/' . $language['flag'] . '.svg') }}" alt="" class="flag-icon me-2">
-                                    {{ $language['name'] }}
+                                <a class="dropdown-item" href="{{ request()->fullUrlWithQuery(['lang' => $language->code]) }}">
+                                    <img src="{{ asset($language->icon) }}" alt="" class="flag-icon me-2">
+                                    {{ $language->name }}
                                 </a>
-                                @if (app()->getLocale() == $key)
+                                @if (app()->getLocale() == $language->code)
                                     <i class="fas fa-check language-check"></i>
                                 @endif
                             </li>
                         @endforeach
                     </ul>
                 </div>
-
             </div>
+
             @if (auth()->user()->role == 'superadmin')
             <div class="notifications dropdown">
                 <a href="#" class="dropdown-toggleer mt-1 me-3" data-bs-toggle="dropdown">

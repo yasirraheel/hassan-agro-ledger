@@ -26,4 +26,10 @@ class Comment extends Model
     {
         return $this->hasMany(Comment::class, 'comment_id');
     }
+
+    protected $casts = [
+        'blog_id' => 'integer',
+        'comment_id' => 'integer',
+        'status' => 'integer'
+    ];
 }

@@ -4,7 +4,7 @@
         <div class="row mt-5">
             <div class="col-md-6 col-lg-5">
                 <a href="{{ route('home') }}">
-                    <img src="{{ asset($general->value['footer_logo'] ?? '') }}" alt="footer-logo" class="footer-logo" />
+                    <img src="{{ Storage::url($general->value['footer_logo'] ?? '') }}" alt="footer-logo" class="footer-logo" />
                 </a>
                 <p class="mt-3 footer-details">
                     {{ $page_data['headings']['footer_short_title'] ?? '' }}
@@ -12,7 +12,7 @@
 
                 <div class="banner-scan">
                     @if (!empty($page_data['footer_scanner_image']))
-                    <img src="{{ asset($page_data['footer_scanner_image'] ?? '') }}" alt="" class="w-20" />
+                    <img src="{{ Storage::url($page_data['footer_scanner_image'] ?? '') }}" alt="" class="w-20" />
                     <p>
                         {{ $page_data['headings']['footer_scanner_title'] ?? '' }}
                     </p>
@@ -22,13 +22,13 @@
                 <div class="footer-play-store mt-3 mb-3">
                     @if (!empty($page_data['footer_google_app_image']))
                         <a href="{{ $page_data['headings']['footer_google_play_app_link'] ?? '' }}" target="_blank">
-                            <img src="{{ asset($page_data['footer_google_app_image']) }}" alt="Google Play App" />
+                            <img src="{{ Storage::url($page_data['footer_google_app_image']) }}" alt="Google Play App" />
                         </a>
                     @endif
 
                     @if (!empty($page_data['footer_apple_app_image']))
                         <a href="{{ $page_data['headings']['footer_apple_app_link'] ?? '' }}" target="_blank">
-                            <img src="{{ asset($page_data['footer_apple_app_image']) }}" alt="Apple App Store" />
+                            <img src="{{ Storage::url($page_data['footer_apple_app_image']) }}" alt="Apple App Store" />
                         </a>
                     @endif
                 </div>
@@ -105,7 +105,7 @@
                     @foreach ($page_data['headings']['footer_socials_links'] ?? [] as $key => $footer_socials_link)
                         <li>
                             <a href="{{ url($footer_socials_link) }}" target="_blank">
-                                <img src="{{ asset($page_data['footer_socials_icons'][$key] ?? 'assets/img/demo-img.png') }}" alt="icon">
+                                <img src="{{ Storage::url($page_data['footer_socials_icons'][$key] ?? 'assets/img/demo-img.png') }}" alt="icon">
                             </a>
                         </li>
                     @endforeach
@@ -120,3 +120,5 @@
         </div>
     </div>
 </footer>
+
+<input type="hidden" id="get-business-categories" value="{{ route('get-business-categories') }}">

@@ -55,15 +55,20 @@ class AcnooProfileController extends Controller
     {
         $request->validate([
             'current_password' => 'required',
-            'password' => 'required|confirmed|string|min:6',
-            'password_confirmation' => 'required',
+            'password' => 'required|string|min:6',
         ]);
 
         $user = auth()->user();
 
+        if ($request->current_password == $request->password){
+            return response()->json([
+                'message' => __('You have already used this password.')
+            ], 422);
+        }
+
         if (!Hash::check($request->current_password, $user->password)) {
             return response()->json([
-                'error' => __('Current password does not match with old password.')
+                'message' => __('Current password does not match with old password.')
             ], 422);
         }
 

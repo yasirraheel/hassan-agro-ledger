@@ -14,13 +14,7 @@ class AcnooInterfaceController extends Controller
 
     public function index(Request $request)
     {
-        $interfaces = PosAppInterface::latest()->paginate(20);
-        return view('admin.website-setting.interfaces.index', compact('interfaces'));
-    }
-
-    public function acnooFilter(Request $request)
-    {
-        $interfaces = PosAppInterface::latest()->paginate($request->per_page ?? 20);
+        $interfaces = PosAppInterface::latest()->paginate($request->per_page ?? 20)->appends($request->query());
 
         if ($request->ajax()) {
             return response()->json([
@@ -28,7 +22,7 @@ class AcnooInterfaceController extends Controller
             ]);
         }
 
-        return redirect(url()->previous());
+        return view('admin.website-setting.interfaces.index', compact('interfaces'));
     }
 
     public function create()
@@ -40,7 +34,7 @@ class AcnooInterfaceController extends Controller
     {
         $request->validate([
             'status' => 'required',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif',
         ]);
 
         PosAppInterface::create($request->except('image') + [
@@ -64,7 +58,7 @@ class AcnooInterfaceController extends Controller
         $interface = PosAppInterface::findOrFail($id);
         $request->validate([
             'status' => 'required',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif',
         ]);
 
         $interface->update($request->except('image') + [

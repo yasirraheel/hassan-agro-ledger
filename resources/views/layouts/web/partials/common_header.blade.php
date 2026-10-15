@@ -2,7 +2,7 @@
     <nav class="navbar navbar-expand-lg p-0">
         <div class="container">
             <a href="{{ route('home') }}" class="header-logo">
-                <img src="{{ asset($general->value['common_header_logo'] ?? 'assets/images/icons/upload-icon.svg') }}"
+                <img src="{{ Storage::url($general->value['common_header_logo'] ?? 'assets/images/icons/upload-icon.svg') }}"
                     alt="header-logo" />
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#staticBackdrop"
@@ -14,7 +14,7 @@
                 tabindex="-1" id="staticBackdrop" aria-labelledby="staticBackdropLabel">
                 <div class="offcanvas-header">
                     <a href="{{ route('home') }}" class="header-logo"><img
-                            src="{{ asset($general->value['common_header_logo'] ?? 'assets/images/icons/upload-icon.svg') }}"
+                            src="{{ Storage::url($general->value['common_header_logo'] ?? 'assets/images/icons/upload-icon.svg') }}"
                             alt="header-logo" /></a>
                     <button type="button" class="btn-close btn-close-commmon" data-bs-dismiss="offcanvas"
                         aria-label="Close">

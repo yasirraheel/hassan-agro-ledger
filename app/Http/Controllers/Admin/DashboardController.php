@@ -12,10 +12,6 @@ use App\Http\Controllers\Controller;
 
 class DashboardController extends Controller
 {
-    public function __construct()
-    {
-        $this->middleware('permission:dashboard-read')->only('index');
-    }
 
     public function index()
     {

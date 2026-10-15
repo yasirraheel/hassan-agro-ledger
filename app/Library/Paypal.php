@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Library;
 
 use App\Models\Gateway;
@@ -13,7 +14,7 @@ class Paypal
         if (Session::has('fund_callback')) {
             return url(Session::get('fund_callback')['success_url']);
         } else {
-            return url('users/payment/success');
+            return url('payment/success');
         }
     }
 
@@ -22,7 +23,7 @@ class Paypal
         if (Session::has('fund_callback')) {
             return url(Session::get('fund_callback')['cancel_url']);
         } else {
-            return url('users/payment/failed');
+            return url('payment/failed');
         }
     }
 
@@ -31,7 +32,7 @@ class Paypal
         if (Session::get('without_auth')) {
             return url('payment/paypal');
         }
-        return url('users/payment/paypal');
+        return url('payment/paypal');
     }
 
     public static function make_payment($array)
@@ -46,37 +47,27 @@ class Paypal
         $email = $array['email'];
         $amount = round($array['pay_amount']);
         $name = $array['name'];
-        $test_mode = $array['test_mode'];
+        $mode = $array['mode'] == 'Live' ? 0 : 1;
         $billName = $array['billName'];
         $data['client_id'] = $client_id;
         $data['client_secret'] = $client_secret;
         $data['payment_mode'] = 'paypal';
 
         $data['amount'] = $amount;
-        $data['test_mode'] = $test_mode;
+        $data['mode'] = $mode;
         $data['charge'] = $array['charge'];
         $data['main_amount'] = $array['amount'];
         $data['gateway_id'] = $array['gateway_id'];
         $data['payment_type'] = $array['payment_type'] ?? '';
 
-        if ($test_mode == 0) {
-            $data['env'] = false;
-            $test_mode = false;
-            $final = str_replace(',', '', number_format($amount, 3));
-        } else {
-            $data['env'] = true;
-            $test_mode = true;
-            $final = str_replace(',', '', number_format($amount / 100, 3));
-        }
-
         Session::put('paypal_credentials', $data);
         $gateway = Omnipay::create('PayPal_Rest');
         $gateway->setClientId($client_id);
         $gateway->setSecret($client_secret);
-        $gateway->setTestMode($test_mode);
+        $gateway->setTestMode($mode);
 
         $response = $gateway->purchase(array(
-            'amount' => $final,
+            'amount' => $amount,
             'currency' => strtoupper($currency),
             'returnUrl' => Paypal::fallback(),
             'cancelUrl' => Paypal::redirect_if_payment_faild(),
@@ -91,8 +82,8 @@ class Paypal
             // not successful
 
             return request()->expectsJson() ?
-            Paypal::redirect_if_payment_faild() :
-            redirect(Paypal::redirect_if_payment_faild());
+                Paypal::redirect_if_payment_faild() :
+                redirect(Paypal::redirect_if_payment_faild());
         }
     }
 
@@ -104,7 +95,7 @@ class Paypal
         $gateway = Omnipay::create('PayPal_Rest');
         $gateway->setClientId($credentials['client_id']);
         $gateway->setSecret($credentials['client_secret']);
-        $gateway->setTestMode($credentials['env']);
+        $gateway->setTestMode($credentials['mode']);
 
         $request = $request->all();
 
@@ -114,6 +105,7 @@ class Paypal
         ));
 
         $response = $transaction->send();
+
         if ($response->isSuccessful()) {
             $arr_body = $response->getData();
             $data['payment_id'] = $arr_body['id'];
@@ -129,16 +121,16 @@ class Paypal
             Session::forget('paypal_credentials');
 
             return request()->expectsJson() ?
-            Paypal::redirect_if_payment_success() :
-            redirect(Paypal::redirect_if_payment_faild());
+                Paypal::redirect_if_payment_success() :
+                redirect(Paypal::redirect_if_payment_success());
         } else {
             $data['payment_status'] = 0;
             Session::put('payment_info', $data);
             Session::forget('paypal_credentials');
 
             return request()->expectsJson() ?
-            Paypal::redirect_if_payment_faild() :
-            redirect(Paypal::redirect_if_payment_faild());
+                Paypal::redirect_if_payment_faild() :
+                redirect(Paypal::redirect_if_payment_faild());
         }
     }
 }

@@ -4,8 +4,9 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Plan;
+use App\Services\PlanService;
 use Illuminate\Http\Request;
-use Spatie\Permission\Models\Role;
+use Illuminate\Support\Facades\DB;
 
 class AcnooPlanController extends Controller
 {
@@ -17,23 +18,17 @@ class AcnooPlanController extends Controller
         $this->middleware('permission:plans-delete')->only('destroy', 'deleteAll');
     }
 
-    public function index()
+    public function index(Request $request)
     {
-        $plans = Plan::latest()->paginate(20);
-        return view('admin.plans.index',  compact('plans'));
-    }
+        $search = $request->input('search');
 
-    public function acnooFilter(Request $request)
-    {
-        $plans = Plan::when(request('search'), function ($q) {
-            $q->where(function ($q) {
-                $q->orWhere('subscriptionName', 'like', '%' . request('search') . '%')
-                    ->orWhere('duration', 'like', '%' . request('search') . '%')
-                    ->orWhere('subscriptionPrice', 'like', '%' . request('search') . '%');
+        $plans = Plan::when($request->search, function ($q) use ($search) {
+            $q->where(function ($q) use ($search) {
+                $q->where('subscriptionName', 'like', '%' . $search . '%')
+                    ->orWhere('duration', 'like', '%' . $search . '%')
+                    ->orWhere('subscriptionPrice', 'like', '%' . $search . '%');
             });
-        })
-            ->latest()
-            ->paginate($request->per_page ?? 20);
+        })->latest()->paginate($request->per_page ?? 20)->appends($request->query());
 
         if ($request->ajax()) {
             return response()->json([
@@ -41,27 +36,38 @@ class AcnooPlanController extends Controller
             ]);
         }
 
-        return redirect(url()->previous());
+        return view('admin.plans.index', compact('plans'));
     }
 
     public function create()
     {
-        $roles = Role::where('name', '!=', 'author')->get();
-        return view('admin.plans.create', compact('roles'));
+        return view('admin.plans.create');
     }
 
     public function store(Request $request)
     {
         $request->validate([
-            'subscriptionName' => 'required|string|max:255',
             'duration' => 'required|string',
             'offerPrice' => 'nullable|numeric|min:0|max:9999999999999',
+            'subscriptionName' => 'required|string|max:255|unique:plans,subscriptionName',
             'subscriptionPrice' => 'required|numeric|min:0|max:9999999999999',
+            'addon_domain_limit' => 'nullable|integer|min:0',
+            'subdomain_limit' => 'nullable|integer|min:0',
+            'user_limit' => 'nullable|integer|min:-1',
+            'product_limit' => 'nullable|integer|min:-1',
+            'customer_limit' => 'nullable|integer|min:-1',
+            'supplier_limit' => 'nullable|integer|min:-1',
+            'warehouse_limit' => 'nullable|integer|min:-1',
+            'branch_limit' => 'nullable|integer|min:-1',
         ]);
 
-        Plan::create($request->except(['offerPrice','status']) + [
-            'offerPrice' => $request->offerPrice ?? NULL,
-            'status' => $request->status ? 1 : 0,
+        Plan::create(PlanService::resolveLimits($request) + [
+            'subscriptionName' => $request->subscriptionName,
+            'subscriptionPrice' => $request->subscriptionPrice,
+            'offerPrice' => $request->offerPrice,
+            'duration' => $request->duration,
+            'status' => 1,
+            'available_modules' => PlanService::processModules($request),
         ]);
 
         return response()->json([
@@ -70,44 +76,90 @@ class AcnooPlanController extends Controller
         ]);
     }
 
-
     public function edit(Plan $plan)
     {
         return view('admin.plans.edit', compact('plan'));
     }
 
-
     public function update(Request $request, Plan $plan)
     {
         $request->validate([
-            'subscriptionName' => 'required|string|max:255',
             'duration' => 'required|string',
             'offerPrice' => 'nullable|numeric|min:0|max:9999999999999',
             'subscriptionPrice' => 'required|numeric|min:0|max:9999999999999',
+            'subscriptionName' => 'required|string|max:255|unique:plans,subscriptionName,' . $plan->id,
+            'addon_domain_limit' => 'nullable|integer|min:0',
+            'subdomain_limit' => 'nullable|integer|min:0',
+            'user_limit' => 'nullable|integer|min:-1',
+            'product_limit' => 'nullable|integer|min:-1',
+            'customer_limit' => 'nullable|integer|min:-1',
+            'supplier_limit' => 'nullable|integer|min:-1',
+            'warehouse_limit' => 'nullable|integer|min:-1',
+            'branch_limit' => 'nullable|integer|min:-1',
         ]);
 
-        $plan->update($request->except(['offerPrice','status']) + [
-            'offerPrice' => $request->offerPrice ?? NULL,
-            'status' => $request->status ? 1 : 0,
-        ]);
+        if ($plan->subscriptionName == 'Free' && ($plan->subscriptionName != $request->subscriptionName || $plan->subscriptionPrice != $request->subscriptionPrice || $plan->offerPrice != $request->offerPrice)) {
+            return response()->json([
+                'message' => __('You can not change the package name & price of free plan.'),
+            ], 406);
+        }
 
-        return response()->json([
-            'message' => __('Subscription Plan updated successfully'),
-            'redirect' => route('admin.plans.index')
-        ]);
+        DB::beginTransaction();
+        try {
+            $limits = PlanService::resolveLimits($request);
+            $modules = PlanService::processModules($request);
+
+            $plan->update($limits + [
+                'subscriptionName' => $request->subscriptionName,
+                'subscriptionPrice' => $request->subscriptionPrice,
+                'offerPrice' => $request->offerPrice,
+                'duration' => $request->duration,
+                'available_modules' => $modules,
+            ]);
+
+            if ($request->apply_to_subscribers) {
+                PlanService::updateActiveSubscribers(
+                    $plan,
+                    PlanService::buildSubscriberUpdateData($request, $modules)
+                );
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'message' => __('Subscription Plan updated successfully'),
+                'redirect' => route('admin.plans.index')
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'message' => 'Something went wrong.',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 
-    public function status(Request $request, $id)
+    public function status(Request $request, Plan $plan)
     {
-        $plan = Plan::findOrFail($id);
+        if ($plan->subscriptionName == 'Free') {
+            return response()->json([
+                'message' => __('You can not change the status for free plan.'),
+            ], 406);
+        }
         $plan->update(['status' => $request->status]);
         return response()->json(['message' => 'Plan']);
     }
 
-
     public function destroy(Plan $plan)
     {
+        if ($plan->subscriptionName == 'Free') {
+            return response()->json([
+                'message' => __('You can not delete free plan.'),
+            ], 406);
+        }
+
         $plan->delete();
+
         return response()->json([
             'message'   => __('Subscription Plan deleted successfully'),
             'redirect'  => route('admin.plans.index')
@@ -116,7 +168,7 @@ class AcnooPlanController extends Controller
 
     public function deleteAll(Request $request)
     {
-        Plan::whereIn('id', $request->ids)->delete();
+        Plan::whereIn('id', $request->ids)->where('subscriptionName', '!=', 'Free')->delete();
         return response()->json([
             'message' => __('Subscription plan deleted successfully'),
             'redirect' => route('admin.plans.index')

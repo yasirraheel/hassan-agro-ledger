@@ -1,3 +1,5 @@
+@include('layouts.lang-text')
+
 <script src="{{ asset('assets/js/jquery-3.7.1.min.js') }}"></script>
 <script src="{{ asset('assets/js/bootstrap.bundle.min.js') }}"></script>
 <script src="{{ asset('assets/js/toastr.min.js') }}"></script>
@@ -19,5 +21,10 @@
 @if(Session::has('error'))
     <script>
         Notify('error', null, "{{ Session::get('error') }}");
+    </script>
+@endif
+@if(Session::has('warning'))
+    <script>
+        Notify('warning', null, "{{ Session::get('warning') }}");
     </script>
 @endif

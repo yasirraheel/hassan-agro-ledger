@@ -18,7 +18,7 @@ class Razorpay
         if (Session::has('fund_callback')) {
             return url(Session::get('fund_callback')['success_url']);
         } else {
-            return url('users/payment/success');
+            return url('payment/success');
         }
     }
 
@@ -27,7 +27,7 @@ class Razorpay
         if (Session::has('fund_callback')) {
             return url(Session::get('fund_callback')['cancel_url']);
         } else {
-            return url('users/payment/failed');
+            return url('payment/failed');
         }
     }
 
@@ -40,7 +40,7 @@ class Razorpay
             $promotion = Session::get('promotion');
             $product = Session::get('product');
 
-            return view('users.payments.razorpay', compact('response', 'Info', 'gateway'));
+            return view('payments.razorpay', compact('response', 'Info', 'gateway'));
         }
         abort(404);
     }
@@ -67,20 +67,20 @@ class Razorpay
         $data['gateway_id'] = $array['gateway_id'];
         $data['is_fallback'] = $array['is_fallback'] ?? 0;
         $data['main_amount'] = $array['amount'];
-        $test_mode = $array['test_mode'];
-        $data['test_mode'] = $test_mode;
+        $mode = $array['mode'];
+        $data['mode'] = $mode;
 
         $data['billName'] = $billName;
         $data['name'] = $name;
         $data['email'] = $email;
         $data['currency'] = $currency;
 
-        if ($test_mode == 0) {
+        if ($mode == 0) {
             $data['env'] = false;
-            $test_mode = false;
+            $mode = false;
         } else {
             $data['env'] = true;
-            $test_mode = true;
+            $mode = true;
         }
 
         Session::put('razorpay_credentials', $data);
@@ -89,7 +89,7 @@ class Razorpay
 
         Session::put('razorpay_response', $response);
 
-        return request()->expectsJson() ? route('users.razorpay.view') : redirect()->route('users.razorpay.view');
+        return request()->expectsJson() ? route('razorpay.view') : redirect()->route('razorpay.view');
     }
 
     public static function get_response()

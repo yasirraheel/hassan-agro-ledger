@@ -6,6 +6,7 @@ use App\Models\Plan;
 use App\Models\User;
 use App\Models\Gateway;
 use App\Models\Business;
+use App\Models\PaymentType;
 use App\Helpers\HasUploader;
 use Illuminate\Http\Request;
 use App\Models\PlanSubscribe;
@@ -13,6 +14,10 @@ use App\Models\BusinessCategory;
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Cache;
+use Modules\AffiliateAddon\App\Models\Affiliate;
+use Modules\AffiliateAddon\App\Models\AffiliateTransaction;
+use Illuminate\Validation\Rule;
 
 class AcnooBusinessController extends Controller
 {
@@ -31,28 +36,25 @@ class AcnooBusinessController extends Controller
     {
         $plans = Plan::latest()->get();
         $gateways = Gateway::latest()->get();
-        $businesses = Business::with('enrolled_plan:id,plan_id', 'enrolled_plan.plan:id,subscriptionName', 'category:id,name')->latest()->paginate(20);
-        return view('admin.business.index', compact('businesses', 'gateways', 'plans'));
-    }
 
-    public function acnooFilter(Request $request)
-    {
         $search = $request->input('search');
 
-        $businesses = Business::when($search, function ($q) use ($search) {
+        $businesses = Business::with(['enrolled_plan:id,plan_id', 'enrolled_plan.plan:id,subscriptionName', 'category:id,name'])
+            ->when($request->search, function ($q) use ($search) {
             $q->where(function ($q) use ($search) {
                 $q->where('companyName', 'like', '%' . $search . '%')
-                    ->orWhere('phoneNumber', 'like', '%' . $search . '%')
-                    ->orWhereHas('category', function ($q) use ($search) {
-                        $q->where('name', 'like', '%' . $search . '%');
-                    })
-                    ->orWhereHas('enrolled_plan.plan', function ($q) use ($search) {
-                        $q->where('subscriptionName', 'like', '%' . $search . '%');
-                    });
+                        ->orWhere('phoneNumber', 'like', '%' . $search . '%')
+                        ->orWhereHas('category', function ($q) use ($search) {
+                            $q->where('name', 'like', '%' . $search . '%');
+                        })
+                        ->orWhereHas('user', function ($q) use ($search) {
+                            $q->where('email', 'like', '%' . $search . '%');
+                        })
+                        ->orWhereHas('enrolled_plan.plan', function ($q) use ($search) {
+                            $q->where('subscriptionName', 'like', '%' . $search . '%');
+                        });
             });
-        })
-            ->latest()
-            ->paginate($request->per_page ?? 10);
+        })->latest()->paginate($request->per_page ?? 20)->appends($request->query());
 
         if ($request->ajax()) {
             return response()->json([
@@ -60,8 +62,9 @@ class AcnooBusinessController extends Controller
             ]);
         }
 
-        return redirect(url()->previous());
+        return view('admin.business.index', compact('businesses', 'gateways', 'plans'));
     }
+
 
     public function create()
     {
@@ -77,8 +80,8 @@ class AcnooBusinessController extends Controller
             'address' => 'nullable|max:250',
             'companyName' => 'required|max:250',
             'email' => 'required|email|unique:users',
-            'password' => 'required|string|min:6',
-            'pictureUrl' => 'nullable|image|max:2024',
+            'password' => 'required|string|min:4|confirmed',
+            'pictureUrl' => 'nullable|image',
             'phoneNumber' => 'nullable',
             'shopOpeningBalance' => 'nullable|numeric',
             'business_category_id' => 'required|exists:business_categories,id',
@@ -86,7 +89,6 @@ class AcnooBusinessController extends Controller
         ]);
 
         DB::beginTransaction();
-
         try {
 
             $user = auth()->user();
@@ -95,7 +97,6 @@ class AcnooBusinessController extends Controller
                 'companyName' => $request->companyName,
                 'address' => $request->address,
                 'email' =>  $request->email,
-                'password' => $request->password,
                 'phoneNumber' => $request->phoneNumber,
                 'shopOpeningBalance' => $request->shopOpeningBalance,
                 'business_category_id' => $request->business_category_id,
@@ -103,15 +104,19 @@ class AcnooBusinessController extends Controller
                 'user_id' => $user->id,
             ]);
 
+            PaymentType::create([
+                'name' => "Cash",
+                'business_id' => $business->id
+            ]);
+
             User::create([
-                'business_id'=>$business->id,
+                'business_id' => $business->id,
                 'name' => $request->companyName,
                 'email' =>  $request->email,
                 'phone' => $request->phoneNumber,
                 'image' => $request->pictureUrl ? $this->upload($request, 'pictureUrl') : NULL,
                 'password' => Hash::make($request->password),
                 'user_id' => $user->id,
-                'lang' => 'en',
             ]);
 
             if ($request->plan_subscribe_id) {
@@ -124,6 +129,16 @@ class AcnooBusinessController extends Controller
                     'business_id' => $business->id,
                     'price' => $plan->subscriptionPrice,
                     'gateway_id' => $request->gateway_id,
+                    'allow_multibranch' => $plan->allow_multibranch,
+                    'addon_domain_limit' => $plan->addon_domain_limit ?? 0,
+                    'subdomain_limit' => $plan->subdomain_limit ?? 0,
+                    'user_limit' => $plan->user_limit,
+                    'product_limit' => $plan->product_limit,
+                    'customer_limit' => $plan->customer_limit,
+                    'supplier_limit' => $plan->supplier_limit,
+                    'warehouse_limit' => $plan->warehouse_limit,
+                    'branch_limit' => $plan->branch_limit,
+                    'available_modules' => $plan->available_modules,
                 ]);
 
                 $business->update([
@@ -153,17 +168,25 @@ class AcnooBusinessController extends Controller
         $business = Business::findOrFail($id);
         $categories = BusinessCategory::latest()->get();
         $user = User::where('business_id', $business->id)->firstOrFail();
-        return view('admin.business.edit', compact('business', 'plans', 'categories','user'));
+        return view('admin.business.edit', compact('business', 'plans', 'categories', 'user'));
     }
 
     public function update(Request $request, string $id)
     {
+
+        $business = Business::findOrFail($id);
+        $user = User::where('business_id', $business->id)->firstOrFail();
+
         $request->validate([
             'address' => 'nullable|max:250',
             'companyName' => 'required|max:250',
-            'email' => 'required|email',
-            'password' => 'nullable|string|min:6',
-            'pictureUrl' => 'nullable|image|max:2024',
+            'email' => [
+                'required',
+                'email',
+                Rule::unique('users', 'email')->ignore($user->id),
+            ],
+            'password' => 'nullable|string|min:4|confirmed',
+            'pictureUrl' => 'nullable|image',
             'phoneNumber' => 'nullable',
             'shopOpeningBalance' => 'nullable|numeric',
             'business_category_id' => 'required|exists:business_categories,id',
@@ -173,18 +196,17 @@ class AcnooBusinessController extends Controller
         DB::beginTransaction();
 
         try {
-            $business = Business::findOrFail($id);
 
             $business->update([
                 'companyName' => $request->companyName,
                 'address' => $request->address,
+                'email' =>  $request->email,
                 'phoneNumber' => $request->phoneNumber,
                 'shopOpeningBalance' => $request->shopOpeningBalance,
                 'business_category_id' => $request->business_category_id,
                 'pictureUrl' => $request->pictureUrl ? $this->upload($request, 'pictureUrl', $business->pictureUrl) : $business->pictureUrl,
             ]);
 
-            $user = User::where('business_id', $business->id)->firstOrFail();
             $user->update([
                 'name' => $request->companyName,
                 'email' => $request->email,
@@ -193,9 +215,10 @@ class AcnooBusinessController extends Controller
                 'password' => $request->password ? Hash::make($request->password) : $user->password,
             ]);
 
-            if ($request->plan_subscribe_id) {
-                $plan = Plan::findOrFail($request->plan_subscribe_id);
+            $prev_subscription = PlanSubscribe::where('business_id', $business->id)->latest()->first();
 
+            if ($request->plan_subscribe_id && ($prev_subscription->plan_id != $request->plan_subscribe_id)) {
+                $plan = Plan::findOrFail($request->plan_subscribe_id);
                 $subscribe = PlanSubscribe::create([
                     'plan_id' => $plan->id,
                     'notes' => $request->notes,
@@ -203,6 +226,16 @@ class AcnooBusinessController extends Controller
                     'business_id' => $business->id,
                     'price' => $plan->subscriptionPrice,
                     'gateway_id' => $request->gateway_id,
+                    'allow_multibranch' => $plan->allow_multibranch,
+                    'addon_domain_limit' => $plan->addon_domain_limit ?? 0,
+                    'subdomain_limit' => $plan->subdomain_limit ?? 0,
+                    'user_limit' => $plan->user_limit,
+                    'product_limit' => $plan->product_limit,
+                    'customer_limit' => $plan->customer_limit,
+                    'supplier_limit' => $plan->supplier_limit,
+                    'warehouse_limit' => $plan->warehouse_limit,
+                    'branch_limit' => $plan->branch_limit,
+                    'available_modules' => $plan->available_modules,
                 ]);
 
                 $business->update([
@@ -271,13 +304,47 @@ class AcnooBusinessController extends Controller
                 'business_id' => $business->id,
                 'price' => $plan->subscriptionPrice,
                 'gateway_id' => $request->gateway_id,
+                'allow_multibranch' => $plan->allow_multibranch,
+                'addon_domain_limit' => $plan->addon_domain_limit ?? 0,
+                'subdomain_limit' => $plan->subdomain_limit ?? 0,
+                'user_limit' => $plan->user_limit,
+                'product_limit' => $plan->product_limit,
+                'customer_limit' => $plan->customer_limit,
+                'supplier_limit' => $plan->supplier_limit,
+                'warehouse_limit' => $plan->warehouse_limit,
+                'branch_limit' => $plan->branch_limit,
+                'available_modules' => $plan->available_modules,
             ]);
+
+            Cache::forget('plan-data-' . $business->id);
 
             $business->update([
                 'subscriptionDate' => now(),
                 'plan_subscribe_id' => $subscribe->id,
                 'will_expire' => now()->addDays($plan->duration),
             ]);
+
+            if (moduleCheck('AffiliateAddon') && $business->affiliator_id) {
+                $affiliateUser = User::find($business->affiliator_id);
+
+                if ($affiliateUser && $plan->affiliate_commission > 0) {
+                    $commission = ($plan->subscriptionPrice * $plan->affiliate_commission) / 100;
+
+                    Affiliate::where('user_id', $affiliateUser->id)->increment('balance', $commission);
+
+                    AffiliateTransaction::create([
+                        'user_id'        => $affiliateUser->id,
+                        'business_id'    => $business->id,
+                        'trx'            => strtoupper(str()->random(10)),
+                        'type'           => 'credit',
+                        'amount'         => $commission,
+                        'title'          => 'Commission from Order #' . $subscribe->id,
+                        'reference_id'   => $subscribe->id,
+                        'reference_type' => 'PlanSubscribe',
+                        'note'           => 'User purchased via your referral link',
+                    ]);
+                }
+            }
 
             sendNotification($subscribe->id, route('admin.subscription-reports.index', ['id' => $subscribe->id]), __('Plan subscribed by ' . auth()->user()->name));
 
@@ -288,7 +355,14 @@ class AcnooBusinessController extends Controller
             ]);
         } catch (\Throwable $th) {
             DB::rollback();
-            return response()->json(__('Something was wrong.'), 403);
+            return response()->json(__('Something went wrong.'), 403);
         }
+    }
+
+    public function status(Request $request, $id)
+    {
+        $business = Business::findOrFail($id);
+        $business->update(['status' => $request->status]);
+        return response()->json(['message' => 'Business']);
     }
 }

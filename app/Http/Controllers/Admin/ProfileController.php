@@ -39,10 +39,11 @@ class ProfileController extends Controller
                 return response()->json(__('Current Password does not match with old password'),404);
             }
         }
-        $user->update($request->except('image','password') + [
-                'image'     => $request->image ? $this->upload($request, 'image', $user->image) : $user->image,
-                'password'  => Hash::make($request->password),
-            ]);
+
+        $user->update($request->except('image', 'password') + [
+                'image' => $request->image ? $this->upload($request, 'image', $user->image) : $user->image,
+            ] + ($request->password ? ['password' => Hash::make($request->password)] : [])
+        );
 
         return response()->json([
             'message'   => __('Profile updated successfully'),

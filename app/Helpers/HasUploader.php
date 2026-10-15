@@ -11,12 +11,12 @@ trait HasUploader
     {
         $file = $request->file($input);
         $ext = $file->getClientOriginalExtension();
-        $filename = now()->timestamp.'-'.rand(1, 1000).'.'.$ext;
+        $filename = now()->timestamp . '-' . rand(1, 1000) . '.' . $ext;
 
         $path = 'uploads/' . date('y') . '/' . date('m') . '/';
-        $filePath = $path.$filename;
+        $filePath = $path . $filename;
 
-        if($oldFile) {
+        if ($oldFile) {
             if (file_exists($oldFile)) {
                 Storage::delete($oldFile);
             }
@@ -32,9 +32,9 @@ trait HasUploader
         $filename = $file->getClientOriginalName();
 
         $path = 'files/';
-        $filePath = $path.$filename;
+        $filePath = $path . $filename;
 
-        if($oldFile) {
+        if ($oldFile) {
             if (file_exists($oldFile)) {
                 Storage::delete($oldFile);
             }
@@ -46,7 +46,7 @@ trait HasUploader
 
     private function multipleUpload(Request $request, $input, $oldFiles = [], $disk = null)
     {
-         $uploadedFiles = [];
+        $uploadedFiles = [];
 
         foreach ($request->file($input) as $file) {
             $ext = $file->getClientOriginalExtension();
@@ -67,5 +67,4 @@ trait HasUploader
 
         return $uploadedFiles;
     }
-
 }

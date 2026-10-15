@@ -24,3 +24,7 @@
         padding: 0px 15px !important;
     }
 }
+[dir="rtl"] .payment-items {
+    text-align: left !important;
+    text-decoration: none;
+}

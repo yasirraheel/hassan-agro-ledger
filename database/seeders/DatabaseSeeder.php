@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
@@ -19,6 +20,7 @@ class DatabaseSeeder extends Seeder
             PermissionSeeder::class,
             OptionTableSeeder::class,
             BlogSeeder::class,
+            BranchSeeder::class,
             UserSeeder::class,
             FeatureSeeder::class,
             InterfaceSeeder::class,
@@ -26,7 +28,31 @@ class DatabaseSeeder extends Seeder
             TestimonialSeeder::class,
             CurrencySeeder::class,
             GatewaySeeder::class,
+            PlanSubscribeSeeder::class,
             AdvertiseSeeder::class,
+            BrandSeeder::class,
+            UnitSeeder::class,
+            CategorySeeder::class,
+            // WarehouseSeeder::class,
+            ProductSeeder::class,
+            PartySeeder::class,
+//            PaymentTypeSeeder::class,
+            // AffiliateSeeder::class,
+            VariationSeeder::class,
+            StockSeeder::class,
+            // ComboProductSeeder::class,
+            VatSeeder::class,
+            IncomeCategorySeeder::class,
+            IncomeSeeder::class,
+            ExpenseCategorySeeder::class,
+            ExpenseSeeder::class,
+            SaleSeeder::class,
+            SaleReturnSeeder::class,
+            PurchaseSeeder::class,
+            PurchaseReturnSeeder::class,
+            ShelfSeeder::class,
+            CountrySeeder::class,
+            StateSeeder::class,
         ]);
     }
 }

@@ -14,5 +14,6 @@
 </section>
 
 @include('web.components.plan')
+@include('web.components.signup')
 
 @endsection

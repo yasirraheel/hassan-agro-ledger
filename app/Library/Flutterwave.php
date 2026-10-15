@@ -15,7 +15,7 @@ class Flutterwave
         if (Session::has('fund_callback')) {
             return url(Session::get('fund_callback')['success_url']);
         } else {
-            return url('users/payment/success');
+            return url('payment/success');
         }
     }
 
@@ -24,7 +24,7 @@ class Flutterwave
         if (Session::has('fund_callback')) {
             return url(Session::get('fund_callback')['cancel_url']);
         } else {
-            return url('users/payment/failed');
+            return url('payment/failed');
         }
     }
 
@@ -33,7 +33,7 @@ class Flutterwave
         if (Session::get('without_auth')) {
             return url('payment/flutterwave');
         }
-        return url('users/payment/flutterwave');
+        return url('payment/flutterwave');
     }
 
     public static function make_payment($array)
@@ -53,8 +53,8 @@ class Flutterwave
         $data['payment_options'] = $array['payment_options'];
         $data['encryption_key'] = $array['encryption_key'];
         $data['payment_mode'] = 'flutterwave';
-        $test_mode = $array['test_mode'];
-        $data['test_mode'] = $test_mode;
+        $mode = $array['mode'];
+        $data['mode'] = $mode;
 
         $data['amount'] = $amount;
         $data['charge'] = $array['charge'];
@@ -68,23 +68,23 @@ class Flutterwave
         $data['currency'] = $currency;
         $data['is_fallback'] = $array['is_fallback'] ?? 0;
 
-        if ($test_mode == 0) {
+        if ($mode == 0) {
             $data['env'] = false;
-            $test_mode = false;
+            $mode = false;
         } else {
             $data['env'] = true;
-            $test_mode = true;
+            $mode = true;
         }
 
         Session::put('flutterwave_credentials', $data);
 
-        if ($test_mode == true) {
+        if ($mode == true) {
             $url = 'https://api.flutterwave.com/v3/payments';
         } else {
             $url = 'https://api.flutterwave.com/v3/payments';
         }
 
-        $logo = get_option('logo_setting')->logo ?? asset('uploads/logo.png');
+        $logo = asset(get_option('general')['admin_logo'] ?? 'assets/images/logo/backend_logo.png');
 
         try {
             $params = [
@@ -110,8 +110,10 @@ class Flutterwave
                 'Authorization' => 'Bearer ' . $data['secret_key'],
             ])->post($url, $params);
 
-            if (isset($response['status']) && $response['status'] == 'success') {
-                $url = $response['data']['link'];
+            $responseData = $response->json();
+
+            if (isset($responseData['status']) && in_array($responseData['status'], ['success', 'successful']) && isset($responseData['data']['link'])) {
+                $url = $responseData['data']['link'];
 
                 return request()->expectsJson() ?
                 $url : redirect($url);

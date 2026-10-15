@@ -43,8 +43,8 @@ class Mercado
         $data['secret_key'] = $array['secret_key'];
         $data['public_key'] = $array['public_key'];
         $data['payment_mode'] = 'mercadopago';
-        $test_mode = $array['test_mode'];
-        $data['test_mode'] = $test_mode;
+        $mode = $array['mode'];
+        $data['mode'] = $mode;
 
         $data['amount'] = $amount;
         $data['charge'] = $array['charge'];
@@ -58,12 +58,12 @@ class Mercado
         $data['currency'] = $currency;
 
 
-        if ($test_mode == 0) {
+        if ($mode == 0) {
             $data['env'] = false;
-            $test_mode = false;
+            $mode = false;
         } else {
             $data['env'] = true;
-            $test_mode = true;
+            $mode = true;
         }
 
 
@@ -101,7 +101,7 @@ class Mercado
             $preference->payer = $payer;
             $preference->save();
             $data['preference_id'] = $preference->id;
-            $redirectUrl = $test_mode == 1 ? $preference->sandbox_init_point : $preference->init_point;
+            $redirectUrl = $mode == 1 ? $preference->sandbox_init_point : $preference->init_point;
 
             Session::put('mercadopago_credentials', $data);
 
