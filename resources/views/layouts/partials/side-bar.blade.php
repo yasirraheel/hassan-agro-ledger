@@ -370,6 +370,18 @@
             </li>
 
             @can('settings-read')
+                <li class="{{ Request::routeIs('admin.app-settings.index') ? 'active' : '' }}">
+                    <a href="{{ route('admin.app-settings.index') }}">
+                        <span class="sidebar-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></svg>
+                        </span>
+                        {{ __('App Customization') }}
+                        <sup class="badge bg-success position-absolute side-bar-addon">{{__('Live')}}</sup>
+                    </a>
+                </li>
+            @endcan
+
+            @can('settings-read')
                 <li class="{{ Request::routeIs('admin.manage-settings.index','admin.currencies.index', 'admin.states.index', 'admin.currencies.create', 'admin.currencies.edit','admin.countries.index', 'admin.countries.create', 'admin.countries.edit','admin.settings.index','admin.system-settings.index','admin.gateways.index','admin.notifications.index', 'admin.languages.index', 'admin.languages.show', 'admin.invoice-img-settings.index', 'admin.backup.index') ? 'active' : '' }}">
                     <a href="{{ route('admin.manage-settings.index') }}" class="active">
                         <span class="sidebar-icon">

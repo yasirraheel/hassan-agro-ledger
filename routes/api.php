@@ -15,6 +15,7 @@ Route::prefix('v1')->group(function () {
     Route::post('/verify-reset-code', [Api\Auth\AcnooForgotPasswordController::class, 'verifyResetCode']);
     Route::post('/password-reset', [Api\Auth\AcnooForgotPasswordController::class, 'resetPassword']);
     Route::apiResource('default-lang', Api\DefaultLangController::class)->only('index');
+    Route::get('/app-settings', [Api\AppSettingsController::class, 'index']);
 
     Route::group(['middleware' => ['auth:sanctum', 'module']], function () {
         Route::get('update-expire-date', [Api\BusinessController::class, 'updateExpireDate']);

@@ -110,6 +110,21 @@
                         <div class="tab-pane fade show active" id="all" role="tabpanel" aria-labelledby="all-tab">
                             <div class="settings-box-container">
                                 <div>
+                                    <a href="{{ route('admin.app-settings.index') }}" class="text-decoration-none text-dark">
+                                        <div class=" setting-box">
+                                            <div class="d-flex align-items-center jusitfy-content-center gap-3">
+                                                <div class="settings-icon">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--clr-primary)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></svg>
+                                                </div>
+                                                <div>
+                                                    <h6 class="">{{__('App Customization')}}</h6>
+                                                    <small class="text-muted">{{__('Manage mobile splash screen, branding & remote settings')}}</small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </a>
+                                </div>
+                                <div>
                                     <a href="{{ route('admin.settings.index') }}" class="text-decoration-none text-dark">
                                         <div class=" setting-box">
                                             <div class="d-flex align-items-center jusitfy-content-center gap-3">

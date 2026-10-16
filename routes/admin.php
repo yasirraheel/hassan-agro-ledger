@@ -105,6 +105,7 @@ Route::group(['as' => 'admin.', 'prefix' => 'admin', 'middleware' => ['auth', 'a
     Route::resource('permissions', ADMIN\PermissionController::class)->only('index', 'store');
 
     // Settings
+    Route::resource('app-settings', ADMIN\AppSettingsController::class)->only('index', 'store');
     Route::resource('addons', ADMIN\AddonController::class)->only('index', 'store', 'show');
     Route::resource('settings', ADMIN\SettingController::class)->only('index', 'update');
     Route::resource('system-settings', ADMIN\SystemSettingController::class)->only('index', 'store');
