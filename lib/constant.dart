@@ -49,9 +49,9 @@ const String onboard1 = 'images/onbord1.png';
 const String onboard2 = 'images/onbord2.png';
 const String onboard3 = 'images/onbord3.png';
 const String logo = 'images/logo.png';
-const String appsName = 'POSpro';
-const String companyWebsite = 'https://acnoo.com';
-const String companyName = 'Acnoo';
+const String appsName = 'Business Manager';
+const String companyWebsite = 'https://hassanagro.com';
+const String companyName = 'Business Manager';
 
 bool connected = false;
 

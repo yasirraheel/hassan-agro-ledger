@@ -9,3 +9,7 @@ analyzer:
     must_be_immutable: ignore
     no_leading_underscores_for_local_identifiers: ignore
     unused_result: ignore
+  exclude:
+    - build/**
+    - android/**
+    - ios/**

@@ -12,6 +12,8 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'package:cached_network_image/cached_network_image.dart';
+import '../../Repository/API/app_settings_repo.dart';
 import '../../Repository/API/business_info_repo.dart';
 import '../../core/constant_variables/local_data_saving_keys.dart';
 import '../../currency.dart';
@@ -36,14 +38,23 @@ class SplashScreenState extends ConsumerState<SplashScreen> {
   }
 
   int retryCount = 0;
+  RemoteAppSettings _appSettings = RemoteAppSettings();
+
+  Future<void> _loadAppSettings() async {
+    final local = await AppSettingsRepository().getLocalSettings();
+    if (mounted) setState(() => _appSettings = local);
+    final remote = await AppSettingsRepository().fetchRemoteSettings();
+    if (mounted) setState(() => _appSettings = remote);
+  }
 
   Future<void> checkUserValidity() async {
-      nextPage();
+    nextPage();
   }
 
   @override
   void initState() {
     super.initState();
+    _loadAppSettings();
     getPermission();
     CurrencyMethods().getCurrencyFromLocalDatabase();
     checkUserValidity();
@@ -61,7 +72,7 @@ class SplashScreenState extends ConsumerState<SplashScreen> {
 
   Future<void> nextPage() async {
     final prefs = await SharedPreferences.getInstance();
-    await Future.delayed(const Duration(seconds: 1));
+    await Future.delayed(const Duration(seconds: 2));
 
     final token = prefs.getString(LocalDataBaseSavingKey.tokenKey);
     final skipOnBoard = prefs.getBool(LocalDataBaseSavingKey.skipOnBodingKey) ?? false;
@@ -82,23 +93,45 @@ class SplashScreenState extends ConsumerState<SplashScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final effectivePoweredBy = _appSettings.poweredBy.isNotEmpty ? _appSettings.poweredBy : companyName;
+
     return SafeArea(
       child: Scaffold(
-        backgroundColor: kMainColor,
+        backgroundColor: _appSettings.splashBgColor,
         body: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             const Spacer(),
             Container(
-              height: 230,
-              width: 230,
-              decoration: const BoxDecoration(image: DecorationImage(image: AssetImage(splashLogo))),
+              height: 220,
+              width: 220,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(28),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.15),
+                    blurRadius: 16,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(28),
+                child: _appSettings.splashLogoUrl != null && _appSettings.splashLogoUrl!.isNotEmpty
+                    ? CachedNetworkImage(
+                        imageUrl: _appSettings.splashLogoUrl!,
+                        fit: BoxFit.contain,
+                        placeholder: (context, url) => Image.asset(splashLogo, fit: BoxFit.contain),
+                        errorWidget: (context, url, error) => Image.asset(splashLogo, fit: BoxFit.contain),
+                      )
+                    : Image.asset(splashLogo, fit: BoxFit.contain),
+              ),
             ),
             const Spacer(),
             Center(
               child: Text(
-                '${lang.S.of(context).poweredBy} $companyName',
+                '${lang.S.of(context).poweredBy} $effectivePoweredBy',
                 style: theme.textTheme.titleLarge?.copyWith(
                   color: Colors.white,
                   fontWeight: FontWeight.w500,
@@ -106,16 +139,6 @@ class SplashScreenState extends ConsumerState<SplashScreen> {
                 ),
               ),
             ),
-            // Center(
-            //   child: Text(
-            //     'V $appVersion',
-            //     style: theme.textTheme.titleLarge?.copyWith(
-            //       color: Colors.white,
-            //       fontWeight: FontWeight.w500,
-            //       fontSize: 18,
-            //     ),
-            //   ),
-            // ),
             const SizedBox(height: 16),
           ],
         ),
