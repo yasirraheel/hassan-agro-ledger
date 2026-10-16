@@ -10,7 +10,7 @@
             <div class="card shadow-sm">
                 <div class="card-bodys">
                     <div class="table-header p-16 d-flex align-items-center justify-content-between">
-                        <h4><i class="fa-solid fa-mobile-screen-button me-2 text-primary"></i>{{ __('Mobile App Customization') }}</h4>
+                        <h4><i class="fal fa-mobile-android-alt me-2 text-primary"></i>{{ __('Mobile App Customization') }}</h4>
                         <span class="badge bg-success-subtle text-success fs-12 px-3 py-2">{{ __('Live Remote Sync') }}</span>
                     </div>
 
@@ -23,7 +23,7 @@
                                 <div class="row">
                                     <div class="col-12 mb-3">
                                         <h5 class="border-bottom pb-2 text-primary">
-                                            <i class="fa-solid fa-palette me-2"></i>{{ __('Branding & Splash Screen') }}
+                                            <i class="fal fa-palette me-2"></i>{{ __('Branding & Splash Screen') }}
                                         </h5>
                                     </div>
 
@@ -70,34 +70,34 @@
                                 <div class="row mt-4">
                                     <div class="col-12 mb-3">
                                         <h5 class="border-bottom pb-2 text-primary">
-                                            <i class="fa-solid fa-image me-2"></i>{{ __('App Logos & Visual Assets') }}
+                                            <i class="fal fa-image me-2"></i>{{ __('App Logos & Visual Assets') }}
                                         </h5>
                                     </div>
 
                                     <div class="col-lg-6 settings-image-upload mt-2">
-                                        <label class="title font-weight-bold">{{ __('Splash Screen Logo / Image') }}</label>
-                                        <p class="text-muted fs-12 mb-2">{{ __('Recommended: 512x512 or 1024x1024 PNG with transparent or solid background') }}</p>
+                                        <label class="title">{{ __('Splash Screen Logo / Image') }}</label>
                                         <div class="upload-img-v2">
                                             <label class="upload-v4 settings-upload-v4">
-                                                <div class="img-wrp p-2 d-flex align-items-center justify-content-center" style="min-height: 140px; background: #f8f9fa; border: 1px dashed #ced4da; border-radius: 8px;">
-                                                    <img src="{{ !empty($settings['splash_logo']) ? asset($settings['splash_logo']) : asset('assets/images/icons/upload-icon.svg') }}" alt="Splash Logo" id="splash_logo_preview" style="max-height: 120px; max-width: 100%; object-fit: contain;">
+                                                <div class="img-wrp">
+                                                    <img src="{{ !empty($settings['splash_logo']) ? asset($settings['splash_logo']) : asset('assets/images/icons/upload-icon.svg') }}" alt="Splash Logo" id="splash_logo_preview">
                                                 </div>
                                                 <input type="file" name="splash_logo" class="d-none" accept="image/*" onchange="if(this.files[0]) document.getElementById('splash_logo_preview').src = window.URL.createObjectURL(this.files[0])">
                                             </label>
                                         </div>
+                                        <small class="text-muted d-block mt-1">{{ __('Recommended: 512x512 or 1024x1024 PNG with transparent or solid background') }}</small>
                                     </div>
 
                                     <div class="col-lg-6 settings-image-upload mt-2">
-                                        <label class="title font-weight-bold">{{ __('App Icon / Header Logo') }}</label>
-                                        <p class="text-muted fs-12 mb-2">{{ __('Recommended: 512x512 PNG square format') }}</p>
+                                        <label class="title">{{ __('App Icon / Header Logo') }}</label>
                                         <div class="upload-img-v2">
                                             <label class="upload-v4 settings-upload-v4">
-                                                <div class="img-wrp p-2 d-flex align-items-center justify-content-center" style="min-height: 140px; background: #f8f9fa; border: 1px dashed #ced4da; border-radius: 8px;">
-                                                    <img src="{{ !empty($settings['app_logo']) ? asset($settings['app_logo']) : asset('assets/images/icons/upload-icon.svg') }}" alt="App Logo" id="app_logo_preview" style="max-height: 120px; max-width: 100%; object-fit: contain;">
+                                                <div class="img-wrp">
+                                                    <img src="{{ !empty($settings['app_logo']) ? asset($settings['app_logo']) : asset('assets/images/icons/upload-icon.svg') }}" alt="App Logo" id="app_logo_preview">
                                                 </div>
                                                 <input type="file" name="app_logo" class="d-none" accept="image/*" onchange="if(this.files[0]) document.getElementById('app_logo_preview').src = window.URL.createObjectURL(this.files[0])">
                                             </label>
                                         </div>
+                                        <small class="text-muted d-block mt-1">{{ __('Recommended: 512x512 PNG square format') }}</small>
                                     </div>
                                 </div>
 
@@ -105,7 +105,7 @@
                                 <div class="row mt-4">
                                     <div class="col-12 mb-3">
                                         <h5 class="border-bottom pb-2 text-primary">
-                                            <i class="fa-solid fa-headset me-2"></i>{{ __('In-App Support & Contact') }}
+                                            <i class="fal fa-headset me-2"></i>{{ __('In-App Support & Contact') }}
                                         </h5>
                                     </div>
 
@@ -124,7 +124,7 @@
                                 <div class="row mt-4">
                                     <div class="col-12 mb-3">
                                         <h5 class="border-bottom pb-2 text-primary">
-                                            <i class="fa-solid fa-sliders me-2"></i>{{ __('Onboarding Screens Customization') }}
+                                            <i class="fal fa-sliders-h me-2"></i>{{ __('Onboarding Screens Customization') }}
                                         </h5>
                                     </div>
 
@@ -161,7 +161,7 @@
 
                                 <div class="col-lg-12 mt-4 text-end">
                                     <button type="submit" class="btn submit-btn btn-primary px-4 py-2">
-                                        <i class="fa-solid fa-save me-2"></i>{{ __('Save Settings') }}
+                                        <i class="fal fa-save me-2"></i>{{ __('Save Settings') }}
                                     </button>
                                 </div>
                             </div>
