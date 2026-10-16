@@ -1,6 +1,7 @@
 // Get numeric value from string
 function getNumericValue(value) {
-    return parseFloat(value.replace(/[^0-9.-]+/g, "")) || 0;
+    if (value === null || value === undefined) return 0;
+    return parseFloat(String(value).replace(/[^0-9.-]+/g, "")) || 0;
 }
 
 updateTotalAmount();

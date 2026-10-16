@@ -4,8 +4,8 @@
             <input type="checkbox" name="ids[]" class="delete-checkbox-item  multi-delete" value="{{ $category->id }}">
         </td>
             <td>{{ ($categories->currentPage() - 1) * $categories->perPage() + $loop->iteration }}</td>
-        <td>
-            <img src="{{ asset($category->icon ?? 'assets/images/logo/upload2.jpg') }}" alt="Img" class="table-product-img">
+        <td style="width: 50px; min-width: 50px; max-width: 50px; text-align: center;">
+            <img src="{{ asset($category->icon ?? 'assets/images/logo/upload2.jpg') }}" alt="Img" class="table-product-img" style="width: 40px !important; height: 40px !important; max-width: 40px !important; max-height: 40px !important; object-fit: cover !important; border-radius: 4px !important; display: inline-block !important;">
         </td>
 
         <td class="text-start">{{ $category->categoryName }}</td>

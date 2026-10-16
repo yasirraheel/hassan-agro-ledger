@@ -1251,3 +1251,22 @@
     background-color: var(--clr-primary);
     border-color: var(--clr-primary);
 }
+
+/* Table image size constraints - prevents uploaded high-res images from breaking table layouts */
+.table-product-img,
+.table-img,
+table td img.table-product-img,
+#datatable td img,
+.table td img {
+    width: 40px !important;
+    height: 40px !important;
+    max-width: 40px !important;
+    max-height: 40px !important;
+    min-width: 40px !important;
+    min-height: 40px !important;
+    object-fit: cover !important;
+    border-radius: 4px !important;
+    display: inline-block !important;
+    vertical-align: middle !important;
+}
+

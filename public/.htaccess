@@ -52,9 +52,9 @@
     ExpiresByType application/font-woff2 "access plus 1 year"
 
     # CSS / JS
-    ExpiresByType text/css "access plus 1 month"
-    ExpiresByType application/javascript "access plus 1 month"
-    ExpiresByType text/javascript "access plus 1 month"
+    ExpiresByType text/css "access plus 0 seconds"
+    ExpiresByType application/javascript "access plus 0 seconds"
+    ExpiresByType text/javascript "access plus 0 seconds"
 </IfModule>
 
 <IfModule mod_headers.c>
@@ -62,6 +62,6 @@
         Header set Cache-Control "max-age=31536000, public"
     </FilesMatch>
     <FilesMatch "\.(css|js)$">
-        Header set Cache-Control "max-age=2592000, public"
+        Header set Cache-Control "no-cache, must-revalidate"
     </FilesMatch>
 </IfModule>
