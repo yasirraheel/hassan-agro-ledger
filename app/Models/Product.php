@@ -179,4 +179,63 @@ class Product extends Model
         });
     }
 
+    /**
+     * Recalculates and syncs summary stock and prices from the stocks table to the products table.
+     */
+    public function syncStockAndPrices(): void
+    {
+        $stocks = $this->stocks()->withoutGlobalScopes()->get();
+        if ($stocks->isNotEmpty()) {
+            $totalStock = (double) $stocks->sum('productStock');
+            $latestStock = $stocks->sortByDesc('id')->first();
+
+            $updateData = [
+                'productStock' => $totalStock,
+            ];
+
+            if ($latestStock) {
+                if ($latestStock->productPurchasePrice > 0) {
+                    $updateData['productPurchasePrice'] = $latestStock->productPurchasePrice;
+                }
+                if ($latestStock->productSalePrice > 0) {
+                    $updateData['productSalePrice'] = $latestStock->productSalePrice;
+                }
+                if ($latestStock->productWholeSalePrice > 0) {
+                    $updateData['productWholeSalePrice'] = $latestStock->productWholeSalePrice;
+                }
+                if ($latestStock->productDealerPrice > 0) {
+                    $updateData['productDealerPrice'] = $latestStock->productDealerPrice;
+                }
+                if ($latestStock->profit_percent > 0) {
+                    $updateData['profit_percent'] = $latestStock->profit_percent;
+                }
+            }
+
+            $this->updateQuietly($updateData);
+        }
+    }
+
+    public function getProductStockAttribute($value)
+    {
+        if (($value === null || (float)$value == 0) && $this->relationLoaded('stocks') && $this->stocks->isNotEmpty()) {
+            return (double) $this->stocks->sum('productStock');
+        }
+        return (double) $value;
+    }
+
+    public function getProductPurchasePriceAttribute($value)
+    {
+        if (($value === null || (float)$value == 0) && $this->relationLoaded('stocks') && $this->stocks->isNotEmpty()) {
+            return (double) ($this->stocks->sortByDesc('id')->first()?->productPurchasePrice ?? 0);
+        }
+        return (double) $value;
+    }
+
+    public function getProductSalePriceAttribute($value)
+    {
+        if (($value === null || (float)$value == 0) && $this->relationLoaded('stocks') && $this->stocks->isNotEmpty()) {
+            return (double) ($this->stocks->sortByDesc('id')->first()?->productSalePrice ?? 0);
+        }
+        return (double) $value;
+    }
 }

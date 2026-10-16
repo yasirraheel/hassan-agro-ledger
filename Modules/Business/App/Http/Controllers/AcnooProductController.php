@@ -6,6 +6,7 @@ use App\Models\Unit;
 use App\Models\Brand;
 use App\Models\Product;
 use App\Models\Category;
+use App\Models\Stock;
 use App\Helpers\HasUploader;
 use Illuminate\Http\Request;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -20,14 +21,14 @@ class AcnooProductController extends Controller
 
     public function index()
     {
-        $products = Product::with('unit:id,unitName', 'brand:id,brandName', 'category:id,categoryName')->where('business_id', auth()->user()->business_id)->latest()->paginate(20);
+        $products = Product::with('unit:id,unitName', 'brand:id,brandName', 'category:id,categoryName', 'stocks')->where('business_id', auth()->user()->business_id)->latest()->paginate(20);
         return view('business::products.index', compact('products'));
     }
 
     public function acnooFilter(Request $request)
     {
         $search = $request->input('search');
-        $products = Product::with('unit:id,unitName', 'brand:id,brandName', 'category:id,categoryName')->where('business_id', auth()->user()->business_id)->when($search, function ($q) use ($search) {
+        $products = Product::with('unit:id,unitName', 'brand:id,brandName', 'category:id,categoryName', 'stocks')->where('business_id', auth()->user()->business_id)->when($search, function ($q) use ($search) {
             $q->where(function ($q) use ($search) {
                 $q->where('productName', 'like', '%' . $search . '%')
                   ->orWhere('productCode', 'like', '%' . $search . '%')
@@ -96,7 +97,7 @@ class AcnooProductController extends Controller
         $product_id = (Product::max('id') ?? 0) + 1;
         $code = str_pad($product_id , 4, '0', STR_PAD_LEFT);
 
-        Product::create($request->except(['productPicture', 'productCode', 'productDealerPrice', 'productWholeSalePrice', 'productStock']) + [
+        $product = Product::create($request->except(['productPicture', 'productCode', 'productDealerPrice', 'productWholeSalePrice', 'productStock']) + [
             'productCode' => $request->productCode ?? $code,
             'productPicture' => $request->productPicture ? $this->upload($request, 'productPicture') : NULL,
             'productSalePrice' => $request->productSalePrice,
@@ -104,6 +105,18 @@ class AcnooProductController extends Controller
             'productWholeSalePrice' => $request->productWholeSalePrice ?? $request->productSalePrice,
             'productStock' => $request->productStock ?? 0,
             'business_id' => auth()->user()->business_id,
+        ]);
+
+        Stock::create([
+            'business_id' => auth()->user()->business_id,
+            'product_id' => $product->id,
+            'batch_no' => $product->productCode,
+            'productStock' => $request->productStock ?? 0,
+            'exclusive_price' => $request->productPurchasePrice ?? 0,
+            'productPurchasePrice' => $request->productPurchasePrice ?? 0,
+            'productSalePrice' => $request->productSalePrice ?? 0,
+            'productWholeSalePrice' => $request->productWholeSalePrice ?? $request->productSalePrice,
+            'productDealerPrice' => $request->productDealerPrice ?? $request->productSalePrice,
         ]);
 
         return response()->json([
@@ -154,6 +167,30 @@ class AcnooProductController extends Controller
             'productStock' => $request->productStock ?? 0,
             'business_id' => auth()->user()->business_id,
         ]);
+
+        $stock = Stock::where('product_id', $product->id)->first();
+        if ($stock) {
+            $stock->update([
+                'productStock' => $request->productStock ?? 0,
+                'exclusive_price' => $request->productPurchasePrice ?? 0,
+                'productPurchasePrice' => $request->productPurchasePrice ?? 0,
+                'productSalePrice' => $request->productSalePrice ?? 0,
+                'productWholeSalePrice' => $request->productWholeSalePrice ?? $request->productSalePrice,
+                'productDealerPrice' => $request->productDealerPrice ?? $request->productSalePrice,
+            ]);
+        } else {
+            Stock::create([
+                'business_id' => auth()->user()->business_id,
+                'product_id' => $product->id,
+                'batch_no' => $product->productCode,
+                'productStock' => $request->productStock ?? 0,
+                'exclusive_price' => $request->productPurchasePrice ?? 0,
+                'productPurchasePrice' => $request->productPurchasePrice ?? 0,
+                'productSalePrice' => $request->productSalePrice ?? 0,
+                'productWholeSalePrice' => $request->productWholeSalePrice ?? $request->productSalePrice,
+                'productDealerPrice' => $request->productDealerPrice ?? $request->productSalePrice,
+            ]);
+        }
 
         return response()->json([
             'message' => __('Data saved successfully.'),

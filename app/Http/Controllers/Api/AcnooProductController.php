@@ -367,6 +367,7 @@ class AcnooProductController extends Controller
                 }
 
                 Stock::insert($stockData);
+                $product->syncStockAndPrices();
             }
 
             // Combo Product
@@ -616,6 +617,8 @@ class AcnooProductController extends Controller
                     ]);
                 }
             }
+
+            $product->syncStockAndPrices();
 
             DB::commit();
 

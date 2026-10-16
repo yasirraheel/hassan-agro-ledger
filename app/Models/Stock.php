@@ -92,11 +92,37 @@ class Stock extends Model
             });
         }
 
+        static::saved(function ($model) {
+            $model->product?->syncStockAndPrices();
+        });
+
+        static::deleted(function ($model) {
+            $model->product?->syncStockAndPrices();
+        });
+
         if (auth()->check() && auth()->user()->accessToMultiBranch()) {
             static::addGlobalScope('withBranch', function ($builder) {
                 $builder->with('branch:id,name');
             });
         }
+    }
+
+    public function decrement($column, $amount = 1, array $extra = [])
+    {
+        $result = parent::decrement($column, $amount, $extra);
+        if ($column === 'productStock') {
+            $this->product?->syncStockAndPrices();
+        }
+        return $result;
+    }
+
+    public function increment($column, $amount = 1, array $extra = [])
+    {
+        $result = parent::increment($column, $amount, $extra);
+        if ($column === 'productStock') {
+            $this->product?->syncStockAndPrices();
+        }
+        return $result;
     }
 
     /**
