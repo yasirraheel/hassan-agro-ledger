@@ -28,3 +28,10 @@
         Notify('warning', null, "{{ Session::get('warning') }}");
     </script>
 @endif
+@if($errors->any())
+    <script>
+        @foreach($errors->all() as $error)
+            Notify('error', null, "{{ $error }}");
+        @endforeach
+    </script>
+@endif

@@ -70,8 +70,10 @@ $(document).on("submit", ".ajaxform", function (e) {
 });
 
 let $ajaxform_instant_reload = $(".ajaxform_instant_reload");
-$ajaxform_instant_reload.initFormValidation(),
-    $(document).on("submit", ".ajaxform_instant_reload", function (e) {
+if ($ajaxform_instant_reload.length && typeof $ajaxform_instant_reload.initFormValidation === "function") {
+    $ajaxform_instant_reload.initFormValidation();
+}
+$(document).on("submit", ".ajaxform_instant_reload", function (e) {
         e.preventDefault();
         let t = $(this).find(".submit-btn"),
             a = t.html();
@@ -179,14 +181,17 @@ $(document).on("submit", ".bulk_cart_upload_form", function (e) {
 
 // login form
 const $loginForm = $(".login_form");
-$loginForm.initFormValidation();
+if ($loginForm.length && typeof $loginForm.initFormValidation === "function") {
+    $loginForm.initFormValidation();
+}
 $(document).on("submit", ".login_form", function (e) {
     e.preventDefault();
 
-    const $submitButton = $(this).find(".submit-btn");
+    const $form = $(this);
+    const $submitButton = $form.find(".submit-btn");
     const originalButtonText = $submitButton.html();
 
-    if (!$loginForm.valid()) return;
+    if (typeof $form.valid === "function" && !$form.valid()) return;
 
     $.ajax({
         type: "POST",
@@ -217,7 +222,7 @@ $(document).on("submit", ".login_form", function (e) {
             }
         },
         error: function (error) {
-            let response = error.responseJSON;
+            let response = error.responseJSON || {};
 
             $submitButton
                 .html(originalButtonText)
@@ -230,7 +235,9 @@ $(document).on("submit", ".login_form", function (e) {
                 window.sessionStorage.previousMessage = response.message || null;
                 location.href = response.redirect;
             } else {
-                showInputErrors(error.responseJSON);
+                if (typeof showInputErrors === "function") {
+                    showInputErrors(response);
+                }
                 Notify("error", error);
             }
         },

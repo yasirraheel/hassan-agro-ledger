@@ -23,6 +23,11 @@
 @stack('modal-view')
 
 {{-- Toaster Message --}}
+@if(Session::has('success'))
+    <script>
+        toastr.success("{{ Session::get('success') }}");
+    </script>
+@endif
 @if(Session::has('message'))
     <script>
         toastr.success( "{{ Session::get('message') }}");
@@ -39,7 +44,9 @@
     </script>
 @endif
 @if($errors->any())
-<script>
-    toastr.warning('Error some occurs!');
-</script>
+    <script>
+        @foreach($errors->all() as $error)
+            toastr.error("{{ $error }}");
+        @endforeach
+    </script>
 @endif

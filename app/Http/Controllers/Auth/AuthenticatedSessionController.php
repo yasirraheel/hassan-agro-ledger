@@ -33,6 +33,17 @@ class AuthenticatedSessionController extends Controller
         $redirect_url = url('/');
         $user = auth()->user();
 
+        $fail = function ($message) use ($request) {
+            Auth::logout();
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'message' => $message,
+                    'redirect' => route('login')
+                ], 406);
+            }
+            return redirect()->route('login')->with('error', $message);
+        };
+
         if ($user->role == 'shop-owner' || $user->role == 'staff') {
 
             $module = Module::find('Business');
@@ -44,21 +55,12 @@ class AuthenticatedSessionController extends Controller
                     $branch = Branch::find($user->branch_id);
 
                     if ($business && !$business->status) {
-                        Auth::logout();
-                        return response()->json([
-                            'message' => 'Your business is inactive. Please contact your administrator.',
-                            'redirect' => route('login')
-                        ], 406);
+                        return $fail('Your business is inactive. Please contact your administrator.');
                     }
 
                     if (multibranch_active() && branch_count()) {
                         if ($branch && !$branch->status && $user->branch_id && !$branch->is_main) {
-
-                            Auth::logout();
-                            return response()->json([
-                                'message' => 'This branch is not active, Please contact with manager.',
-                                'redirect' => route('login'),
-                            ], 406);
+                            return $fail('This branch is not active, Please contact with manager.');
                         }
                     } elseif (!multibranch_active()) {
                         if ($user->active_branch_id) {
@@ -66,35 +68,18 @@ class AuthenticatedSessionController extends Controller
                                 'active_branch_id' => NULL
                             ]);
                         } elseif ($user->branch_id && !$branch->is_main) {
-
-                            Auth::logout();
-                            return response()->json([
-                                'message' => 'Multibranch is not allowed in your current package, please upgrade your subscription plan.',
-                                'redirect' => route('login'),
-                            ], 406);
+                            return $fail('Multibranch is not allowed in your current package, please upgrade your subscription plan.');
                         }
                     } elseif (!$branch && $user->branch_id) {
-                        Auth::logout();
-                        return response()->json([
-                            'message' => 'Your current branch has been deleted, Please contact with manager.',
-                            'redirect' => route('login'),
-                        ], 406);
+                        return $fail('Your current branch has been deleted, Please contact with manager.');
                     }
 
                     $redirect_url = route('business.dashboard.index');
                 } else {
-                    Auth::logout();
-                    return response()->json([
-                        'message' => 'Web addon is not active.',
-                        'redirect' => route('login'),
-                    ], 406);
+                    return $fail('Web addon is not active.');
                 }
             } else {
-                Auth::logout();
-                return response()->json([
-                    'message' => 'Web addon is not installed.',
-                    'redirect' => route('login'),
-                ], 406);
+                return $fail('Web addon is not installed.');
             }
         } else if ($user->role == 'affiliator') {
 
@@ -105,28 +90,24 @@ class AuthenticatedSessionController extends Controller
 
                     $redirect_url = route('business.dashboard.index');
                 } else {
-                    Auth::logout();
-                    return response()->json([
-                        'message' => 'Affiliate addon is not active.',
-                        'redirect' => route('login'),
-                    ], 406);
+                    return $fail('Affiliate addon is not active.');
                 }
             } else {
-                Auth::logout();
-                return response()->json([
-                    'message' => 'affiliate addon is not installed.',
-                    'redirect' => route('login'),
-                ], 406);
+                return $fail('affiliate addon is not installed.');
             }
         } else {
             $redirect_url = route('admin.dashboard.index');
         }
 
-        return response()->json([
-            'message' => __('Logged In Successfully'),
-            'remember' => $remember,
-            'redirect' => $redirect_url,
-        ]);
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'message' => __('Logged In Successfully'),
+                'remember' => $remember,
+                'redirect' => $redirect_url,
+            ]);
+        }
+
+        return redirect()->intended($redirect_url)->with('success', __('Logged In Successfully'));
     }
 
 

@@ -1227,7 +1227,7 @@ $(document).on("click", ".sub-btn", function (e) {
 });
 
 let $savingLoader1 =
-    `<div class="spinner-border spinner-border-sm custom-text-primary" role="status"><span class="visually-hidden">${window.trans.loading}</span></div>`,
+    `<div class="spinner-border spinner-border-sm custom-text-primary" role="status"><span class="visually-hidden">${window.trans?.loading ?? "Loading..."}</span></div>`,
     $barcodeForm = $(".barcodeForm");
 
 $barcodeForm.initFormValidation(),
