@@ -26,8 +26,9 @@ subprojects {
             }
         }
     }
-    // ============
-    project.buildDir = "${rootProject.buildDir}/${project.name}"
+    if (project.projectDir.toPath().getRoot() == rootProject.projectDir.toPath().getRoot()) {
+        project.buildDir = "${rootProject.buildDir}/${project.name}"
+    }
     project.evaluationDependsOn(":app")
 }
 
