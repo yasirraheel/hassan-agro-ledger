@@ -1,3 +1,24 @@
+int? _asInt(dynamic value) {
+  if (value == null) return null;
+  if (value is int) return value;
+  if (value is num) return value.toInt();
+  if (value is bool) return value ? 1 : 0;
+  return int.tryParse(value.toString().trim());
+}
+
+num? _asNum(dynamic value) {
+  if (value == null) return null;
+  if (value is num) return value;
+  return num.tryParse(value.toString().trim());
+}
+
+bool _asFlag(dynamic value) {
+  if (value is bool) return value;
+  if (value is num) return value != 0;
+  final normalized = value?.toString().trim().toLowerCase();
+  return normalized == '1' || normalized == 'true' || normalized == 'yes';
+}
+
 class BusinessInformationModel {
   BusinessInformationModel({
     this.message,
@@ -71,19 +92,19 @@ class BusinessInfoData {
   });
 
   BusinessInfoData.fromJson(dynamic json) {
-    id = json['id'];
-    planSubscribeId = json['plan_subscribe_id'];
+    id = _asNum(json['id']);
+    planSubscribeId = _asNum(json['plan_subscribe_id']);
     invoiceEmail = json['email'];
-    businessCategoryId = json['business_category_id'];
-    affiliatorId = json['affiliator_id'];
+    businessCategoryId = _asNum(json['business_category_id']);
+    affiliatorId = _asNum(json['affiliator_id']);
     companyName = json['companyName'];
     willExpire = json['will_expire'];
     address = json['address'];
     phoneNumber = json['phoneNumber'];
     pictureUrl = json['pictureUrl'];
     subscriptionDate = json['subscriptionDate'];
-    remainingShopBalance = json['remainingShopBalance'];
-    shopOpeningBalance = json['shopOpeningBalance'];
+    remainingShopBalance = _asNum(json['remainingShopBalance']);
+    shopOpeningBalance = _asNum(json['shopOpeningBalance']);
     vatNo = json['vat_no'];
     vatName = json['vat_name'];
     createdAt = json['created_at'];
@@ -108,25 +129,25 @@ class BusinessInfoData {
     developByLevel = json['develop_by_level'];
     developBy = json['develop_by'];
     developByLink = json['develop_by_link'];
-    branchCount = json['branch_count'];
+    branchCount = _asNum(json['branch_count']);
     addons = json['addons'] != null ? Addons.fromJson(json['addons']) : null;
     invoiceLanguage = json['invoice_language'];
-    showNote = json['show_note'];
-    showGratitudeMsg = json['show_gratitude_msg'];
-    showInvoiceScannerLogo = json['show_invoice_scanner_logo'];
-    showA4InvoiceLogo = json['show_a4_invoice_logo'];
-    showThermalInvoiceLogo = json['show_thermal_invoice_logo'];
-    showWarranty = json['show_warranty'];
-    countryId = json['country_id'];
-    stateId = json['state_id'];
+    showNote = _asInt(json['show_note']);
+    showGratitudeMsg = _asInt(json['show_gratitude_msg']);
+    showInvoiceScannerLogo = _asInt(json['show_invoice_scanner_logo']);
+    showA4InvoiceLogo = _asInt(json['show_a4_invoice_logo']);
+    showThermalInvoiceLogo = _asInt(json['show_thermal_invoice_logo']);
+    showWarranty = _asInt(json['show_warranty']);
+    countryId = _asNum(json['country_id']);
+    stateId = _asNum(json['state_id']);
     country = json['country'] != null ? BusinessCountry.fromJson(json['country']) : null;
     state = json['state'] != null ? BusinessState.fromJson(json['state']) : null;
-    allowDueSale = json['allow_due_sale'];
-    allowProductDiscount = json['allow_product_discount'];
-    showSaleProductTax = json['show_sale_product_tax'] == 1;
-    showSaleInvoiceTax = json['show_sale_invoice_tax'] == 1;
-    showPurchaseProductTax = json['show_purchase_product_tax'] == 1;
-    showPurchaseInvoiceTax = json['show_purchase_invoice_tax'] == 1;
+    allowDueSale = _asInt(json['allow_due_sale']);
+    allowProductDiscount = _asInt(json['allow_product_discount']);
+    showSaleProductTax = _asFlag(json['show_sale_product_tax']);
+    showSaleInvoiceTax = _asFlag(json['show_sale_invoice_tax']);
+    showPurchaseProductTax = _asFlag(json['show_purchase_product_tax']);
+    showPurchaseInvoiceTax = _asFlag(json['show_purchase_invoice_tax']);
     availableModules = AvailableModulesModel.fromJson(json['available_modules'] ?? {});
   }
   num? id;

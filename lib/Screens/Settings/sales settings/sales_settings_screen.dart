@@ -24,7 +24,9 @@ class _PrintingInvoiceScreenState extends ConsumerState<SalesSettingsScreen> {
   @override
   void initState() {
     super.initState();
-    ref.read(businessInfoProvider).when(
+    ref
+        .read(businessInfoProvider)
+        .when(
           data: (data) {
             setState(() {
               selectedMethod = roundingMethods.firstWhere(
@@ -61,7 +63,9 @@ class _PrintingInvoiceScreenState extends ConsumerState<SalesSettingsScreen> {
           child: ElevatedButton(
             child: Text(lang.S.of(context).save),
             onPressed: () async {
-              ref.watch(businessInfoProvider).when(
+              ref
+                  .read(businessInfoProvider)
+                  .when(
                     data: (data) async {
                       final businessRepository = BusinessUpdateRepository();
                       final isProfileUpdated = await businessRepository.updateSalesSettings(
@@ -75,6 +79,7 @@ class _PrintingInvoiceScreenState extends ConsumerState<SalesSettingsScreen> {
                       );
 
                       if (isProfileUpdated) {
+                        if (!context.mounted) return;
                         ref.refresh(businessInfoProvider);
                         Navigator.pop(context);
                       }
