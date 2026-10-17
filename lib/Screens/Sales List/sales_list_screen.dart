@@ -44,8 +44,7 @@ class _SalesListScreenState extends State<SalesListScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: () => handleBackNavigation(context),
+    return AppBackGuard(
       child: GlobalPopup(
         child: Scaffold(
           backgroundColor: kWhite,

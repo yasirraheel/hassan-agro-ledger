@@ -10,6 +10,7 @@ import 'package:mobile_pos/constant.dart';
 import 'package:mobile_pos/generated/l10n.dart' as lang;
 
 import '../../GlobalComponents/glonal_popup.dart';
+import '../../GlobalComponents/back_navigation_guard.dart';
 import '../../Provider/profile_provider.dart';
 import '../../offline/offline_service.dart';
 
@@ -46,20 +47,7 @@ class _HomeState extends State<Home> {
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: () async =>
-          await showDialog<bool>(
-            context: context,
-            builder: (context) => AlertDialog(
-              title: Text(lang.S.of(context).areYouSure),
-              content: Text(lang.S.of(context).doYouWantToExitTheApp),
-              actions: [
-                TextButton(onPressed: () => Navigator.pop(context, false), child: Text(lang.S.of(context).no)),
-                TextButton(onPressed: () => Navigator.pop(context, true), child: Text(lang.S.of(context).yes)),
-              ],
-            ),
-          ) ??
-          false,
+    return AppBackGuard(
       child: Consumer(
         builder: (context, ref, _) {
           ref.watch(getExpireDateProvider(ref));

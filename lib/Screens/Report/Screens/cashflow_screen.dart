@@ -192,8 +192,7 @@ class _CashflowScreenState extends ConsumerState<CashflowScreen> {
   Widget build(BuildContext context) {
     final _theme = Theme.of(context);
 
-    return WillPopScope(
-      onWillPop: () => handleBackNavigation(context),
+    return AppBackGuard(
       child: Consumer(
         builder: (_, ref, watch) {
           final _lang = l.S.of(context);

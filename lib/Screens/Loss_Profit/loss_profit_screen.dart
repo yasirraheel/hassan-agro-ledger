@@ -191,8 +191,7 @@ class _LossProfitScreenState extends ConsumerState<LossProfitScreen> {
     final _theme = Theme.of(context);
     final _lang = l.S.of(context);
 
-    return WillPopScope(
-      onWillPop: () => handleBackNavigation(context),
+    return AppBackGuard(
       child: Consumer(
         builder: (_, ref, watch) {
           final providerData = ref.watch(filteredLossProfitProvider(_getDateRangeFilter()));

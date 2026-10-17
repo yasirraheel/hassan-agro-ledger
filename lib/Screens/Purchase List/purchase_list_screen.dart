@@ -100,8 +100,7 @@ class PurchaseReportState extends State<PurchaseListScreen> {
   Widget build(BuildContext context) {
     final _theme = Theme.of(context);
 
-    return WillPopScope(
-      onWillPop: () => handleBackNavigation(context),
+    return AppBackGuard(
       child: GlobalPopup(
         child: Scaffold(
           backgroundColor: kWhite,
