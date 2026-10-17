@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mobile_pos/offline/remember_filters.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hugeicons/hugeicons.dart';
@@ -21,7 +22,15 @@ class TaxReportScreen extends ConsumerStatefulWidget {
   ConsumerState<TaxReportScreen> createState() => _TaxReportScreenState();
 }
 
-class _TaxReportScreenState extends ConsumerState<TaxReportScreen> {
+class _TaxReportScreenState extends ConsumerState<TaxReportScreen> with RememberFilters<TaxReportScreen> {
+  @override String get rememberedFilterKey => 'reports.tax';
+  @override Map<String, dynamic> get rememberedFilters => {'duration': selectedTime, 'from': fromDate?.toIso8601String(), 'to': toDate?.toIso8601String()};
+  @override void restoreRememberedFilters(Map<String, dynamic> values) {
+    final duration = values['duration'];
+    if (duration is String && dateOptions.containsKey(duration)) selectedTime = duration;
+    final range = FilterMemory.range(selectedTime, from: DateTime.tryParse('${values['from'] ?? ''}'), to: DateTime.tryParse('${values['to'] ?? ''}'));
+    fromDate = range.$1; toDate = range.$2; _showCustomDatePickers = selectedTime == 'custom_date';
+  }
   final TextEditingController fromDateController = TextEditingController();
   final TextEditingController toDateController = TextEditingController();
   final tabIndexNotifier = ValueNotifier<int>(0);
