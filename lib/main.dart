@@ -58,7 +58,7 @@ class MyApp extends StatelessWidget {
             GlobalCupertinoLocalizations.delegate,
           ],
           supportedLocales: S.delegate.supportedLocales,
-          title: 'POSPro',
+          title: 'Hassan Agro',
           initialRoute: '/',
           builder: (context, child) {
             return SafeArea(

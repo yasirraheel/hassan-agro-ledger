@@ -21,6 +21,7 @@ import '../../widgets/page_navigation_list/_page_navigation_list.dart';
 import '../Authentication/Repo/logout_repo.dart';
 import '../Currency/currency_screen.dart';
 import '../../service/check_user_role_permission_provider.dart';
+import '../../offline/sync_status_bar.dart';
 import '../barcode/gererate_barcode.dart';
 import '../cash and bank/cheques/cheques_list_screen.dart';
 import '../language/language.dart';
@@ -185,6 +186,13 @@ class SettingScreenState extends ConsumerState<SettingScreen> {
         title: lang.S.of(context).profile,
         svgIconPath: 'assets/profile.svg',
         route: const ProfileDetails(),
+      ),
+    );
+    add(
+      PageNavigationNavTile(
+        title: 'Sync data',
+        svgIconPath: 'assets/setting.svg',
+        route: const SyncStatusScreen(),
       ),
     );
     add(

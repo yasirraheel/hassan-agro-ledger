@@ -1,5 +1,10 @@
+import 'dart:io';
+import 'dart:math' as math;
+import 'dart:typed_data';
+import 'dart:ui' as ui;
 import 'package:mobile_pos/offline/offline_media.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:intl/intl.dart';
@@ -9,6 +14,11 @@ import 'package:mobile_pos/generated/l10n.dart' as lang;
 import 'package:nb_utils/nb_utils.dart';
 import 'package:provider/provider.dart' as pro;
 import 'package:screenshot/screenshot.dart';
+import 'package:cross_file/cross_file.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:pdf/pdf.dart' as pdf;
+import 'package:share_plus/share_plus.dart';
 import '../../GlobalComponents/glonal_popup.dart';
 import '../../constant.dart' as mainConstant;
 import '../../constant.dart';
@@ -69,6 +79,53 @@ class _SalesInvoiceDetailsState extends State<SalesInvoiceDetails> {
   }
 
   int serialNumber = 1;
+
+  Future<Uint8List?> _invoiceImage() async {
+    await Future<void>.delayed(const Duration(milliseconds: 80));
+    final renderObject = _screenshotKey.currentContext?.findRenderObject();
+    if (renderObject is! RenderRepaintBoundary) return null;
+    final image = await renderObject.toImage(pixelRatio: 3);
+    final data = await image.toByteData(format: ui.ImageByteFormat.png);
+    return data?.buffer.asUint8List();
+  }
+
+  Future<void> _shareInvoice({required bool asPdf}) async {
+    final bytes = await _invoiceImage();
+    if (!mounted || bytes == null) return;
+    final directory = await getTemporaryDirectory();
+    final extension = asPdf ? 'pdf' : 'png';
+    final file = File('${directory.path}/invoice-${widget.saleTransaction.invoiceNumber ?? 'sale'}.$extension');
+    if (asPdf) {
+      final document = pw.Document();
+      document.addPage(pw.Page(
+        pageFormat: pdf.PdfPageFormat.a4,
+        build: (_) => pw.Center(child: pw.Image(pw.MemoryImage(bytes), fit: pw.BoxFit.contain)),
+      ));
+      await file.writeAsBytes(await document.save(), flush: true);
+    } else {
+      await file.writeAsBytes(bytes, flush: true);
+    }
+    if (!mounted) return;
+    await SharePlus.instance.share(ShareParams(
+      files: [XFile(file.path, mimeType: asPdf ? 'application/pdf' : 'image/png')],
+      subject: 'Invoice ${widget.saleTransaction.invoiceNumber ?? ''}',
+      text: 'Invoice ${widget.saleTransaction.invoiceNumber ?? ''}',
+    ));
+  }
+
+  Future<void> _chooseShareFormat() async {
+    if (!mounted) return;
+    await showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      builder: (sheetContext) => SafeArea(
+        child: Wrap(children: [
+          ListTile(leading: const Icon(Icons.picture_as_pdf), title: const Text('Share as PDF'), onTap: () { Navigator.pop(sheetContext); _shareInvoice(asPdf: true); }),
+          ListTile(leading: const Icon(Icons.image), title: const Text('Share as image'), onTap: () { Navigator.pop(sheetContext); _shareInvoice(asPdf: false); }),
+        ]),
+      ),
+    );
+  }
 
   num getReturndDiscountAmount() {
     num totalReturnDiscount = 0;
@@ -137,6 +194,7 @@ class _SalesInvoiceDetailsState extends State<SalesInvoiceDetails> {
     final _lang = lang.S.of(context);
     final _theme = Theme.of(context);
     final locale = Localizations.localeOf(context).languageCode;
+    final invoiceWidth = math.min(374.0, MediaQuery.sizeOf(context).width - 24.0);
     return Consumer(builder: (context, ref, _) {
       final printerData = ref.watch(thermalPrinterProvider);
       final businessSettingData = ref.watch(businessInfoProvider);
@@ -146,13 +204,18 @@ class _SalesInvoiceDetailsState extends State<SalesInvoiceDetails> {
           child: Scaffold(
             backgroundColor: Colors.white,
             body: Center(
-              child: SingleChildScrollView(
+              child: InteractiveViewer(
+                minScale: 0.75,
+                maxScale: 4,
+                boundaryMargin: const EdgeInsets.all(80),
+                constrained: false,
+                child: SingleChildScrollView(
                   child: RepaintBoundary(
                 key: _screenshotKey,
                 child: SizedBox(
-                  width: 374,
+                  width: invoiceWidth,
                   child: Container(
-                    width: 374,
+                    width: invoiceWidth,
                     color: Colors.white,
                     // Reduced horizontal padding to free up space on both sides
                     padding: const EdgeInsets.symmetric(horizontal: 4.0, vertical: 10.0),
@@ -1259,7 +1322,7 @@ class _SalesInvoiceDetailsState extends State<SalesInvoiceDetails> {
                     ]),
                   ),
                 ),
-              )),
+              ))),
             ),
             bottomNavigationBar: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -1271,26 +1334,22 @@ class _SalesInvoiceDetailsState extends State<SalesInvoiceDetails> {
                     Expanded(
                       child: OutlinedButton(
                         onPressed: () async {
-                          if (widget.fromSale ?? false) {
-                            int count = 0;
-                            bool popped = false;
-
-                            Navigator.popUntil(context, (route) {
-                              count++;
-                              if (count == 2 && !popped) {
-                                popped = true;
-                                Navigator.pop(context, true);
-                              }
-                              return count == 2;
-                            });
-                          } else {
-                            Navigator.pop(context);
+                          if (Navigator.of(context).canPop()) {
+                            Navigator.of(context).pop(true);
                           }
                         },
                         child: Text(
                           lang.S.of(context).cancel,
                           //'Cancel',
                         ),
+                      ),
+                    ),
+                    SizedBox(width: 16),
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: _chooseShareFormat,
+                        icon: const Icon(Icons.share),
+                        label: const Text('Share'),
                       ),
                     ),
                     SizedBox(width: 16),
