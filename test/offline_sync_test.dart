@@ -138,4 +138,74 @@ void main() {
     service.dispose();
     await database.close();
   });
+
+  test('a rejected change does not block later valid changes from syncing', () async {
+    SharedPreferences.setMockInitialValues({'token': 'conflict-session'});
+    final database = await databaseFactoryFfi.openDatabase(
+      inMemoryDatabasePath,
+      options: OpenDatabaseOptions(version: 1, onCreate: OfflineStore.createSchema),
+    );
+    final server = jsonDecode(jsonEncode(fixture())) as Map<String, dynamic>;
+    server['business'] = {
+      'data': {'id': 1},
+    };
+    final resources = server.keys.toList();
+    var reachable = true;
+    var acceptedIncomes = 0;
+    final client = MockClient((request) async {
+      if (!reachable) throw const SocketException('No connection');
+      final path = request.url.path.replaceFirst('${Uri.parse(APIConfig.url).path}/', '');
+      if (path == 'sync/status') {
+        return http.Response(
+          jsonEncode({'protocol': 1, 'idempotency': true, 'scope': '1:1:all', 'resources': resources}),
+          200,
+        );
+      }
+      if (request.method == 'GET') return http.Response(jsonEncode(server[path]), 200);
+      if (path == 'parties') {
+        return http.Response(jsonEncode({'message': 'Customer name is already used.'}), 422);
+      }
+      if (path == 'incomes') {
+        acceptedIncomes++;
+        return http.Response(
+          jsonEncode({
+            'data': {
+              'id': 71,
+              'amount': 25,
+              'incomeDate': '2026-10-18',
+              '_sync_version': 'income-v1',
+            },
+          }),
+          201,
+        );
+      }
+      fail('Unexpected write $path');
+    });
+    final service = OfflineService.forTesting(
+      database: OfflineStore(database),
+      clientFactory: () => client,
+    );
+
+    await service.sync();
+    reachable = false;
+    await service.write(
+      Uri.parse('${APIConfig.url}/parties'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'name': 'Rejected customer', 'type': 'Retailer'}),
+    );
+    await service.write(
+      Uri.parse('${APIConfig.url}/incomes'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'amount': 25, 'incomeDate': '2026-10-18', 'payment_type_id': 3}),
+    );
+    reachable = true;
+    await service.sync(force: true);
+
+    expect(acceptedIncomes, 1);
+    expect(service.conflictCount, 1);
+    expect(service.pendingCount, 1);
+    expect(service.lastError, contains('Customer name is already used'));
+    service.dispose();
+    await database.close();
+  });
 }

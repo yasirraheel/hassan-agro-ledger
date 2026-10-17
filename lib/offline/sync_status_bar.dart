@@ -4,6 +4,18 @@ import 'dart:convert';
 import 'offline_service.dart';
 import '../Screens/Authentication/Sign In/sign_in_screen.dart';
 
+String _syncOperationLabel(Map<String, Object?> operation) {
+  final method = '${operation['method'] ?? ''}'.toUpperCase();
+  final action = switch (method) {
+    'POST' => 'Create',
+    'PUT' || 'PATCH' => 'Update',
+    'DELETE' => 'Delete',
+    _ => method,
+  };
+  final resource = '${operation['path'] ?? ''}'.split('/').first.replaceAll('-', ' ');
+  return '$action ${resource.isEmpty ? 'record' : resource}';
+}
+
 class SyncStatusBar extends StatelessWidget {
   const SyncStatusBar({super.key});
 
@@ -184,7 +196,7 @@ class SyncStatusScreen extends StatelessWidget {
                         ),
                         title: Text(
                           op['state'] == 'conflict'
-                              ? 'Needs review: ${op['method']} ${op['path']}'
+                              ? 'Needs review: ${_syncOperationLabel(op)}'
                               : '${op['method']} ${op['path']}',
                         ),
                         onTap: op['state'] == 'conflict'
@@ -227,17 +239,35 @@ class _ConflictReviewScreenState extends State<ConflictReviewScreen> {
       builder: (context, snapshot) {
         if (snapshot.hasError) return Padding(padding: const EdgeInsets.all(24), child: Text('${snapshot.error}'));
         if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
-        final latest = snapshot.data!['data'] as Map;
-        final fields = jsonDecode(widget.operation['fields'] as String) as Map;
+        final payload = snapshot.data!;
+        final latest = Map<String, dynamic>.from((payload['data'] as Map?) ?? const {});
+        final fields = Map<String, dynamic>.from(jsonDecode(widget.operation['fields'] as String) as Map);
+        final reviewable = payload['reviewable'] != false && '${payload['version'] ?? ''}'.isNotEmpty;
+        final message = '${payload['message'] ?? widget.operation['error'] ?? ''}'.trim();
         final keys = fields.keys
-            .where((key) => !'$key'.startsWith('_') && !'$key'.contains('password') && latest.containsKey(key))
+            .where(
+              (key) =>
+                  !'$key'.startsWith('_') && !'$key'.contains('password') && (!reviewable || latest.containsKey(key)),
+            )
             .toList();
         return ListView(
           padding: const EdgeInsets.all(20),
           children: [
-            const Text(
-              'Another change was saved on the server. Check the values below before applying your saved change.',
+            Text(
+              reviewable
+                  ? 'Another device changed this record. Compare the server value with your saved value before applying it.'
+                  : 'The server rejected this saved action. It remains safely on this phone and does not block other changes from syncing.',
             ),
+            if (message.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              Card(
+                color: Theme.of(context).colorScheme.errorContainer,
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Text('Server message: $message'),
+                ),
+              ),
+            ],
             const SizedBox(height: 16),
             for (final key in keys)
               Card(
@@ -247,11 +277,15 @@ class _ConflictReviewScreenState extends State<ConflictReviewScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(label('$key'), style: Theme.of(context).textTheme.titleSmall),
-                      Text('On server: ${latest[key] ?? '—'}'),
-                      Text('Saved on phone: ${fields[key] ?? '—'}'),
+                      if (reviewable) Text('On server: ${latest[key] ?? '—'}'),
+                      Text('${reviewable ? 'Saved on phone' : 'Saved value'}: ${fields[key] ?? '—'}'),
                     ],
                   ),
                 ),
+              ),
+            if (!reviewable && keys.isEmpty)
+              const Text(
+                'The saved request has no displayable fields. Open the original form and create it again after correcting the server message.',
               ),
             if ('${widget.operation['method']}'.toUpperCase() == 'DELETE')
               const Padding(
@@ -259,23 +293,24 @@ class _ConflictReviewScreenState extends State<ConflictReviewScreen> {
                 child: Text('Your saved action will delete this record.'),
               ),
             const SizedBox(height: 16),
-            FilledButton(
-              onPressed: saving
-                  ? null
-                  : () async {
-                      setState(() => saving = true);
-                      try {
-                        await OfflineService.instance.applyReviewedConflict(widget.operation, snapshot.data!);
-                        if (context.mounted) Navigator.pop(context);
-                      } catch (error) {
-                        if (context.mounted)
-                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$error')));
-                      } finally {
-                        if (mounted) setState(() => saving = false);
-                      }
-                    },
-              child: Text(saving ? 'Saving…' : 'Apply my change to this version'),
-            ),
+            if (reviewable)
+              FilledButton(
+                onPressed: saving
+                    ? null
+                    : () async {
+                        setState(() => saving = true);
+                        try {
+                          await OfflineService.instance.applyReviewedConflict(widget.operation, payload);
+                          if (context.mounted) Navigator.pop(context);
+                        } catch (error) {
+                          if (context.mounted)
+                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$error')));
+                        } finally {
+                          if (mounted) setState(() => saving = false);
+                        }
+                      },
+                child: Text(saving ? 'Saving…' : 'Apply my change to this version'),
+              ),
             TextButton(onPressed: () => Navigator.pop(context), child: const Text('Keep saved work and decide later')),
           ],
         );

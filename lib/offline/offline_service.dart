@@ -490,6 +490,7 @@ class OfflineService extends ChangeNotifier with WidgetsBindingObserver {
       if (!await checkConnection()) return;
       final current = scope!;
       final token = _token;
+      String? conflictMessage;
       if (!force &&
           wasOnline &&
           ready &&
@@ -510,8 +511,10 @@ class OfflineService extends ChangeNotifier with WidgetsBindingObserver {
         if (scope != current || token != _token) return;
         if (op['state'] == 'accepted') continue;
         if (op['state'] == 'conflict') {
-          status = 'A saved change needs review before synchronization can continue.';
-          return;
+          // A conflict belongs to this operation only. Keep it pending for review,
+          // but do not block unrelated operations that can still be uploaded.
+          conflictMessage ??= op['error']?.toString();
+          continue;
         }
         final mapping = await store.mappings(current);
         final projection = OfflineProjection({}, mapping);
@@ -594,7 +597,17 @@ class OfflineService extends ChangeNotifier with WidgetsBindingObserver {
           }
           String message = 'Server rejected this change (${response.statusCode}).';
           try {
-            message = '${jsonDecode(response.body)['message'] ?? message}';
+            final body = jsonDecode(response.body);
+            if (body is Map) {
+              message = '${body['message'] ?? message}';
+              final errors = body['errors'];
+              if (errors is Map && errors.isNotEmpty) {
+                final details = errors.entries
+                    .map((entry) => '${entry.key}: ${entry.value is List ? (entry.value as List).join(', ') : entry.value}')
+                    .join('\n');
+                message = '$message\n$details';
+              }
+            }
           } catch (_) {}
           await store.db.update(
             'outbox',
@@ -602,17 +615,26 @@ class OfflineService extends ChangeNotifier with WidgetsBindingObserver {
             where: 'scope=? AND seq=?',
             whereArgs: [current, op['seq']],
           );
-          lastError = message;
-          status = 'A saved change needs review. Your work is kept on this device.';
-          return;
+          conflictMessage ??= message;
+          // Continue with the remaining outbox records. One invalid or stale
+          // request must not prevent successful sales, purchases, or settings
+          // saved after it from reaching the server.
+          continue;
         }
         await _counts();
       }
       if (uploadOnly && ready) {
-        status = 'Saved on device and server';
+        lastError = conflictMessage;
+        status = conflictMessage == null
+            ? 'Saved on device and server'
+            : 'Saved on device and server. A saved change needs review.';
         return;
       }
       await _download(current, token);
+      if (conflictMessage != null) {
+        lastError = conflictMessage;
+        status = 'Data synchronized. A saved change needs review.';
+      }
     } catch (error) {
       lastError = error.toString();
       status = ready
@@ -844,8 +866,17 @@ class OfflineService extends ChangeNotifier with WidgetsBindingObserver {
     if (!online) throw const OfflineException('Connect to review the latest server record. Your saved work is kept.');
     final path = operation['path'] as String;
     final parts = path.split('/');
-    if (parts.length != 2 || int.tryParse(parts.last) == null)
-      throw const OfflineException('Open the original form to check the validation message for this change.');
+    // Creates and collection-level actions do not have a server record ID to
+    // compare. Return the saved server validation error instead of sending the
+    // user to a review endpoint that can never resolve such an operation.
+    if (parts.length != 2 || int.tryParse(parts.last) == null) {
+      return {
+        'data': <String, dynamic>{},
+        'version': null,
+        'reviewable': false,
+        'message': operation['error']?.toString() ?? 'The server rejected this saved request.',
+      };
+    }
     final mapped = await store.mappings(scope!);
     final id = mapped[int.parse(parts.last)] ?? int.parse(parts.last);
     final client = _clientFactory();
