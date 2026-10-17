@@ -52,6 +52,34 @@ class MobileSyncOperationTest extends TestCase
         return $request;
     }
 
+    public function test_summary_uses_transaction_dates_when_offline_work_is_uploaded_later(): void
+    {
+        Schema::table('sales', function (Blueprint $table) {
+            $table->timestamp('saleDate')->nullable();
+            $table->double('totalAmount')->default(0);
+            $table->double('lossProfit')->default(0);
+        });
+        foreach (['purchases' => 'purchaseDate', 'incomes' => 'incomeDate', 'expenses' => 'expenseDate'] as $name => $date) {
+            Schema::create($name, function (Blueprint $table) use ($date) {
+                $table->id(); $table->unsignedBigInteger('business_id'); $table->timestamp($date); $table->double('amount')->default(0); $table->double('totalAmount')->default(0); $table->timestamps();
+            });
+        }
+        $row = ['business_id' => 1, 'created_at' => '2026-10-17 10:00:00', 'updated_at' => '2026-10-17 10:00:00'];
+        DB::table('sales')->insert($row + ['saleDate' => '2026-10-16 09:00:00', 'totalAmount' => 120, 'lossProfit' => 40]);
+        DB::table('purchases')->insert($row + ['purchaseDate' => '2026-10-16 09:00:00', 'totalAmount' => 80]);
+        DB::table('incomes')->insert($row + ['incomeDate' => '2026-10-16 09:00:00', 'amount' => 10]);
+        DB::table('expenses')->insert($row + ['expenseDate' => '2026-10-16 09:00:00', 'amount' => 5]);
+        $user = new User();
+        $user->forceFill(['id' => 1, 'business_id' => 1, 'role' => 'shop-owner']);
+        $this->actingAs($user);
+        app()->instance('request', Request::create('/api/v1/summary', 'GET', ['date' => '2026-10-16']));
+        $body = (new \App\Http\Controllers\Api\StatisticsController)->summary()->getData(true);
+        $this->assertEquals(['sales' => 120, 'purchase' => 80, 'income' => 50, 'expense' => 5], $body['data']);
+        app()->instance('request', Request::create('/api/v1/summary', 'GET', ['date' => '2026-10-17']));
+        $today = (new \App\Http\Controllers\Api\StatisticsController)->summary()->getData(true);
+        $this->assertEquals(0, array_sum($today['data']));
+    }
+
     public function test_retry_after_lost_response_does_not_duplicate_a_bank_or_sale_record(): void
     {
         $next = function () {
