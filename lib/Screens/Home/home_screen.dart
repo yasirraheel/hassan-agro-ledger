@@ -398,19 +398,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                 ],
                               );
                             } else {
-                              return Center(
-                                child: Container(
-                                  height: 150,
-                                  width: MediaQuery.of(context).size.width,
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(5),
-                                    image: DecorationImage(
-                                      fit: BoxFit.cover,
-                                      image: AssetImage('images/banner1.png'),
-                                    ),
-                                  ),
-                                ),
-                              );
+                              // Do not show a bundled promotional banner when the
+                              // server has no active banners. Promotional content
+                              // must come from the server-managed banners endpoint.
+                              return const SizedBox.shrink();
                             }
                           },
                           error: (e, stack) {
