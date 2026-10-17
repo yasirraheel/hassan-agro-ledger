@@ -17,6 +17,8 @@ class Controller extends BaseController
             return;
         }
 
+        $businessCurrency = business_currency($business->id);
+
         app(NotifyService::class)->send(
             'new_sale',
             [
@@ -26,12 +28,12 @@ class Controller extends BaseController
                 'customer_name' => $customer->name,
 
                 'invoice_no' => $sale->invoiceNumber,
-                'amount' => currency_format($sale->totalAmount),
+                'amount' => currency_format($sale->totalAmount, 'icon', 2, $businessCurrency),
                 'date' => formatted_date($sale->saleDate),
                 'time' => formatted_time($sale->saleDate),
-                'received_amount' => currency_format($sale->paidAmount),
-                'paid_amount' => currency_format(0),
-                'due_amount' => currency_format($sale->dueAmount),
+                'received_amount' => currency_format($sale->paidAmount, 'icon', 2, $businessCurrency),
+                'paid_amount' => currency_format($sale->paidAmount, 'icon', 2, $businessCurrency),
+                'due_amount' => currency_format($sale->dueAmount, 'icon', 2, $businessCurrency),
 
                 'invoice_url' => route('sale.invoice', ['sale_id' => $sale->id, 'phone' => $customer->phone,]),
                 'business_name' => $business->companyName,
