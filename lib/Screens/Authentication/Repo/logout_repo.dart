@@ -6,9 +6,14 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../../Const/api_config.dart';
 import '../../../Repository/constant_functions.dart';
 import '../../../currency.dart';
+import '../../../offline/offline_service.dart';
 
 class LogOutRepo {
   Future<void> signOut() async {
+    if (!await OfflineService.instance.canSignOut()) {
+      EasyLoading.showError('Sync your pending work before signing out.');
+      return;
+    }
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove("token");
     await prefs.remove("hasShownExpiredDialog");
@@ -18,6 +23,10 @@ class LogOutRepo {
   }
 
   Future<void> signOutApi() async {
+    if (!await OfflineService.instance.canSignOut()) {
+      EasyLoading.showError('Sync your pending work before signing out.');
+      return;
+    }
     try {
       final uri = Uri.parse('${APIConfig.url}/sign-out');
 

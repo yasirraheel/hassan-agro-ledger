@@ -1,3 +1,4 @@
+import 'package:mobile_pos/offline/offline_media.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_feather_icons/flutter_feather_icons.dart';
@@ -534,7 +535,7 @@ class _LedgerPartyListScreenState extends State<LedgerPartyListScreen> {
       leading: CircleAvatar(
         radius: 20,
         backgroundColor: kMainColor50,
-        backgroundImage: (party.image != null && party.image!.isNotEmpty) ? NetworkImage('${party.image}') : null,
+        backgroundImage: (party.image != null && party.image!.isNotEmpty) ? offlineImageProvider('${party.image}') : null,
         child: (party.image == null || party.image!.isEmpty)
             ? Text(
                 (party.name != null && party.name!.length >= 2)

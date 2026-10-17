@@ -1,6 +1,6 @@
 import 'dart:typed_data';
 import 'dart:ui' as ui;
-import 'package:http/http.dart' as http;
+import 'package:mobile_pos/offline/offline_media.dart';
 import 'package:image/image.dart' as img;
 import '_base_widget.dart';
 
@@ -27,11 +27,7 @@ class ThermerImage extends ThermerWidget {
     double? width,
     double? height,
   }) async {
-    final response = await http.get(Uri.parse(url));
-    if (response.statusCode != 200) {
-      throw Exception('Failed to load image from $url');
-    }
-    final image = img.decodeImage(response.bodyBytes);
+    final image = img.decodeImage(await OfflineMedia.bytes(url));
     if (image == null) {
       throw Exception('Failed to decode image from $url');
     }

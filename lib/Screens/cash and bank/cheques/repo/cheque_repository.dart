@@ -1,3 +1,4 @@
+import 'package:mobile_pos/offline/offline_revision_provider.dart';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
@@ -10,6 +11,7 @@ import '../../bank account/provider/bank_account_provider.dart';
 import '../model/cheques_list_model.dart';
 
 final chequeListProvider = FutureProvider.autoDispose<ChequeTransactionModel>((ref) async {
+  ref.watch(offlineRevisionProvider);
   final repo = ChequeRepository();
   return repo.fetchChequeList(filter: 'Current Year');
 });

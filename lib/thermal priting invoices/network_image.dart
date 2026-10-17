@@ -1,4 +1,4 @@
-import 'package:http/http.dart' as http;
+import 'package:mobile_pos/offline/offline_media.dart';
 import 'package:image/image.dart' as img;
 
 Future<img.Image?> getNetworkImage(
@@ -9,10 +9,7 @@ Future<img.Image?> getNetworkImage(
   if (url == null) return null;
 
   try {
-    final response = await http.get(Uri.parse(url));
-    if (response.statusCode != 200) return null;
-
-    final _image = img.decodeImage(response.bodyBytes);
+    final _image = img.decodeImage(await OfflineMedia.bytes(url));
     if (_image == null) return null;
     return _image;
     return img.copyResize(

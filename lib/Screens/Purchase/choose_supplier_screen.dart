@@ -1,3 +1,4 @@
+import 'package:mobile_pos/offline/offline_media.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:iconly/iconly.dart';
@@ -90,7 +91,7 @@ class _PurchaseContactsState extends State<PurchaseContacts> {
                                                   shape: BoxShape.circle,
                                                   border: Border.all(color: Colors.grey.shade50, width: 0.3),
                                                   image: DecorationImage(
-                                                      image: NetworkImage(
+                                                      image: offlineImageProvider(
                                                         '${customer[index].image}',
                                                       ),
                                                       fit: BoxFit.cover),

@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:excel/excel.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -29,7 +30,12 @@ class BulkUpLoadRepo {
 
       request.files.add(http.MultipartFile.fromBytes('file', file.readAsBytesSync(), filename: file.path));
 
-      final response = await customHttpClient.uploadFile(url: uri, fileFieldName: 'file', file: file, fields: request.fields);
+      final response = await customHttpClient.uploadFile(
+        url: uri,
+        fileFieldName: 'file',
+        file: file,
+        fields: request.fields,
+      );
       final responseData = await response.stream.bytesToString();
       final parsedData = jsonDecode(responseData);
 
@@ -53,18 +59,38 @@ class BulkUpLoadRepo {
 
   Future<void> downloadFile(BuildContext context) async {
     try {
-      final response = await http.get(Uri.parse(fileUrl));
-      if (response.statusCode != 200) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to download file!')),
-        );
-        return;
-      }
+      final workbook = Excel.createExcel();
+      workbook[workbook.getDefaultSheet()!].appendRow([
+        for (final name in [
+          'Product name',
+          'Category',
+          'Unit',
+          'Brand',
+          'Stock quantity',
+          'Product code',
+          'Purchase price',
+          'Sale price',
+          'Dealer price',
+          'Wholesale price',
+          'VAT name',
+          'VAT percent',
+          'VAT type',
+          'Alert quantity',
+          'Manufacturer',
+          'Expiry date',
+          'Batch number',
+          'Model',
+          'Manufacturing date',
+          'Product type',
+          'Variations',
+        ])
+          TextCellValue(name),
+      ]);
 
       final downloadPath = '/storage/emulated/0/Download';
       final file = File('$downloadPath/POSpro_bulk_product_upload.xlsx');
 
-      await file.writeAsBytes(response.bodyBytes);
+      await file.writeAsBytes(workbook.encode()!);
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('File saved to: ${file.path}')),

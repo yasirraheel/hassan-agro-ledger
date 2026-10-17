@@ -1,3 +1,4 @@
+import 'package:mobile_pos/offline/offline_media.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -81,7 +82,7 @@ class _TransferInvoiceScreenState extends ConsumerState<TransferInvoiceScreen> {
                                                   fit: BoxFit.contain,
                                                   colorFilter: const ColorFilter.mode(Colors.black, BlendMode.srcIn),
                                                 )
-                                              : buildInvoiceLogo(image: NetworkImage(imageUrl));
+                                              : buildInvoiceLogo(image: offlineImageProvider(imageUrl));
                                     }),
                                   const SizedBox(height: 10),
 

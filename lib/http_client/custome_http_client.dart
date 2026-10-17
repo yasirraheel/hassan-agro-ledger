@@ -5,10 +5,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
-import 'package:mobile_pos/Screens/Authentication/Repo/logout_repo.dart';
 import 'package:mobile_pos/http_client/subscription_expire_provider.dart';
 
 import '../Repository/constant_functions.dart';
+import '../offline/offline_service.dart';
 import '../service/check_user_role_permission_provider.dart';
 import '../Screens/subscription/purchase_premium_plan_screen.dart';
 
@@ -30,9 +30,8 @@ class CustomHttpClient {
     final notifier = ref.read(userPermissionProvider.notifier);
     final permissions = ref.read(userPermissionProvider);
 
-    if (permissions.isEmpty) {
-      return true;
-    }
+    if (notifier.visibilityIsNull) return true;
+    if (permissions.isEmpty) return false;
     return notifier.has(permission);
   }
 
@@ -68,9 +67,10 @@ class CustomHttpClient {
       }
     }
 
-    final http.Response response = await client.post(
+    final http.Response response = await OfflineService.instance.write(
       url,
-      headers: headers ??
+      headers:
+          headers ??
           {
             'Accept': 'application/json', // Force JSON response
             'Authorization': await getAuthToken(),
@@ -82,7 +82,6 @@ class CustomHttpClient {
     // Prevent HTML crash on Token Expire or Forbidden
     if (response.statusCode == 401 || response.statusCode == 403) {
       EasyLoading.showError('Session expired. Please login again!');
-      LogOutRepo().signOutApi();
       // Return a safe JSON response to prevent jsonDecode format exception
       return http.Response(jsonEncode({'error': 'Unauthorized or Session Expired'}), response.statusCode);
     }
@@ -120,9 +119,11 @@ class CustomHttpClient {
       }
     }
 
-    final http.Response response = await client.delete(
+    final http.Response response = await OfflineService.instance.write(
       url,
-      headers: headers ??
+      method: 'DELETE',
+      headers:
+          headers ??
           {
             'Accept': 'application/json', // Force JSON response
             'Authorization': await getAuthToken(),
@@ -132,7 +133,6 @@ class CustomHttpClient {
     // Prevent HTML crash
     if (response.statusCode == 401 || response.statusCode == 403) {
       EasyLoading.showError('Session expired. Please login again!');
-      LogOutRepo().signOutApi();
       return http.Response(jsonEncode({'error': 'Unauthorized or Session Expired'}), response.statusCode);
     }
 
@@ -191,11 +191,16 @@ class CustomHttpClient {
       request.files.add(multipartFile);
     }
 
-    final http.StreamedResponse response = await request.send();
+    final result = await OfflineService.instance.write(
+      url,
+      body: fields ?? <String, String>{},
+      multipart: true,
+      files: {if (file != null && fileFieldName != null) fileFieldName: file},
+    );
+    final response = http.StreamedResponse(Stream.value(result.bodyBytes), result.statusCode, headers: result.headers);
 
     if (response.statusCode == 401 || response.statusCode == 403) {
       EasyLoading.showError('Session expired. Please login again!');
-      LogOutRepo().signOutApi();
       throw Exception("Unauthorized or Session Expired");
     }
 
@@ -232,7 +237,8 @@ class CustomHttpClient {
     }
 
     final request = http.MultipartRequest('POST', url)
-      ..headers['Accept'] = 'application/json' // Force JSON response
+      ..headers['Accept'] =
+          'application/json' // Force JSON response
       ..headers['Authorization'] = await getAuthToken()
       ..fields.addAll(fields);
 
@@ -247,11 +253,11 @@ class CustomHttpClient {
       );
     }
 
-    final response = await request.send();
+    final result = await OfflineService.instance.write(url, body: fields, multipart: true, files: files);
+    final response = http.StreamedResponse(Stream.value(result.bodyBytes), result.statusCode, headers: result.headers);
 
     if (response.statusCode == 401 || response.statusCode == 403) {
       EasyLoading.showError('Session expired. Please login again!');
-      LogOutRepo().signOutApi();
       throw Exception("Unauthorized or Session Expired");
     }
 

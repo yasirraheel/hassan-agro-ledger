@@ -1,3 +1,4 @@
+import 'package:mobile_pos/offline/offline_media.dart';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -561,7 +562,7 @@ class _AddNewEmployeeState extends ConsumerState<AddNewEmployee> {
                                 image: pickedImage != null
                                     ? FileImage(File(pickedImage!.path))
                                     : widget.employeeToEdit?.image != null
-                                        ? NetworkImage('${widget.employeeToEdit?.image}')
+                                        ? offlineImageProvider('${widget.employeeToEdit?.image}')
                                         : const AssetImage('assets/hrm/image_icon.jpg') as ImageProvider,
                                 fit: BoxFit.cover,
                               ),

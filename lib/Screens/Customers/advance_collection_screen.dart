@@ -1,3 +1,4 @@
+import 'package:mobile_pos/offline/offline_media.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_feather_icons/flutter_feather_icons.dart';
@@ -72,7 +73,7 @@ class _AdvanceCollectionScreenState extends ConsumerState<AdvanceCollectionScree
                       border: Border.all(color: kMainColor.withOpacity(0.1)),
                       image: widget.party.image != null
                           ? DecorationImage(
-                              image: NetworkImage('${widget.party.image}'),
+                              image: offlineImageProvider('${widget.party.image}'),
                               fit: BoxFit.cover,
                             )
                           : null,

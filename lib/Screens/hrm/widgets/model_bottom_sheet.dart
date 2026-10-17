@@ -1,3 +1,4 @@
+import 'package:mobile_pos/offline/offline_media.dart';
 import 'package:flutter/material.dart';
 import 'package:mobile_pos/generated/l10n.dart' as l;
 import '../../../constant.dart';
@@ -61,7 +62,7 @@ void viewModalSheet({
                                 shape: BoxShape.circle,
                                 image: DecorationImage(
                                   fit: BoxFit.cover,
-                                  image: NetworkImage(image),
+                                  image: offlineImageProvider(image),
                                 ),
                               ),
                             ),

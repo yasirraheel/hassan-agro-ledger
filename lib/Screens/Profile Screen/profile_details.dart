@@ -1,3 +1,4 @@
+import 'package:mobile_pos/offline/offline_media.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobile_pos/Screens/Profile%20Screen/edit_profile.dart';
@@ -119,7 +120,7 @@ class ProfileDetailsState extends State<ProfileDetails> {
                               )
                             : BoxDecoration(
                                 image: DecorationImage(
-                                    image: NetworkImage((details.data?.pictureUrl.toString() ?? '')),
+                                    image: offlineImageProvider((details.data?.pictureUrl.toString() ?? '')),
                                     fit: BoxFit.cover),
                                 borderRadius: BorderRadius.circular(50),
                               ),

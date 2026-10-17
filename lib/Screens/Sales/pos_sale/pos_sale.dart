@@ -1,5 +1,6 @@
 import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:flutter/material.dart';
+import 'package:mobile_pos/offline/offline_media.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/svg.dart';
@@ -609,9 +610,9 @@ class _PosSaleScreenState extends _$PosSaleScreenState {
             children: [
               Expanded(
                 child: product.productPicture?.isNotEmpty ?? false
-                    ? Image.network(
+                    ? Image(
                         fit: BoxFit.cover,
-                        '${product.productPicture}',
+                        image: offlineImageProvider('${product.productPicture}'),
                       )
                     : Image.asset(
                         fit: BoxFit.cover,

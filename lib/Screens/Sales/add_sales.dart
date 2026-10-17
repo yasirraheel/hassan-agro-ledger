@@ -1,3 +1,4 @@
+import 'package:mobile_pos/offline/offline_media.dart';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:ui';
@@ -936,7 +937,7 @@ class AddSalesScreenState extends ConsumerState<AddSalesScreen> {
                                             borderRadius: BorderRadius.circular(4),
                                             color: const Color(0xffF5F3F3),
                                             image: DecorationImage(
-                                              image: NetworkImage(
+                                              image: offlineImageProvider(
                                                 '${widget.transitionModel?.image.toString()}',
                                               ),
                                               fit: BoxFit.contain,

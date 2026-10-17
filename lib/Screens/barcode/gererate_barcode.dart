@@ -1,3 +1,4 @@
+import 'package:mobile_pos/offline/offline_media.dart';
 import 'dart:async';
 import 'dart:ui';
 import 'package:bluetooth_print_plus/bluetooth_print_plus.dart';
@@ -317,7 +318,7 @@ class _BarcodeGeneratorScreenState extends State<BarcodeGeneratorScreen> {
                                             width: 0.3,
                                           ),
                                           image: DecorationImage(
-                                            image: NetworkImage(
+                                            image: offlineImageProvider(
                                               '${suggestion.productPicture}',
                                             ),
                                             fit: BoxFit.cover,

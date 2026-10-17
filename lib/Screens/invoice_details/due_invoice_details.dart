@@ -1,3 +1,4 @@
+import 'package:mobile_pos/offline/offline_media.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/svg.dart';
@@ -90,7 +91,7 @@ class _DueInvoiceDetailsState extends State<DueInvoiceDetails> {
                                                     fit: BoxFit.cover,
                                                     colorFilter: ColorFilter.mode(Colors.black, BlendMode.srcIn),
                                                   )
-                                                : buildInvoiceLogo(image: NetworkImage(imageUrl));
+                                                : buildInvoiceLogo(image: offlineImageProvider(imageUrl));
                                       },
                                       error: (e, stack) => Text(e.toString()),
                                       loading: () => const Center(child: CircularProgressIndicator()),

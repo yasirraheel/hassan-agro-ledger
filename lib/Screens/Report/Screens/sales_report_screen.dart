@@ -17,6 +17,7 @@ import '../../../Provider/profile_provider.dart';
 import '../../../constant.dart';
 import '../../../currency.dart';
 import '../../../widgets/empty_widget/_empty_widget.dart';
+import '../../../offline/remember_filters.dart';
 
 class SalesReportScreen extends ConsumerStatefulWidget {
   const SalesReportScreen({super.key});
@@ -24,7 +25,32 @@ class SalesReportScreen extends ConsumerStatefulWidget {
   SalesReportScreenState createState() => SalesReportScreenState();
 }
 
-class SalesReportScreenState extends ConsumerState<SalesReportScreen> {
+class SalesReportScreenState extends ConsumerState<SalesReportScreen> with RememberFilters<SalesReportScreen> {
+  @override
+  String get rememberedFilterKey => 'reports.sales';
+
+  @override
+  Map<String, dynamic> get rememberedFilters => {
+        'duration': selectedTime,
+        'from': fromDate?.toIso8601String(),
+        'to': toDate?.toIso8601String(),
+      };
+
+  @override
+  void restoreRememberedFilters(Map<String, dynamic> values) {
+    final duration = values['duration'];
+    if (duration is String && dateOptions.containsKey(duration)) selectedTime = duration;
+    final range = FilterMemory.range(
+      selectedTime,
+      from: DateTime.tryParse('${values['from'] ?? ''}'),
+      to: DateTime.tryParse('${values['to'] ?? ''}'),
+    );
+    fromDate = range.$1;
+    toDate = range.$2;
+    _showCustomDatePickers = selectedTime == 'custom_date';
+    if (fromDate != null) fromDateController.text = DateFormat('yyyy-MM-dd').format(fromDate!);
+    if (toDate != null) toDateController.text = DateFormat('yyyy-MM-dd').format(toDate!);
+  }
   final TextEditingController fromDateController = TextEditingController();
   final TextEditingController toDateController = TextEditingController();
 

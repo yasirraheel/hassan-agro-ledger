@@ -1,3 +1,4 @@
+import 'package:mobile_pos/offline/offline_media.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:iconly/iconly.dart';
@@ -136,7 +137,7 @@ class _DueCalculationContactScreenState extends State<DueCalculationContactScree
                                     shape: BoxShape.circle,
                                     border: Border.all(color: DAppColors.kBorder, width: 0.3),
                                     image: DecorationImage(
-                                      image: NetworkImage(item.image ?? ''),
+                                      image: offlineImageProvider(item.image ?? ''),
                                       fit: BoxFit.cover,
                                     ),
                                   ),

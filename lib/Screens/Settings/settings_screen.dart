@@ -1,3 +1,4 @@
+import 'package:mobile_pos/offline/offline_media.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -85,7 +86,7 @@ class SettingScreenState extends ConsumerState<SettingScreen> {
                                       fit: BoxFit.cover,
                                     )
                                   : DecorationImage(
-                                      image: NetworkImage(
+                                      image: offlineImageProvider(
                                         (_details?.data?.pictureUrl ?? ''),
                                       ),
                                       fit: BoxFit.cover,

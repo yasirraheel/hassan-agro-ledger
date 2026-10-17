@@ -1,3 +1,4 @@
+import 'package:mobile_pos/offline/offline_media.dart';
 import 'dart:io';
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
@@ -443,7 +444,7 @@ class AddProductState extends ConsumerState<AddProduct> {
                                                     image: DecorationImage(
                                                         image: pickedImage != null
                                                             ? FileImage(File(pickedImage!.path))
-                                                            : NetworkImage("$previousProductImage") as ImageProvider,
+                                                            : offlineImageProvider("$previousProductImage") as ImageProvider,
                                                         fit: BoxFit.cover))),
                                           ),
                                           Padding(

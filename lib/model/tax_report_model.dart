@@ -5,7 +5,7 @@
 class VatModel {
   final int id;
   final String name;
-  final int rate;
+  final num rate;
   final int? manageState;
   final List<SubVatModel>? subVat;
   final bool status;
@@ -23,12 +23,12 @@ class VatModel {
     return VatModel(
       id: json['id'] as int,
       name: json['name'] as String? ?? 'Unknown',
-      rate: json['rate'] as int? ?? 0,
+      rate: num.tryParse('${json['rate']}') ?? 0,
       manageState: json['manage_state'] as int?,
       subVat: json['sub_vat'] == null
           ? null
           : (json['sub_vat'] as List<dynamic>).map((e) => SubVatModel.fromJson(e as Map<String, dynamic>)).toList(),
-      status: json['status'] as bool? ?? true,
+      status: json['status'] == null || json['status'] == true || json['status'] == 1 || json['status'] == '1',
     );
   }
 
@@ -40,7 +40,7 @@ class VatModel {
 class SubVatModel {
   final int id;
   final String name;
-  final int rate;
+  final num rate;
 
   SubVatModel({
     required this.id,
@@ -52,7 +52,7 @@ class SubVatModel {
     return SubVatModel(
       id: json['id'] as int,
       name: json['name'] as String? ?? 'Unknown',
-      rate: json['rate'] as int? ?? 0,
+      rate: num.tryParse('${json['rate']}') ?? 0,
     );
   }
 }
@@ -162,7 +162,11 @@ class InvoiceModel {
       transactionDate: dateKey == null ? null : DateTime.tryParse(dateKey as String),
       amount: json['totalAmount'] as num?,
       discountAmount: json['discountAmount'] as num?,
-      paymentType: (json['payment_type']?['name'] as String?) ?? (json['paymentType']?['name'] as String?),
+      paymentType: json['payment_type'] is Map
+          ? json['payment_type']['name']?.toString()
+          : json['paymentType'] is Map
+          ? json['paymentType']['name']?.toString()
+          : (json['payment_type'] ?? json['paymentType'])?.toString(),
       vatId: json['vat_id'] as int?,
       vatAmount: json['vat_amount'] as num?,
     );

@@ -1,3 +1,4 @@
+import 'package:mobile_pos/offline/offline_revision_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobile_pos/Screens/transfer/model/transfer_cart_data_model.dart';
 import 'package:mobile_pos/Screens/transfer/model/transfer_details_model.dart';
@@ -80,5 +81,6 @@ final transferCartProvider = StateNotifierProvider<TransferCartNotifier, List<Tr
 });
 
 final transferDetailsProvider = FutureProvider.family.autoDispose<TransferDetailsModel, String>((ref, id) async {
+  ref.watch(offlineRevisionProvider);
   return TransferRepo().fetchTransferDetails(id);
 });

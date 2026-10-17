@@ -17,7 +17,7 @@ class UserPermissionNotifier extends StateNotifier<List<String>> {
         next.whenData((businessInfo) {
           final user = businessInfo.data?.user;
           if (user != null) {
-            _visibilityIsNull = user.visibilityIsNull;
+            _visibilityIsNull = user.role == 'shop-owner';
             state = user.getAllPermissions();
           } else {
             _visibilityIsNull = false;

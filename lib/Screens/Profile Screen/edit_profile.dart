@@ -1,3 +1,4 @@
+import 'package:mobile_pos/offline/offline_media.dart';
 // ignore_for_file: unused_result, use_build_context_synchronously
 
 import 'dart:io';
@@ -227,7 +228,7 @@ class _EditProfileState extends State<EditProfile> {
                                           fit: BoxFit.cover,
                                         )
                                       : DecorationImage(
-                                          image: NetworkImage((widget.profile.data?.pictureUrl.toString() ?? '')),
+                                          image: offlineImageProvider((widget.profile.data?.pictureUrl.toString() ?? '')),
                                           fit: BoxFit.cover,
                                         )
                                   : DecorationImage(

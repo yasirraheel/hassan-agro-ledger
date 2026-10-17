@@ -11,6 +11,7 @@ import 'package:mobile_pos/generated/l10n.dart' as lang;
 
 import '../../GlobalComponents/glonal_popup.dart';
 import '../../Provider/profile_provider.dart';
+import '../../offline/offline_service.dart';
 
 class Home extends StatefulWidget {
   const Home({super.key});
@@ -22,6 +23,12 @@ class Home extends StatefulWidget {
 class _HomeState extends State<Home> {
   int _tabIndex = 0;
   late final PageController pageController = PageController(initialPage: _tabIndex);
+
+  @override
+  void initState() {
+    super.initState();
+    OfflineService.instance.sync();
+  }
 
   @override
   void dispose() {
@@ -60,16 +67,22 @@ class _HomeState extends State<Home> {
 
           return GlobalPopup(
             child: Scaffold(
-              body: PageView(
-                controller: pageController,
-                physics: const NeverScrollableScrollPhysics(),
-                onPageChanged: (v) => setState(() => _tabIndex = v),
+              body: Column(
                 children: [
-                  HomeScreen(),
-                  PosSaleScreen(),
-                  DashboardScreen(),
-                  Reports(),
-                  SettingScreen(),
+                  Expanded(
+                    child: PageView(
+                      controller: pageController,
+                      physics: const NeverScrollableScrollPhysics(),
+                      onPageChanged: (v) => setState(() => _tabIndex = v),
+                      children: [
+                        HomeScreen(),
+                        PosSaleScreen(),
+                        DashboardScreen(),
+                        Reports(),
+                        SettingScreen(),
+                      ],
+                    ),
+                  ),
                 ],
               ),
               bottomNavigationBar: BottomNavigationBar(

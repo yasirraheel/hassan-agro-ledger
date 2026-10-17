@@ -1,3 +1,4 @@
+import 'package:mobile_pos/offline/offline_media.dart';
 // File: product_list.dart
 
 import 'package:flutter/material.dart';
@@ -483,7 +484,7 @@ class _ProductListState extends ConsumerState<ProductList> {
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     image: DecorationImage(
-                      image: NetworkImage('${product.productPicture!}'),
+                      image: offlineImageProvider('${product.productPicture!}'),
                       fit: BoxFit.cover,
                     ),
                   ),

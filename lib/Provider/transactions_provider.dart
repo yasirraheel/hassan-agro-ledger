@@ -1,3 +1,4 @@
+import '../offline/offline_revision_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobile_pos/Screens/Purchase/Model/purchase_transaction_model.dart';
 import 'package:mobile_pos/Screens/Purchase/Repo/purchase_repo.dart';
@@ -19,28 +20,33 @@ final saleRepo = Provider<SaleRepo>((ref) => SaleRepo());
 
 ///-----------sale tax provider-----------------------------
 final saleTaxProvider = FutureProvider.family<TaxSaleData?, int>((ref, id) async {
+  ref.watch(offlineRevisionProvider);
   final repo = SaleRepo();
   return repo.getTaxSale(id);
 });
 
 ///-----------purchase tax provider-----------------------------
 final purchaseTaxProvider = FutureProvider.family<TaxPurchaseData?, int>((ref, id) async {
+  ref.watch(offlineRevisionProvider);
   final repo = SaleRepo();
   return repo.getTaxPurchase(id);
 });
 
 final saleProvider = FutureProvider.autoDispose<List<SalesTransactionModel>>((ref) {
+  ref.watch(offlineRevisionProvider);
   final repo = ref.read(saleRepo);
   return repo.fetchSalesList();
 });
 
 final salesTransactionProvider = FutureProvider.autoDispose<List<SalesTransactionModel>>((ref) {
+  ref.watch(offlineRevisionProvider);
   final repo = ref.read(saleRepo);
   return repo.fetchSalesList();
 });
 
 final filteredSaleProvider = FutureProvider.family.autoDispose<List<SalesTransactionModel>, FilterModel>(
   (ref, filter) {
+    ref.watch(offlineRevisionProvider);
     final repo = ref.read(saleRepo);
     return repo.fetchSalesList(
       type: filter.duration,
@@ -52,6 +58,7 @@ final filteredSaleProvider = FutureProvider.family.autoDispose<List<SalesTransac
 
 final filteredSaleReturnedProvider = FutureProvider.family.autoDispose<List<SalesTransactionModel>, FilterModel>(
   (ref, filter) {
+    ref.watch(offlineRevisionProvider);
     final repo = ref.read(saleRepo);
     return repo.fetchSalesList(
       type: filter.duration,
@@ -66,12 +73,14 @@ final filteredSaleReturnedProvider = FutureProvider.family.autoDispose<List<Sale
 final purchaseRepo = Provider<PurchaseRepo>((ref) => PurchaseRepo());
 
 final purchaseTransactionProvider = FutureProvider.autoDispose<List<PurchaseTransaction>>((ref) {
+  ref.watch(offlineRevisionProvider);
   final repo = ref.read(purchaseRepo);
   return repo.fetchPurchaseList();
 });
 
 final filterPurchaseProvider = FutureProvider.family.autoDispose<List<PurchaseTransaction>, FilterModel>(
   (ref, filter) {
+    ref.watch(offlineRevisionProvider);
     final repo = ref.read(purchaseRepo);
     return repo.fetchPurchaseList(
       type: filter.duration,
@@ -83,6 +92,7 @@ final filterPurchaseProvider = FutureProvider.family.autoDispose<List<PurchaseTr
 
 final filterPurchaseReturnProvider = FutureProvider.family.autoDispose<List<PurchaseTransaction>, FilterModel>(
   (ref, filter) {
+    ref.watch(offlineRevisionProvider);
     final repo = ref.read(purchaseRepo);
     return repo.fetchPurchaseList(
       type: filter.duration,
@@ -95,6 +105,7 @@ final filterPurchaseReturnProvider = FutureProvider.family.autoDispose<List<Purc
 
 final filteredLossProfitProvider = FutureProvider.family.autoDispose<lpmodel.LossProfitModel, FilterModel>(
   (ref, filter) {
+    ref.watch(offlineRevisionProvider);
     final repo = ref.read(saleRepo);
     return repo.getLossProfit(
       type: filter.duration,
@@ -106,6 +117,7 @@ final filteredLossProfitProvider = FutureProvider.family.autoDispose<lpmodel.Los
 
 final filteredCashflowProvider = FutureProvider.family.autoDispose<cf.CashflowModel, FilterModel>(
   (ref, filter) {
+    ref.watch(offlineRevisionProvider);
     final repo = ref.read(saleRepo);
     return repo.getCashflow(
       type: filter.duration,
@@ -117,6 +129,7 @@ final filteredCashflowProvider = FutureProvider.family.autoDispose<cf.CashflowMo
 
 final filteredBalanceSheetProvider = FutureProvider.family.autoDispose<bs.BalanceSheetModel, FilterModel>(
   (ref, filter) {
+    ref.watch(offlineRevisionProvider);
     final repo = ref.read(saleRepo);
     return repo.getBalanceSheet(
       type: filter.duration,
@@ -126,20 +139,22 @@ final filteredBalanceSheetProvider = FutureProvider.family.autoDispose<bs.Balanc
   },
 );
 
-final filteredSubscriptionReportProvider =
-    FutureProvider.family.autoDispose<List<srm.SubscriptionReportModel>, FilterModel>(
-  (ref, filter) {
-    final repo = ref.read(saleRepo);
-    return repo.getSubscriptionReport(
-      type: filter.duration,
-      fromDate: filter.fromDate,
-      toDate: filter.toDate,
+final filteredSubscriptionReportProvider = FutureProvider.family
+    .autoDispose<List<srm.SubscriptionReportModel>, FilterModel>(
+      (ref, filter) {
+        ref.watch(offlineRevisionProvider);
+        final repo = ref.read(saleRepo);
+        return repo.getSubscriptionReport(
+          type: filter.duration,
+          fromDate: filter.fromDate,
+          toDate: filter.toDate,
+        );
+      },
     );
-  },
-);
 
 final filteredTaxReportReportProvider = FutureProvider.family.autoDispose<trm.TaxReportModel, FilterModel>(
   (ref, filter) {
+    ref.watch(offlineRevisionProvider);
     final repo = ref.read(saleRepo);
     return repo.getTaxReport(
       type: filter.duration,
@@ -149,55 +164,59 @@ final filteredTaxReportReportProvider = FutureProvider.family.autoDispose<trm.Ta
   },
 );
 
-final filteredBillWiseLossProfitReportProvider =
-    FutureProvider.family.autoDispose<bwlprm.BillWiseLossProfitReportModel, FilterModel>(
-  (ref, filter) {
-    final repo = ref.read(saleRepo);
-    return repo.getBillWiseLossProfitReport(
-      type: filter.duration,
-      fromDate: filter.fromDate,
-      toDate: filter.toDate,
+final filteredBillWiseLossProfitReportProvider = FutureProvider.family
+    .autoDispose<bwlprm.BillWiseLossProfitReportModel, FilterModel>(
+      (ref, filter) {
+        ref.watch(offlineRevisionProvider);
+        final repo = ref.read(saleRepo);
+        return repo.getBillWiseLossProfitReport(
+          type: filter.duration,
+          fromDate: filter.fromDate,
+          toDate: filter.toDate,
+        );
+      },
     );
-  },
-);
 
-final filteredProductSaleHistoryReportProvider =
-    FutureProvider.family.autoDispose<phlm.ProductHistoryListModel, FilterModel>(
-  (ref, filter) {
-    final repo = ref.read(saleRepo);
-    return repo.getProductSaleHistoryReport(
-      type: filter.duration,
-      fromDate: filter.fromDate,
-      toDate: filter.toDate,
+final filteredProductSaleHistoryReportProvider = FutureProvider.family
+    .autoDispose<phlm.ProductHistoryListModel, FilterModel>(
+      (ref, filter) {
+        ref.watch(offlineRevisionProvider);
+        final repo = ref.read(saleRepo);
+        return repo.getProductSaleHistoryReport(
+          type: filter.duration,
+          fromDate: filter.fromDate,
+          toDate: filter.toDate,
+        );
+      },
     );
-  },
-);
 
-final filteredProductSaleHistoryReportDetailsProvider =
-    FutureProvider.family.autoDispose<phlm.ProductHistoryDetailsModel, ({int productId, FilterModel filter})>(
-  (ref, arg) {
-    final repo = ref.read(saleRepo);
-    return repo.getProductSaleHistoryReportDetails(
-      productId: arg.productId,
-      type: arg.filter.duration,
-      fromDate: arg.filter.fromDate,
-      toDate: arg.filter.toDate,
+final filteredProductSaleHistoryReportDetailsProvider = FutureProvider.family
+    .autoDispose<phlm.ProductHistoryDetailsModel, ({int productId, FilterModel filter})>(
+      (ref, arg) {
+        ref.watch(offlineRevisionProvider);
+        final repo = ref.read(saleRepo);
+        return repo.getProductSaleHistoryReportDetails(
+          productId: arg.productId,
+          type: arg.filter.duration,
+          fromDate: arg.filter.fromDate,
+          toDate: arg.filter.toDate,
+        );
+      },
     );
-  },
-);
 
-final filteredProductPurchaseHistoryReportDetailsProvider =
-    FutureProvider.family.autoDispose<phlm.ProductHistoryDetailsModel, ({int productId, FilterModel filter})>(
-  (ref, arg) {
-    final repo = ref.read(saleRepo);
-    return repo.getProductPurchaseHistoryReportDetails(
-      productId: arg.productId,
-      type: arg.filter.duration,
-      fromDate: arg.filter.fromDate,
-      toDate: arg.filter.toDate,
+final filteredProductPurchaseHistoryReportDetailsProvider = FutureProvider.family
+    .autoDispose<phlm.ProductHistoryDetailsModel, ({int productId, FilterModel filter})>(
+      (ref, arg) {
+        ref.watch(offlineRevisionProvider);
+        final repo = ref.read(saleRepo);
+        return repo.getProductPurchaseHistoryReportDetails(
+          productId: arg.productId,
+          type: arg.filter.duration,
+          fromDate: arg.filter.fromDate,
+          toDate: arg.filter.toDate,
+        );
+      },
     );
-  },
-);
 
 class FilterModel {
   final String? duration;

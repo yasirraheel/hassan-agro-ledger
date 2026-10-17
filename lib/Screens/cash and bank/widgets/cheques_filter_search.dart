@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:mobile_pos/generated/l10n.dart' as l;
 import 'package:iconly/iconly.dart';
 import 'package:mobile_pos/constant.dart';
+import 'package:mobile_pos/offline/remember_filters.dart';
 
 class CashFilterState {
   final String searchQuery;
@@ -23,19 +24,54 @@ class ChequesFilterSearch extends ConsumerStatefulWidget {
   final Function(dynamic) onFilterChanged; // Use dynamic if model name differs
   final DateFormat displayFormat;
   final List<String> timeOptions;
+  final String memoryKey;
 
   const ChequesFilterSearch({
     super.key,
     required this.onFilterChanged,
     required this.displayFormat,
     required this.timeOptions,
+    this.memoryKey = 'cash-bank.transactions',
   });
 
   @override
   ConsumerState<ChequesFilterSearch> createState() => _ChequesFilterSearchState();
 }
 
-class _ChequesFilterSearchState extends ConsumerState<ChequesFilterSearch> {
+class _ChequesFilterSearchState extends ConsumerState<ChequesFilterSearch> with RememberFilters<ChequesFilterSearch> {
+  @override
+  String get rememberedFilterKey => widget.memoryKey;
+
+  @override
+  Map<String, dynamic> get rememberedFilters => {
+        'duration': _selectedTimeFilter,
+        'from': _fromDate?.toIso8601String(),
+        'to': _toDate?.toIso8601String(),
+        'search': _searchQuery,
+      };
+
+  @override
+  void restoreRememberedFilters(Map<String, dynamic> values) {
+    final saved = values['duration'];
+    final duration = saved is String && widget.timeOptions.contains(saved) ? saved : _selectedTimeFilter;
+    if (duration != null) _updateDateRange(duration, notify: false);
+    if (duration == 'Custom Date') {
+      _fromDate = DateTime.tryParse('${values['from'] ?? ''}');
+      _toDate = DateTime.tryParse('${values['to'] ?? ''}');
+    }
+    final search = values['search'];
+    if (search is String && search.isNotEmpty) {
+      _searchQuery = search;
+      _searchController.text = search;
+    }
+  }
+
+  @override
+  void didRestoreRememberedFilters() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _notifyParent();
+    });
+  }
   final TextEditingController _searchController = TextEditingController();
 
   String _searchQuery = '';

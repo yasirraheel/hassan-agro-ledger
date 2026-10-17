@@ -1,3 +1,4 @@
+import 'package:mobile_pos/offline/offline_revision_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobile_pos/Screens/Expense/Model/expense_modle.dart';
 
@@ -12,6 +13,7 @@ final expenseRepoProvider = Provider<ExpenseRepo>(
 
 final filteredExpenseProvider = FutureProvider.family.autoDispose<List<Expense>, FilterModel>(
   (ref, filter) {
+  ref.watch(offlineRevisionProvider);
     final repo = ref.read(expenseRepoProvider);
 
     return repo.fetchAllIExpense(

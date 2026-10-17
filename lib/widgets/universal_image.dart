@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import '../offline/offline_media.dart';
 
 class UniversalImage extends StatelessWidget {
   final String? imagePath;
@@ -25,8 +26,8 @@ class UniversalImage extends StatelessWidget {
 
     /// Network Image
     if (imagePath!.startsWith('http')) {
-      return Image.network(
-        imagePath!,
+      return Image(
+        image: offlineImageProvider(imagePath!),
         height: height,
         width: width,
         fit: fit,

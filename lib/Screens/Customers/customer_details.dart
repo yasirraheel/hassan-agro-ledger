@@ -1,3 +1,4 @@
+import 'package:mobile_pos/offline/offline_media.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_feather_icons/flutter_feather_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -206,7 +207,7 @@ class _CustomerDetailsState extends ConsumerState<CustomerDetails> {
                                             fit: BoxFit.cover,
                                           )
                                         : DecorationImage(
-                                            image: NetworkImage(widget.party.image!),
+                                            image: offlineImageProvider(widget.party.image!),
                                             fit: BoxFit.cover,
                                           ),
                                   ),

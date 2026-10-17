@@ -1,5 +1,6 @@
 //ignore_for_file: unused_local_variable
 import 'dart:convert';
+import '../../../offline/offline_service.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -69,7 +70,7 @@ class BrandsRepo {
     final uri = Uri.parse('${APIConfig.url}/brands');
 
     try {
-      var responseData = await http.post(uri, headers: {
+      var responseData = await OfflineService.instance.write(uri, headers: {
         "Accept": 'application/json',
         'Authorization': await getAuthToken(),
       }, body: {

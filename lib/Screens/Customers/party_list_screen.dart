@@ -1,3 +1,4 @@
+import 'package:mobile_pos/offline/offline_media.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_feather_icons/flutter_feather_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -433,7 +434,7 @@ class _PartyListScreenState extends State<PartyListScreen> {
                                             shape: BoxShape.circle,
                                             border: Border.all(color: DAppColors.kBorder, width: 0.3),
                                             image: DecorationImage(
-                                              image: NetworkImage(item.image ?? ''),
+                                              image: offlineImageProvider(item.image ?? ''),
                                               fit: BoxFit.cover,
                                             ),
                                           ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mobile_pos/offline/remember_filters.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/svg.dart';
@@ -30,7 +31,17 @@ class IncomeReport extends ConsumerStatefulWidget {
   ConsumerState<IncomeReport> createState() => _IncomeReportState();
 }
 
-class _IncomeReportState extends ConsumerState<IncomeReport> {
+class _IncomeReportState extends ConsumerState<IncomeReport> with RememberFilters<IncomeReport> {
+  @override String get rememberedFilterKey => 'reports.income';
+  @override Map<String, dynamic> get rememberedFilters => {'duration': selectedTime, 'from': fromDate?.toIso8601String(), 'to': toDate?.toIso8601String()};
+  @override void restoreRememberedFilters(Map<String, dynamic> values) {
+    final duration = values['duration'];
+    if (duration is String && dateOptions.containsKey(duration)) selectedTime = duration;
+    final range = FilterMemory.range(selectedTime, from: DateTime.tryParse('${values['from'] ?? ''}'), to: DateTime.tryParse('${values['to'] ?? ''}'));
+    fromDate = range.$1; toDate = range.$2; _showCustomDatePickers = selectedTime == 'custom_date';
+    if (fromDate != null) fromDateController.text = DateFormat('yyyy-MM-dd').format(fromDate!);
+    if (toDate != null) toDateController.text = DateFormat('yyyy-MM-dd').format(toDate!);
+  }
   final TextEditingController fromDateController = TextEditingController();
   final TextEditingController toDateController = TextEditingController();
 

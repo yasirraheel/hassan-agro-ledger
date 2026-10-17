@@ -1,3 +1,4 @@
+import 'package:mobile_pos/offline/offline_media.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart'; // Import EasyLoading
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -133,7 +134,7 @@ class _PurchaseProductsState extends State<PurchaseProducts> {
                                     decoration: BoxDecoration(
                                       shape: BoxShape.circle,
                                       image: DecorationImage(
-                                        image: NetworkImage(
+                                        image: offlineImageProvider(
                                           filteredProducts[i].productPicture!,
                                         ),
                                         fit: BoxFit.cover,
@@ -295,7 +296,7 @@ class _ProductCardState extends State<ProductCard> {
                         borderRadius: BorderRadius.circular(90.0),
                       )
                     : BoxDecoration(
-                        image: DecorationImage(image: NetworkImage("${widget.productImage}"), fit: BoxFit.cover),
+                        image: DecorationImage(image: offlineImageProvider("${widget.productImage}"), fit: BoxFit.cover),
                         borderRadius: BorderRadius.circular(90.0),
                       ),
               ),

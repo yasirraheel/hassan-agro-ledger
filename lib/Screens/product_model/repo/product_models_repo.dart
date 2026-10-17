@@ -1,4 +1,5 @@
 import 'dart:convert';
+import '../../../offline/offline_service.dart';
 
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:http/http.dart' as http;
@@ -25,9 +26,8 @@ class ProductModelsRepo {
     request.fields['name'] = data.name.toString();
     request.fields['status'] = data.status.toString();
     try {
-      var response = await request.send();
-
-      var responseData = await http.Response.fromStream(response);
+      var response = await OfflineService.instance.write(url, body: request.fields, multipart: true);
+      var responseData = response;
       EasyLoading.dismiss();
       print('Model create ${response.statusCode}');
       print('Model create ${data.status}');
@@ -89,9 +89,8 @@ class ProductModelsRepo {
     request.fields['status'] = data.status.toString();
     request.fields['_method'] = 'put';
     try {
-      var response = await request.send();
-
-      var responseData = await http.Response.fromStream(response);
+      var response = await OfflineService.instance.write(url, body: request.fields, multipart: true);
+      var responseData = response;
       EasyLoading.dismiss();
       print(response.statusCode);
       if (response.statusCode == 200) {
@@ -120,8 +119,9 @@ class ProductModelsRepo {
       'Content-Type': 'application/json',
     };
     try {
-      var response = await http.delete(
+      var response = await OfflineService.instance.write(
         url,
+        method: 'DELETE',
         headers: headers,
       );
       EasyLoading.dismiss();

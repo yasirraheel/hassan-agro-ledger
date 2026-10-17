@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mobile_pos/offline/remember_filters.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_feather_icons/flutter_feather_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -33,7 +34,15 @@ class PurchaseReportScreen extends ConsumerStatefulWidget {
   PurchaseReportState createState() => PurchaseReportState();
 }
 
-class PurchaseReportState extends ConsumerState<PurchaseReportScreen> {
+class PurchaseReportState extends ConsumerState<PurchaseReportScreen> with RememberFilters<PurchaseReportScreen> {
+  @override String get rememberedFilterKey => 'reports.purchase';
+  @override Map<String, dynamic> get rememberedFilters => {'duration': selectedTime, 'from': fromDate?.toIso8601String(), 'to': toDate?.toIso8601String()};
+  @override void restoreRememberedFilters(Map<String, dynamic> values) {
+    final duration = values['duration'];
+    if (duration is String && dateOptions.containsKey(duration)) selectedTime = duration;
+    final range = FilterMemory.range(selectedTime, from: DateTime.tryParse('${values['from'] ?? ''}'), to: DateTime.tryParse('${values['to'] ?? ''}'));
+    fromDate = range.$1; toDate = range.$2; _showCustomDatePickers = selectedTime == 'custom_date';
+  }
   final TextEditingController fromDateController = TextEditingController();
   final TextEditingController toDateController = TextEditingController();
 

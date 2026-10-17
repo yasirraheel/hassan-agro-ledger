@@ -11,6 +11,7 @@ import '../../Provider/profile_provider.dart';
 import '../../widgets/build_date_selector/build_date_selector.dart';
 import '../../widgets/empty_widget/_empty_widget.dart';
 import '../../service/check_user_role_permission_provider.dart';
+import '../../offline/remember_filters.dart';
 import 'numeric_axis.dart';
 
 class DashboardScreen extends ConsumerStatefulWidget {
@@ -20,7 +21,30 @@ class DashboardScreen extends ConsumerStatefulWidget {
   ConsumerState<DashboardScreen> createState() => _DashboardScreenState();
 }
 
-class _DashboardScreenState extends ConsumerState<DashboardScreen> {
+class _DashboardScreenState extends ConsumerState<DashboardScreen> with RememberFilters<DashboardScreen> {
+  @override
+  String get rememberedFilterKey => 'dashboard';
+
+  @override
+  Map<String, dynamic> get rememberedFilters => {
+        'duration': selectedTime,
+        'from': fromDate?.toIso8601String(),
+        'to': toDate?.toIso8601String(),
+      };
+
+  @override
+  void restoreRememberedFilters(Map<String, dynamic> values) {
+    final duration = values['duration'];
+    if (duration is String && dateOptions.containsKey(duration)) selectedTime = duration;
+    final range = FilterMemory.range(
+      selectedTime,
+      from: DateTime.tryParse('${values['from'] ?? ''}'),
+      to: DateTime.tryParse('${values['to'] ?? ''}'),
+    );
+    fromDate = range.$1;
+    toDate = range.$2;
+    _showCustomDatePickers = selectedTime == 'custom_date';
+  }
   final Map<String, String> dateOptions = {
     'today': lang.S.current.today,
     'yesterday': lang.S.current.yesterday,
@@ -31,7 +55,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     'current_year': lang.S.current.currentYear,
     'custom_date': lang.S.current.customDate,
   };
-  String selectedTime = 'today';
+  String selectedTime = 'current_month';
   bool _isRefreshing = false; // Prevents multiple refresh calls
 
   Future<void> refreshData(WidgetRef ref) async {

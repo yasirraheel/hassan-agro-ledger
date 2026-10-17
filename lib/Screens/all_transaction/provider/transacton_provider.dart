@@ -1,3 +1,4 @@
+import 'package:mobile_pos/offline/offline_revision_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../model/transaction_model.dart';
 import '../repo/transaction_repo.dart';
@@ -53,6 +54,7 @@ class TransactionFilteredModel {
 
 final filteredTransactionProvider = FutureProvider.autoDispose.family<TransactionModel, TransactionFilteredModel>(
   (ref, filter) async {
+  ref.watch(offlineRevisionProvider);
     final repo = ref.read(transactionRepoProvider);
 
     // Convert party string to int if it's not "all_parties"

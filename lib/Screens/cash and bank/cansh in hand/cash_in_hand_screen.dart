@@ -309,6 +309,7 @@ class _CashInHandScreenState extends ConsumerState<CashInHandScreen> {
               ChequesFilterSearch(
                 displayFormat: _displayFormat,
                 timeOptions: _timeFilterOptions,
+                memoryKey: 'cash-in-hand.transactions',
                 onFilterChanged: (filterState) {
                   // Cast the dynamic output to the expected CashFilterState
                   _handleFilterChange(filterState as CashFilterState);

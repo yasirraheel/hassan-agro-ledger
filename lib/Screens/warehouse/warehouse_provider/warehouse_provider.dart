@@ -1,3 +1,4 @@
+import 'package:mobile_pos/offline/offline_revision_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobile_pos/Screens/transfer/repo/transfer_repo.dart';
 import 'package:mobile_pos/Screens/warehouse/model/warehouse_by_branch_model.dart';
@@ -10,14 +11,17 @@ WarehouseRepo repo = WarehouseRepo();
 
 // fetch warehouse list
 final fetchWarehouseListProvider = FutureProvider<WarehouseListModel>((ref) {
+  ref.watch(offlineRevisionProvider);
   return repo.fetchWareHouseList();
 });
 
 // fetch transfer list
 final fetchTransferListProvider = FutureProvider.autoDispose<TransferListModel>((ref) async {
+  ref.watch(offlineRevisionProvider);
   return TransferRepo().fetchTransferList();
 });
 
 final warehouseByBranchProvider = FutureProvider.family<List<WarehouseByBranchData>, String>((ref, branchId) async {
+  ref.watch(offlineRevisionProvider);
   return WarehouseRepo().fetchWarehouseByBranch(branchId);
 });

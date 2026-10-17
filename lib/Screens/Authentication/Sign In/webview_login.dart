@@ -5,7 +5,7 @@ import 'package:mobile_pos/generated/l10n.dart' as l;
 
 import '../../../../Repository/constant_functions.dart'; // Adjust path accordingly
 import '../../../../currency.dart'; // Adjust path accordingly
-import '../../Home/home.dart';
+import '../../SplashScreen/splash_screen.dart';
 import '../profile_setup_screen.dart'; // Adjust path accordingly
 
 class WebViewLogin extends StatefulWidget {
@@ -50,7 +50,7 @@ class _WebViewLoginState extends State<WebViewLogin> {
           if (isSetup) {
             Navigator.pushReplacement(
               context,
-              MaterialPageRoute(builder: (_) => const Home()),
+              MaterialPageRoute(builder: (_) => const SplashScreen()),
             );
           } else {
             Navigator.pushReplacement(

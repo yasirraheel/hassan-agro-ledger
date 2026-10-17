@@ -1,3 +1,4 @@
+import 'package:mobile_pos/offline/offline_media.dart';
 // File: product_list.dart (Refactored and Cleaned)
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
@@ -216,7 +217,7 @@ class _ProductListState extends ConsumerState<ComboProductReport> {
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     image: DecorationImage(
-                      image: NetworkImage('${product.productPicture!}'),
+                      image: offlineImageProvider('${product.productPicture!}'),
                       fit: BoxFit.cover,
                     ),
                   ),

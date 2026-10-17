@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobile_pos/generated/l10n.dart' as l;
 import '../constant.dart';
 import 'internet_connection_notifier.dart';
+import '../offline/offline_service.dart';
 
 class GlobalPopup extends ConsumerStatefulWidget {
   final Widget child;
@@ -19,10 +20,10 @@ class _GlobalPopupState extends ConsumerState<GlobalPopup> {
     final internetStatus = ref.watch(internetConnectionProvider);
     final _lang = l.S.of(context);
 
-    return Stack(
+    return ListenableBuilder(listenable:OfflineService.instance,builder:(context,_) => Stack(
       children: [
         widget.child,
-        if (!internetStatus.isConnected && internetStatus.appLifecycleState == AppLifecycleState.resumed)
+        if (!internetStatus.isConnected && !OfflineService.instance.ready && internetStatus.appLifecycleState == AppLifecycleState.resumed)
           Positioned.fill(
             child: Container(
               padding: const EdgeInsets.all(20),
@@ -51,6 +52,6 @@ class _GlobalPopupState extends ConsumerState<GlobalPopup> {
             ),
           ),
       ],
-    );
+    ));
   }
 }

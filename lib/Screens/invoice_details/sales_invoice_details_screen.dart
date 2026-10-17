@@ -1,3 +1,4 @@
+import 'package:mobile_pos/offline/offline_media.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -180,7 +181,7 @@ class _SalesInvoiceDetailsState extends State<SalesInvoiceDetails> {
                                             colorFilter: ColorFilter.mode(Colors.black, BlendMode.srcIn),
                                           )
                                         : buildInvoiceLogo(
-                                            image: NetworkImage(imageUrl),
+                                            image: offlineImageProvider(imageUrl),
                                           );
                               },
                               error: (e, stack) => Text(e.toString()),
@@ -1201,7 +1202,7 @@ class _SalesInvoiceDetailsState extends State<SalesInvoiceDetails> {
                                 borderRadius: BorderRadius.circular(4),
                                 color: const Color(0xffF5F3F3),
                                 image: DecorationImage(
-                                    image: NetworkImage(
+                                    image: offlineImageProvider(
                                       '${widget.saleTransaction.image}',
                                     ),
                                     fit: BoxFit.contain),

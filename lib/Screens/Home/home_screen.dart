@@ -1,3 +1,4 @@
+import 'package:mobile_pos/offline/offline_media.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -11,6 +12,8 @@ import 'package:nb_utils/nb_utils.dart';
 import 'package:restart_app/restart_app.dart';
 
 import '../../Provider/profile_provider.dart';
+import '../../offline/offline_service.dart';
+import '../../offline/sync_status_bar.dart';
 import '../../constant.dart';
 import '../../currency.dart';
 import '../../service/check_actions_when_no_branch.dart';
@@ -40,12 +43,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
     _isRefreshing = true;
     try {
+      await OfflineService.instance.sync(force:true);
       ref.refresh(summaryInfoProvider);
       ref.refresh(bannerProvider);
       ref.refresh(businessInfoProvider);
       ref.refresh(partiesProvider);
       ref.refresh(getExpireDateProvider(ref));
-      await Future.delayed(const Duration(seconds: 3));
     } finally {
       _isRefreshing = false;
     }
@@ -117,7 +120,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       width: 16,
                     ),
                   ),
-                IconButton(onPressed: () async => refreshAllProviders(ref: ref), icon: const Icon(Icons.refresh))
+                SyncStatusButton(onSync:() => refreshAllProviders(ref:ref)),
               ],
               leading: Padding(
                 padding: const EdgeInsets.all(10),
@@ -136,7 +139,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           )
                         : BoxDecoration(
                             image:
-                                DecorationImage(image: NetworkImage('${details.data?.pictureUrl}'), fit: BoxFit.cover),
+                                DecorationImage(image: offlineImageProvider('${details.data?.pictureUrl}'), fit: BoxFit.cover),
                             borderRadius: BorderRadius.circular(50),
                           ),
                   ),
@@ -217,7 +220,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                   children: [
                                     Flexible(
                                       child: Text(
-                                        lang.S.of(context).quickOver,
+                                        '${lang.S.of(context).quickOver} · ${lang.S.of(context).today}',
                                         maxLines: 2,
                                         overflow: TextOverflow.ellipsis,
                                         style: theme.textTheme.titleLarge?.copyWith(
@@ -363,8 +366,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                         padding: EdgeInsetsDirectional.only(end: 10), // Spacing between items
                                         child: ClipRRect(
                                           borderRadius: BorderRadius.circular(5),
-                                          child: Image.network(
-                                            "${images[index].imageUrl}",
+                                          child: Image(
+                                            image: offlineImageProvider("${images[index].imageUrl}"),
                                             width: MediaQuery.of(context).size.width * 0.7, // 80% width
                                             fit: BoxFit.cover,
                                           ),

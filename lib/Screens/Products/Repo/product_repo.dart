@@ -1,5 +1,6 @@
 //ignore_for_file: file_names, unused_element, unused_local_variable
 import 'dart:convert';
+import '../../../offline/offline_service.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
@@ -471,8 +472,9 @@ class ProductRepo {
       'Content-Type': 'application/json',
     };
     try {
-      var response = await http.delete(
+      var response = await OfflineService.instance.write(
         url,
+        method: 'DELETE',
         headers: headers,
       );
       EasyLoading.dismiss();

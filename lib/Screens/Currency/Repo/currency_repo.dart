@@ -1,4 +1,5 @@
 import 'dart:convert';
+import '../../../offline/offline_service.dart';
 
 import 'package:http/http.dart' as http;
 
@@ -53,9 +54,9 @@ class CurrencyRepo {
 
   Future<bool> setDefaultCurrency({required num id}) async {
     CustomHttpClientGet clientGet = CustomHttpClientGet(client: http.Client());
-    final uri = Uri.parse('${APIConfig.url}/currencies/$id');
+    final uri = Uri.parse('${APIConfig.url}/currency-selection');
 
-    final response = await clientGet.get(url: uri);
+    final response = await OfflineService.instance.write(uri, body: {'currency_id': id.toString()});
 
     if (response.statusCode == 200) {
       return true;

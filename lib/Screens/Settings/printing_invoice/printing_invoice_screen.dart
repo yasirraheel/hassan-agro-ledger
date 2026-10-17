@@ -1,3 +1,4 @@
+import 'package:mobile_pos/offline/offline_media.dart';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
@@ -465,7 +466,7 @@ class _PrintingInvoiceScreenState extends ConsumerState<PrintingInvoiceScreen> {
                                     fit: BoxFit.cover,
                                   )
                                 : DecorationImage(
-                                    image: NetworkImage(
+                                    image: offlineImageProvider(
                                         (ref.watch(businessInfoProvider).value?.data?.a4InvoiceLogo.toString() ?? '')),
                                     fit: BoxFit.cover,
                                   )
@@ -595,7 +596,7 @@ class _PrintingInvoiceScreenState extends ConsumerState<PrintingInvoiceScreen> {
                                     fit: BoxFit.cover,
                                   )
                                 : DecorationImage(
-                                    image: NetworkImage(
+                                    image: offlineImageProvider(
                                         (ref.watch(businessInfoProvider).value?.data?.thermalInvoiceLogo.toString() ??
                                             '')),
                                     fit: BoxFit.cover,
@@ -726,7 +727,7 @@ class _PrintingInvoiceScreenState extends ConsumerState<PrintingInvoiceScreen> {
                                     fit: BoxFit.cover,
                                   )
                                 : DecorationImage(
-                                    image: NetworkImage(
+                                    image: offlineImageProvider(
                                         (ref.watch(businessInfoProvider).value?.data?.invoiceScannerLogo.toString() ??
                                             '')),
                                     fit: BoxFit.cover,

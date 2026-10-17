@@ -1,3 +1,4 @@
+import 'package:mobile_pos/offline/offline_revision_provider.dart';
 import 'dart:convert';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -7,6 +8,7 @@ import '../Const/api_config.dart';
 import '../http_client/customer_http_client_get.dart';
 
 final socialLoginCheckProvider = FutureProvider.autoDispose<bool>((ref) async {
+  ref.watch(offlineRevisionProvider);
   CustomHttpClientGet clientGet = CustomHttpClientGet(client: http.Client());
   final url = Uri.parse('${APIConfig.url}/module-check?module_name=SocialLoginAddon');
   final headers = {
@@ -21,11 +23,12 @@ final socialLoginCheckProvider = FutureProvider.autoDispose<bool>((ref) async {
   }
 });
 final invoice80mmAddonCheckProvider = FutureProvider.autoDispose<bool>((ref) async {
+  ref.watch(offlineRevisionProvider);
   final url = Uri.parse('${APIConfig.url}/module-check?module_name=ThermalPrinterAddon');
   final headers = {
     "Accept": "application/json",
   };
-  final response = await http.get(url, headers: headers);
+  final response = await CustomHttpClientGet(client: http.Client()).get(url: url, headers: headers);
   if (response.statusCode == 200) {
     final data = jsonDecode(response.body);
     return data['status'];

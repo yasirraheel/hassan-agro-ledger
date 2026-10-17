@@ -1,3 +1,4 @@
+import 'package:mobile_pos/offline/offline_media.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -473,7 +474,7 @@ class TransferProductCard extends StatelessWidget {
                             borderRadius: BorderRadius.circular(90.0),
                           )
                         : BoxDecoration(
-                            image: DecorationImage(image: NetworkImage("$productImage"), fit: BoxFit.cover),
+                            image: DecorationImage(image: offlineImageProvider("$productImage"), fit: BoxFit.cover),
                             borderRadius: BorderRadius.circular(90.0),
                           ),
                   ),

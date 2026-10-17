@@ -1,4 +1,5 @@
 import 'dart:convert';
+import '../../../../offline/offline_service.dart';
 
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:http/http.dart' as http;
@@ -61,8 +62,8 @@ class ProductSettingRepo {
     request.fields['show_serial'] = data.showSerial.toString();
 
     try {
-      var response = await request.send();
-      var responseData = await http.Response.fromStream(response);
+      var response = await OfflineService.instance.write(url, body: request.fields, multipart: true);
+      var responseData = response;
       EasyLoading.dismiss();
 
       print(response.statusCode);

@@ -23,7 +23,9 @@
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>mobile_pos</string>
+	<string>Business Manager</string>
+	<key>CFBundleDisplayName</key>
+	<string>Business Manager</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>

@@ -1,3 +1,4 @@
+import 'package:mobile_pos/offline/offline_revision_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobile_pos/Screens/Products/Model/product_total_stock_model.dart';
 
@@ -5,6 +6,7 @@ import '../Repo/product_repo.dart';
 
 ProductRepo productRepo = ProductRepo();
 final productListProvider = FutureProvider<ProductListResponse>((ref) async {
+  ref.watch(offlineRevisionProvider);
   final response = await productRepo.fetchProducts();
   return response;
 });

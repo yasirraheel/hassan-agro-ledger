@@ -8,7 +8,7 @@ import 'package:nb_utils/nb_utils.dart';
 
 import '../../GlobalComponents/glonal_popup.dart';
 import '../../constant.dart';
-import '../Home/home.dart';
+import '../SplashScreen/splash_screen.dart';
 
 class SuccessScreen extends StatelessWidget {
   const SuccessScreen({super.key, required this.email});
@@ -50,7 +50,7 @@ class SuccessScreen extends StatelessWidget {
                     padding: const EdgeInsets.all(8.0),
                     child: ElevatedButton(
                       onPressed: () {
-                        const Home().launch(context);
+                        const SplashScreen().launch(context);
                         // Navigator.pushNamed(context, '/home');
                       },
                       child: Text(lang.S.of(context).continueButton),

@@ -1,3 +1,4 @@
+import 'package:mobile_pos/offline/offline_revision_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../Provider/transactions_provider.dart';
@@ -10,6 +11,7 @@ final incomeRepoProvider = Provider<IncomeRepo>(
 
 final filteredIncomeProvider = FutureProvider.family.autoDispose<List<Income>, FilterModel>(
   (ref, filter) {
+  ref.watch(offlineRevisionProvider);
     final repo = ref.read(incomeRepoProvider);
 
     return repo.fetchAllIncome(

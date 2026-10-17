@@ -1,3 +1,4 @@
+import 'package:mobile_pos/offline/offline_media.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
@@ -224,7 +225,7 @@ class _ProductDetailsState extends ConsumerState<ProductDetails> {
           borderRadius: BorderRadius.circular(5),
           image: snapshot.productPicture == null
               ? DecorationImage(fit: BoxFit.cover, image: AssetImage(noProductImageUrl))
-              : DecorationImage(fit: BoxFit.cover, image: NetworkImage('${snapshot.productPicture}')),
+              : DecorationImage(fit: BoxFit.cover, image: offlineImageProvider('${snapshot.productPicture}')),
         ),
       ),
     );
