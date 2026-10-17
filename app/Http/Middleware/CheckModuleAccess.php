@@ -25,7 +25,7 @@ class CheckModuleAccess
             }
         }
 
-        $module = $this->getModuleFromUrl($request->path());
+        $module = $this->moduleForPath($request->path());
 
         if ($module && !plan_module_enabled($module)) {
             return $this->deny($request);
@@ -34,7 +34,7 @@ class CheckModuleAccess
         return $next($request);
     }
 
-    private function getModuleFromUrl(string $path): ?string
+    public function moduleForPath(string $path): ?string
     {
         $path = preg_replace('#^api/v\d+/#', '', $path);
         $segment = explode('/', $path)[0] ?? '';
@@ -79,6 +79,8 @@ class CheckModuleAccess
             'switch-branch' => 'branches',
             'transactions' => 'payment-types',
             'transfers' => 'transfers',
+            'bulk-product-rows' => 'products',
+            'tax-transactions' => 'vats',
             'units' => 'products',
             'variations' => 'products',
             'vats' => 'vats',

@@ -41,7 +41,11 @@ class MobileSyncController extends Controller
                 }
             }
         }
-        $resources = array_values(array_filter(self::RESOURCES, fn ($path) => isset($paths['api/v1/'.$path])));
+        $moduleAccess = new \App\Http\Middleware\CheckModuleAccess;
+        $resources = array_values(array_filter(self::RESOURCES, function ($path) use ($paths, $moduleAccess) {
+            $module = $moduleAccess->moduleForPath($path);
+            return isset($paths['api/v1/'.$path]) && (!$module || plan_module_enabled($module));
+        }));
 
         return response()->json([
             'protocol' => 1,
@@ -64,9 +68,14 @@ class MobileSyncController extends Controller
 
     public function review(Request $request, string $resource, int $id)
     {
+        $module = (new \App\Http\Middleware\CheckModuleAccess)->moduleForPath($resource);
+        abort_if($module && !plan_module_enabled($module), 403);
         $table = \App\Http\Middleware\MobileSyncOperation::TABLES[$resource] ?? null;
         abort_unless($table && Schema::hasTable($table), 404);
-        $record = \Illuminate\Support\Facades\DB::table($table)->where('business_id', $request->user()->business_id)->where('id', $id)->first();
+        $query = \Illuminate\Support\Facades\DB::table($table)->where('business_id', $request->user()->business_id)->where('id', $id);
+        $branchId = $request->user()->active_branch_id ?? $request->user()->branch_id;
+        if (moduleCheck('MultiBranchAddon') && $branchId && Schema::hasColumn($table, 'branch_id')) $query->where('branch_id', $branchId);
+        $record = $query->first();
         abort_unless($record, 404);
         $version = (new \App\Http\Middleware\MobileSyncOperation)->recordVersion($record);
         $data = (array) $record;
