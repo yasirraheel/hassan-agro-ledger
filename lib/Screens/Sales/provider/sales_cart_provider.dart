@@ -8,8 +8,13 @@ import '../../Settings/sales settings/model/amount_rounding_dropdown_model.dart'
 import '../../vat_&_tax/model/vat_model.dart';
 import '../model/sale_add_to_cart_model.dart';
 
+// Keep the cart instance independent from the business-info request. Business
+// settings are refreshed after sync and after saving settings; watching that
+// provider here recreates CartNotifier and silently discards an in-progress sale.
+// Read the current value once for the rounding default, but do not subscribe to
+// the request so a settings refresh cannot wipe the cart.
 final cartNotifier = ChangeNotifierProvider((ref) {
-  return CartNotifier(businessInformation: ref.watch(businessInfoProvider).value);
+  return CartNotifier(businessInformation: ref.read(businessInfoProvider).valueOrNull);
 });
 
 class CartNotifier extends ChangeNotifier {

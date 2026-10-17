@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:ui';
 
 import 'package:flutter/cupertino.dart';
@@ -7,6 +8,7 @@ import 'package:mobile_pos/Screens/Products/Model/product_total_stock_model.dart
 import 'package:mobile_pos/generated/l10n.dart' as lang;
 import 'package:mobile_pos/model/business_info_model.dart';
 import 'package:nb_utils/nb_utils.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:print_bluetooth_thermal/print_bluetooth_thermal.dart';
 
 import '../../Screens/Products/Model/product_model.dart';
@@ -33,6 +35,12 @@ class ThermalPrinter extends ChangeNotifier {
   /// Scans and retrieves a list of paired Bluetooth thermal printers.
   /// Updates the connection status and notifies listeners to rebuild the UI.
   Future<void> getBluetooth() async {
+    if (Platform.isAndroid) {
+      final permissions = await [Permission.bluetoothScan, Permission.bluetoothConnect].request();
+      if (permissions.values.any((status) => !status.isGranted)) {
+        throw const FormatException('Bluetooth permission was not granted.');
+      }
+    }
     availableBluetoothDevices = await PrintBluetoothThermal.pairedBluetooths;
     isBluetoothConnected = await PrintBluetoothThermal.connectionStatus;
     notifyListeners();
@@ -167,16 +175,27 @@ class ThermalPrinter extends ChangeNotifier {
     required List<SalesDetails>? productList,
     required BuildContext context,
   }) async {
-    await getBluetooth();
-
-    if (isBluetoothConnected) {
-      SalesThermalPrinterInvoice().printSalesTicket(
-        printTransactionModel: transaction,
-        productList: productList,
-        context: context,
-      );
-    } else {
-      listOfBluDialog(context: context);
+    try {
+      await getBluetooth();
+      if (isBluetoothConnected) {
+        await SalesThermalPrinterInvoice().printSalesTicket(
+          printTransactionModel: transaction,
+          productList: productList,
+          context: context,
+        );
+      } else if (context.mounted) {
+        await listOfBluDialog(context: context);
+      }
+    } catch (_) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context)
+          ..hideCurrentSnackBar()
+          ..showSnackBar(
+            const SnackBar(
+              content: Text('Unable to print. Check Bluetooth permission and printer connection.'),
+            ),
+          );
+      }
     }
   }
 

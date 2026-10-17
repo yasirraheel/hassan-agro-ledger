@@ -53,6 +53,7 @@ class SalesInvoiceDetails extends StatefulWidget {
 class _SalesInvoiceDetailsState extends State<SalesInvoiceDetails> {
   ScreenshotController controller = ScreenshotController();
   final GlobalKey _screenshotKey = GlobalKey();
+  bool _isPrinting = false;
   late final TransformationController _invoiceZoomController = TransformationController(
     Matrix4.identity()..scale(0.8, 0.8, 1.0),
   );
@@ -247,7 +248,10 @@ class _SalesInvoiceDetailsState extends State<SalesInvoiceDetails> {
                   child: SingleChildScrollView(
                     child: RepaintBoundary(
                       key: _screenshotKey,
-                      child: Padding(
+                      child: Container(
+                        // Keep the existing margin, but paint it white so the
+                        // exported image has no transparent/black outer canvas.
+                        color: Colors.white,
                         padding: const EdgeInsets.all(16),
                         child: SizedBox(
                           width: invoiceWidth,
@@ -1455,17 +1459,29 @@ class _SalesInvoiceDetailsState extends State<SalesInvoiceDetails> {
                           builder: (BuildContext context, LanguageChangeProvider value, Widget? child) {
                             return ElevatedButton(
                               onPressed: () async {
-                                PrintSalesTransactionModel model = PrintSalesTransactionModel(
-                                  transitionModel: widget.saleTransaction,
-                                  personalInformationModel: widget.businessInfo,
-                                );
-                                await printerData.printSalesThermalInvoiceNow(
-                                  transaction: model,
-                                  productList: model.transitionModel!.salesDetails,
-                                  context: context,
-                                );
+                                if (_isPrinting) return;
+                                setState(() => _isPrinting = true);
+                                try {
+                                  final model = PrintSalesTransactionModel(
+                                    transitionModel: widget.saleTransaction,
+                                    personalInformationModel: widget.businessInfo,
+                                  );
+                                  await printerData.printSalesThermalInvoiceNow(
+                                    transaction: model,
+                                    productList: model.transitionModel!.salesDetails,
+                                    context: context,
+                                  );
+                                } finally {
+                                  if (mounted) setState(() => _isPrinting = false);
+                                }
                               },
-                              child: Text(lang.S.of(context).print),
+                              child: _isPrinting
+                                  ? const SizedBox(
+                                      width: 20,
+                                      height: 20,
+                                      child: CircularProgressIndicator(strokeWidth: 2),
+                                    )
+                                  : Text(lang.S.of(context).print),
                             );
                           },
                         ),

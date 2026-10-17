@@ -105,7 +105,6 @@ class _PosSaleScreenState extends _$PosSaleScreenState {
   @override
   void initState() {
     super.initState();
-    ref.refresh(cartNotifier);
 
     // Listen for customer type changes to clear cart
     String currentCustomerType = selectedFilterNotifier.value.customer?.type ?? 'Retailer';
