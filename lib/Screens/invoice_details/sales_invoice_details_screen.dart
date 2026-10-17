@@ -53,6 +53,15 @@ class SalesInvoiceDetails extends StatefulWidget {
 class _SalesInvoiceDetailsState extends State<SalesInvoiceDetails> {
   ScreenshotController controller = ScreenshotController();
   final GlobalKey _screenshotKey = GlobalKey();
+  late final TransformationController _invoiceZoomController = TransformationController(
+    Matrix4.identity()..scale(0.8, 0.8, 1.0),
+  );
+
+  @override
+  void dispose() {
+    _invoiceZoomController.dispose();
+    super.dispose();
+  }
 
   String productName({required num detailsId}) {
     final details = widget
@@ -230,6 +239,7 @@ class _SalesInvoiceDetailsState extends State<SalesInvoiceDetails> {
               backgroundColor: Colors.white,
               body: Center(
                 child: InteractiveViewer(
+                  transformationController: _invoiceZoomController,
                   minScale: 0.75,
                   maxScale: 4,
                   boundaryMargin: const EdgeInsets.all(80),
