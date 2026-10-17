@@ -152,6 +152,7 @@ class SettingScreenState extends ConsumerState<SettingScreen> {
                       EasyLoading.show(status: lang.S.of(context).logOut);
                       LogOutRepo repo = LogOutRepo();
                       await repo.signOutApi();
+                      EasyLoading.dismiss();
                       if (mounted && await OfflineService.instance.canSignOut()) {
                         Navigator.of(context).pushAndRemoveUntil(
                           MaterialPageRoute(builder: (_) => const SignIn()),
