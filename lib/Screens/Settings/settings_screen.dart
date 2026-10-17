@@ -1,4 +1,5 @@
 import 'package:mobile_pos/offline/offline_media.dart';
+import 'package:mobile_pos/offline/offline_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -19,6 +20,7 @@ import '../../currency.dart';
 import '../../model/business_info_model.dart';
 import '../../widgets/page_navigation_list/_page_navigation_list.dart';
 import '../Authentication/Repo/logout_repo.dart';
+import '../Authentication/Sign In/sign_in_screen.dart';
 import '../Currency/currency_screen.dart';
 import '../../service/check_user_role_permission_provider.dart';
 import '../../offline/sync_status_bar.dart';
@@ -150,6 +152,12 @@ class SettingScreenState extends ConsumerState<SettingScreen> {
                       EasyLoading.show(status: lang.S.of(context).logOut);
                       LogOutRepo repo = LogOutRepo();
                       await repo.signOutApi();
+                      if (mounted && await OfflineService.instance.canSignOut()) {
+                        Navigator.of(context).pushAndRemoveUntil(
+                          MaterialPageRoute(builder: (_) => const SignIn()),
+                          (_) => false,
+                        );
+                      }
                     }
                     if (value.value == 'delete_account') {
                       showDeleteAccountDialog(context, ref);

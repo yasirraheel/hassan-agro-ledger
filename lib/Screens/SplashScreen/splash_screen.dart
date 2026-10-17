@@ -141,11 +141,10 @@ class SplashScreenState extends ConsumerState<SplashScreen> with SingleTickerPro
                       child: Container(
                         width: 156,
                         height: 156,
-                        padding: const EdgeInsets.all(12),
+                        padding: EdgeInsets.zero,
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: Colors.transparent,
                           borderRadius: BorderRadius.circular(32),
-                          boxShadow: const [BoxShadow(color: Color(0x26000000), blurRadius: 28, offset: Offset(0, 12))],
                         ),
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(22),
@@ -165,12 +164,7 @@ class SplashScreenState extends ConsumerState<SplashScreen> with SingleTickerPro
                       listenable: _service,
                       builder: (context, _) => Container(
                         constraints: const BoxConstraints(maxWidth: 420),
-                        padding: const EdgeInsets.all(22),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(24),
-                          border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
-                        ),
+                        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 10),
                         child: Column(
                           children: [
                             if (_busy)

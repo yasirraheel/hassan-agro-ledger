@@ -64,20 +64,50 @@ class SyncStatusBar extends StatelessWidget {
 
 class SyncStatusButton extends StatelessWidget {
   final Future<void> Function() onSync;
-  const SyncStatusButton({super.key,required this.onSync});
+  const SyncStatusButton({super.key, required this.onSync});
   @override
   Widget build(BuildContext context) {
     final service = OfflineService.instance;
-    return ListenableBuilder(listenable:service,builder:(context,_) => GestureDetector(
-      onLongPress:() => Navigator.push(context,MaterialPageRoute(builder:(_) => const SyncStatusScreen())),
-      child:IconButton(
-      tooltip:service.conflictCount>0 ? '${service.conflictCount} changes need review' : service.pendingCount>0 ? '${service.pendingCount} changes waiting to sync' : service.online ? 'Sync status' : 'Offline · using saved data',
-      onPressed:service.syncing?null:onSync,
-      icon:Badge(isLabelVisible:service.pendingCount>0 || service.conflictCount>0,
-        label:Text('${service.pendingCount+service.conflictCount}'),
-        child:Icon(Icons.refresh,
-          size:21,color:service.conflictCount>0 || !service.online?const Color(0xff9a5b08):const Color(0xff087f67))),
-    )));
+    return ListenableBuilder(
+      listenable: service,
+      builder: (context, _) => GestureDetector(
+        onLongPress: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SyncStatusScreen())),
+        child: IconButton(
+          tooltip: service.conflictCount > 0
+              ? '${service.conflictCount} changes need review'
+              : service.pendingCount > 0
+              ? '${service.pendingCount} changes waiting to sync'
+              : service.online
+              ? 'Sync status'
+              : 'Offline · using saved data',
+          onPressed: service.syncing
+              ? null
+              : () async {
+                  await onSync();
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(service.lastError == null ? 'Sync completed successfully.' : service.lastError!),
+                      ),
+                    );
+                  }
+                },
+          icon: Badge(
+            isLabelVisible: service.pendingCount > 0 || service.conflictCount > 0,
+            label: Text('${service.pendingCount + service.conflictCount}'),
+            child: service.syncing
+                ? const SizedBox(width: 21, height: 21, child: CircularProgressIndicator(strokeWidth: 2))
+                : Icon(
+                    Icons.refresh,
+                    size: 21,
+                    color: service.conflictCount > 0 || !service.online
+                        ? const Color(0xff9a5b08)
+                        : const Color(0xff087f67),
+                  ),
+          ),
+        ),
+      ),
+    );
   }
 }
 
@@ -108,6 +138,12 @@ class SyncStatusScreen extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text('${service.pendingCount} pending · ${service.conflictCount} need review'),
+            if (service.conflictCount > 0) ...[
+              const SizedBox(height: 12),
+              const Text(
+                'Needs review means another device changed the same record before this device uploaded its edit. Open the item below to compare the local and server versions.',
+              ),
+            ],
             if (service.lastError != null)
               Padding(padding: const EdgeInsets.only(top: 12), child: Text(service.lastError!)),
             if (service.downloading)
@@ -146,7 +182,11 @@ class SyncStatusScreen extends StatelessWidget {
                               ? Icons.check_circle_outline
                               : Icons.schedule,
                         ),
-                        title: Text('${op['method']} ${op['path']}'),
+                        title: Text(
+                          op['state'] == 'conflict'
+                              ? 'Needs review: ${op['method']} ${op['path']}'
+                              : '${op['method']} ${op['path']}',
+                        ),
                         onTap: op['state'] == 'conflict'
                             ? () => Navigator.of(
                                 context,

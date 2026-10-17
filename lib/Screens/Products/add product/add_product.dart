@@ -13,6 +13,7 @@ import 'package:mobile_pos/Provider/profile_provider.dart';
 import 'package:mobile_pos/Screens/Products/Model/product_model.dart';
 import 'package:mobile_pos/Screens/Products/Repo/product_repo.dart';
 import 'package:mobile_pos/Screens/Products/product_setting/product_setting_drawer.dart';
+import 'package:mobile_pos/Screens/Products/product_list_screen.dart';
 import 'package:mobile_pos/Screens/Products/product_setting/provider/setting_provider.dart';
 import 'package:mobile_pos/Screens/Products/add%20product/single_product_form.dart';
 import 'package:mobile_pos/Screens/Products/add%20product/variant_product_form.dart';
@@ -115,8 +116,8 @@ class AddProductState extends ConsumerState<AddProduct> {
       _selectedType = widget.productModel?.productType == 'variant'
           ? ProductType.variant
           : widget.productModel?.productType == 'combo'
-              ? ProductType.combo
-              : ProductType.single;
+          ? ProductType.combo
+          : ProductType.single;
 
       selectedTaxType = widget.productModel?.vatType ?? "exclusive";
       num vatAmount = widget.productModel?.vatAmount ?? 0;
@@ -149,8 +150,9 @@ class AddProductState extends ConsumerState<AddProduct> {
             productSalePrice: e.productSalePrice.toString(),
             productWholeSalePrice: e.productWholeSalePrice.toString(),
             productDealerPrice: e.productDealerPrice.toString(),
-            expireDate:
-                e.expireDate != null ? DateFormat('yyyy-MM-dd').format(DateTime.parse(e.expireDate.toString())) : null,
+            expireDate: e.expireDate != null
+                ? DateFormat('yyyy-MM-dd').format(DateTime.parse(e.expireDate.toString()))
+                : null,
             mfgDate: e.mfgDate != null ? DateFormat('yyyy-MM-dd').format(DateTime.parse(e.mfgDate.toString())) : null,
             warehouseId: e.warehouseId?.toString(),
             serialNumbers: e.serialNumbers ?? [],
@@ -175,8 +177,9 @@ class AddProductState extends ConsumerState<AddProduct> {
             productSalePrice: e.productSalePrice.toString(),
             productWholeSalePrice: e.productWholeSalePrice.toString(),
             productDealerPrice: e.productDealerPrice.toString(),
-            expireDate:
-                e.expireDate != null ? DateFormat('yyyy-MM-dd').format(DateTime.parse(e.expireDate.toString())) : null,
+            expireDate: e.expireDate != null
+                ? DateFormat('yyyy-MM-dd').format(DateTime.parse(e.expireDate.toString()))
+                : null,
             mfgDate: e.mfgDate != null ? DateFormat('yyyy-MM-dd').format(DateTime.parse(e.mfgDate.toString())) : null,
             variantName: e.variantName,
             variationData: e.variationData,
@@ -312,7 +315,8 @@ class AddProductState extends ConsumerState<AddProduct> {
               backgroundColor: Colors.white,
               iconTheme: const IconThemeData(color: Colors.black),
               title: Text(
-                  widget.productModel != null ? lang.S.of(context).updateProduct : lang.S.of(context).addNewProduct),
+                widget.productModel != null ? lang.S.of(context).updateProduct : lang.S.of(context).addNewProduct,
+              ),
               centerTitle: true,
               actions: [
                 IconButton(
@@ -328,9 +332,10 @@ class AddProductState extends ConsumerState<AddProduct> {
               ),
             ),
             endDrawer: ProductSettingsDrawer(
-                onSave: () => Navigator.of(context).pop(),
-                modules: snapShot.data?.modules,
-                addons: businessInfoAsyncValue.value?.data?.addons),
+              onSave: () => Navigator.of(context).pop(),
+              modules: snapShot.data?.modules,
+              addons: businessInfoAsyncValue.value?.data?.addons,
+            ),
             body: Consumer(
               builder: (context, ref, _) {
                 final taxesData = ref.watch(taxProvider);
@@ -342,20 +347,23 @@ class AddProductState extends ConsumerState<AddProduct> {
                     bool shouldUpdate = false;
 
                     if (!isTaxInitialized && taxesData.value != null) {
-                      final targetTax =
-                          taxesData.value!.firstWhereOrNull((vat) => vat.id == widget.productModel?.vatId);
+                      final targetTax = taxesData.value!.firstWhereOrNull(
+                        (vat) => vat.id == widget.productModel?.vatId,
+                      );
                       if (targetTax != null) selectedTax = targetTax;
                       isTaxInitialized = true;
                       shouldUpdate = true;
                     }
 
                     if (!isRackInitialized && rackData.value?.data != null) {
-                      final targetRack =
-                          rackData.value!.data!.firstWhereOrNull((r) => r.id == widget.productModel?.rackId);
+                      final targetRack = rackData.value!.data!.firstWhereOrNull(
+                        (r) => r.id == widget.productModel?.rackId,
+                      );
                       if (targetRack != null) {
                         selectedRack = targetRack;
-                        selectedShelf =
-                            selectedRack!.shelves?.firstWhereOrNull((s) => s.id == widget.productModel?.shelfId);
+                        selectedShelf = selectedRack!.shelves?.firstWhereOrNull(
+                          (s) => s.id == widget.productModel?.shelfId,
+                        );
                       }
                       isRackInitialized = true;
                       shouldUpdate = true;
@@ -400,62 +408,85 @@ class AddProductState extends ConsumerState<AddProduct> {
                             Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(lang.S.of(context).image,
-                                    style: theme.textTheme.bodyMedium
-                                        ?.copyWith(color: kTitleColor, fontWeight: FontWeight.w500, fontSize: 16)),
+                                Text(
+                                  lang.S.of(context).image,
+                                  style: theme.textTheme.bodyMedium?.copyWith(
+                                    color: kTitleColor,
+                                    fontWeight: FontWeight.w500,
+                                    fontSize: 16,
+                                  ),
+                                ),
                                 const SizedBox(height: 10),
                                 pickedImage == null && previousProductImage == null
                                     ? InkWell(
                                         onTap: () => uploadImageDialog(context, theme),
                                         child: CustomDottedBorder(
-                                            color: const Color(0xFFB7B7B7),
-                                            borderType: BorderType.rRect,
-                                            radius: const Radius.circular(8),
-                                            padding: const EdgeInsets.all(6),
-                                            child: ClipRRect(
-                                                borderRadius: const BorderRadius.all(Radius.circular(4.0)),
-                                                child: SizedBox(
-                                                    height: 70,
-                                                    width: 70,
-                                                    child:
-                                                        Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-                                                      const Icon(IconlyLight.camera, color: kNeutralColor),
-                                                      Text(lang.S.of(context).upload,
-                                                          style: theme.textTheme.bodyMedium?.copyWith(
-                                                              color: kNeutralColor,
-                                                              fontSize: 14,
-                                                              fontWeight: FontWeight.w500))
-                                                    ])))),
+                                          color: const Color(0xFFB7B7B7),
+                                          borderType: BorderType.rRect,
+                                          radius: const Radius.circular(8),
+                                          padding: const EdgeInsets.all(6),
+                                          child: ClipRRect(
+                                            borderRadius: const BorderRadius.all(Radius.circular(4.0)),
+                                            child: SizedBox(
+                                              height: 70,
+                                              width: 70,
+                                              child: Column(
+                                                mainAxisAlignment: MainAxisAlignment.center,
+                                                children: [
+                                                  const Icon(IconlyLight.camera, color: kNeutralColor),
+                                                  Text(
+                                                    lang.S.of(context).upload,
+                                                    style: theme.textTheme.bodyMedium?.copyWith(
+                                                      color: kNeutralColor,
+                                                      fontSize: 14,
+                                                      fontWeight: FontWeight.w500,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ),
+                                        ),
                                       )
                                     : GestureDetector(
                                         onTap: () => uploadImageDialog(context, theme),
-                                        child: Stack(alignment: Alignment.topRight, children: [
-                                          Container(
-                                            height: 70,
-                                            width: 70,
-                                            padding: const EdgeInsets.all(2),
-                                            decoration: BoxDecoration(
+                                        child: Stack(
+                                          alignment: Alignment.topRight,
+                                          children: [
+                                            Container(
+                                              height: 70,
+                                              width: 70,
+                                              padding: const EdgeInsets.all(2),
+                                              decoration: BoxDecoration(
                                                 borderRadius: const BorderRadius.all(Radius.circular(4)),
-                                                border: Border.all(color: kBorderColorTextField)),
-                                            child: Container(
+                                                border: Border.all(color: kBorderColorTextField),
+                                              ),
+                                              child: Container(
                                                 height: 70,
                                                 width: 70,
                                                 decoration: BoxDecoration(
-                                                    image: DecorationImage(
-                                                        image: pickedImage != null
-                                                            ? FileImage(File(pickedImage!.path))
-                                                            : offlineImageProvider("$previousProductImage") as ImageProvider,
-                                                        fit: BoxFit.cover))),
-                                          ),
-                                          Padding(
+                                                  image: DecorationImage(
+                                                    image: pickedImage != null
+                                                        ? FileImage(File(pickedImage!.path))
+                                                        : offlineImageProvider("$previousProductImage")
+                                                              as ImageProvider,
+                                                    fit: BoxFit.cover,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                            Padding(
                                               padding: const EdgeInsets.all(5.0),
                                               child: GestureDetector(
-                                                  onTap: () => setState(() {
-                                                        previousProductImage = null;
-                                                        pickedImage = null;
-                                                      }),
-                                                  child: const Icon(Icons.close, color: kMainColor, size: 18)))
-                                        ]),
+                                                onTap: () => setState(() {
+                                                  previousProductImage = null;
+                                                  pickedImage = null;
+                                                }),
+                                                child: const Icon(Icons.close, color: kMainColor, size: 18),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
                                       ),
                               ],
                             ),
@@ -463,11 +494,12 @@ class AddProductState extends ConsumerState<AddProduct> {
                           ],
 
                           _buildTextField(
-                              controller: nameController,
-                              label: lang.S.of(context).productName,
-                              hint: lang.S.of(context).enterProductName,
-                              validator: (value) =>
-                                  value!.isEmpty ? lang.S.of(context).pleaseEnterAValidProductName : null),
+                            controller: nameController,
+                            label: lang.S.of(context).productName,
+                            hint: lang.S.of(context).enterProductName,
+                            validator: (value) =>
+                                value!.isEmpty ? lang.S.of(context).pleaseEnterAValidProductName : null,
+                          ),
 
                           if (snapShot.data?.modules?.showProductCode == '1') ...[
                             const SizedBox(height: 24),
@@ -485,19 +517,26 @@ class AddProductState extends ConsumerState<AddProduct> {
                                 hintText: lang.S.of(context).enterProductCode,
                                 border: const OutlineInputBorder(),
                                 suffixIcon: InkWell(
-                                    onTap: () => showDialog(
-                                        context: context,
-                                        builder: (c) => BarcodeScannerWidget(
-                                            onBarcodeFound: (code) => productCodeController.text = code)),
-                                    child: Container(
-                                        padding: const EdgeInsets.all(8),
-                                        height: 48,
-                                        width: 44,
-                                        decoration: BoxDecoration(
-                                            borderRadius: const BorderRadius.only(
-                                                topRight: Radius.circular(5), bottomRight: Radius.circular(5)),
-                                            color: const Color(0xffD8D8D8).withValues(alpha: 0.3)),
-                                        child: SvgPicture.asset(height: 28, 'assets/qr_new.svg'))),
+                                  onTap: () => showDialog(
+                                    context: context,
+                                    builder: (c) => BarcodeScannerWidget(
+                                      onBarcodeFound: (code) => productCodeController.text = code,
+                                    ),
+                                  ),
+                                  child: Container(
+                                    padding: const EdgeInsets.all(8),
+                                    height: 48,
+                                    width: 44,
+                                    decoration: BoxDecoration(
+                                      borderRadius: const BorderRadius.only(
+                                        topRight: Radius.circular(5),
+                                        bottomRight: Radius.circular(5),
+                                      ),
+                                      color: const Color(0xffD8D8D8).withValues(alpha: 0.3),
+                                    ),
+                                    child: SvgPicture.asset(height: 28, 'assets/qr_new.svg'),
+                                  ),
+                                ),
                               ),
                             ),
                           ],
@@ -509,125 +548,145 @@ class AddProductState extends ConsumerState<AddProduct> {
                             children: [
                               if (snapShot.data?.modules?.showProductCategory == '1')
                                 Expanded(
-                                    child: TextFormField(
-                                        readOnly: true,
-                                        controller: categoryController,
-                                        onTap: () async {
-                                          selectedCategory =
-                                              await const CategoryList(isFromProductList: false).launch(context);
-                                          setState(
-                                              () => categoryController.text = selectedCategory?.categoryName ?? '');
-                                        },
-                                        decoration: kInputDecoration.copyWith(
-                                            suffixIcon: const Icon(Icons.keyboard_arrow_down),
-                                            floatingLabelBehavior: FloatingLabelBehavior.always,
-                                            labelText: lang.S.of(context).category,
-                                            hintText: lang.S.of(context).selectProductCategory,
-                                            border: const OutlineInputBorder()))),
+                                  child: TextFormField(
+                                    readOnly: true,
+                                    controller: categoryController,
+                                    onTap: () async {
+                                      selectedCategory = await const CategoryList(
+                                        isFromProductList: false,
+                                      ).launch(context);
+                                      setState(() => categoryController.text = selectedCategory?.categoryName ?? '');
+                                    },
+                                    decoration: kInputDecoration.copyWith(
+                                      suffixIcon: const Icon(Icons.keyboard_arrow_down),
+                                      floatingLabelBehavior: FloatingLabelBehavior.always,
+                                      labelText: lang.S.of(context).category,
+                                      hintText: lang.S.of(context).selectProductCategory,
+                                      border: const OutlineInputBorder(),
+                                    ),
+                                  ),
+                                ),
                               if ((snapShot.data?.modules?.showProductCategory == '1') &&
                                   (snapShot.data?.modules?.showProductBrand == '1'))
                                 const SizedBox(width: 14),
                               if (snapShot.data?.modules?.showProductBrand == '1')
                                 Expanded(
-                                    child: TextFormField(
-                                        readOnly: true,
-                                        controller: brandController,
-                                        onTap: () async {
-                                          selectedBrand =
-                                              await const BrandsList(isFromProductList: false).launch(context);
-                                          setState(() => brandController.text = selectedBrand?.brandName ?? '');
-                                        },
-                                        decoration: kInputDecoration.copyWith(
-                                            suffixIcon: const Icon(Icons.keyboard_arrow_down),
-                                            floatingLabelBehavior: FloatingLabelBehavior.always,
-                                            labelText: lang.S.of(context).brand,
-                                            hintText: lang.S.of(context).selectABrand,
-                                            border: const OutlineInputBorder()))),
+                                  child: TextFormField(
+                                    readOnly: true,
+                                    controller: brandController,
+                                    onTap: () async {
+                                      selectedBrand = await const BrandsList(isFromProductList: false).launch(context);
+                                      setState(() => brandController.text = selectedBrand?.brandName ?? '');
+                                    },
+                                    decoration: kInputDecoration.copyWith(
+                                      suffixIcon: const Icon(Icons.keyboard_arrow_down),
+                                      floatingLabelBehavior: FloatingLabelBehavior.always,
+                                      labelText: lang.S.of(context).brand,
+                                      hintText: lang.S.of(context).selectABrand,
+                                      border: const OutlineInputBorder(),
+                                    ),
+                                  ),
+                                ),
                             ],
                           ),
 
                           if ((snapShot.data?.modules?.showRack == '1') || (snapShot.data?.modules?.showShelf == '1'))
                             const SizedBox(height: 24),
-                          Row(children: [
-                            if (snapShot.data?.modules?.showRack == '1')
-                              Expanded(
+                          Row(
+                            children: [
+                              if (snapShot.data?.modules?.showRack == '1')
+                                Expanded(
                                   child: rackData.when(
-                                      data: (d) => DropdownButtonFormField<RackData>(
-                                          isExpanded: true,
-                                          hint: Text(lang.S.of(context).selectRack),
-                                          decoration: kInputDecoration.copyWith(
-                                              labelText: lang.S.of(context).rack, border: const OutlineInputBorder()),
-                                          initialValue: selectedRack,
-                                          items: d.data
-                                              ?.map((e) => DropdownMenuItem(value: e, child: Text(e.name ?? '')))
-                                              .toList(),
-                                          onChanged: (v) => setState(() {
-                                                selectedRack = v;
-                                                selectedShelf = null;
-                                              })),
-                                      error: (e, s) => const Text('Error'),
-                                      loading: () => kLoader)),
-                            if ((snapShot.data?.modules?.showRack == '1') && (snapShot.data?.modules?.showShelf == '1'))
-                              const SizedBox(width: 14),
-                            if (snapShot.data?.modules?.showShelf == '1')
-                              Expanded(
+                                    data: (d) => DropdownButtonFormField<RackData>(
+                                      isExpanded: true,
+                                      hint: Text(lang.S.of(context).selectRack),
+                                      decoration: kInputDecoration.copyWith(
+                                        labelText: lang.S.of(context).rack,
+                                        border: const OutlineInputBorder(),
+                                      ),
+                                      initialValue: selectedRack,
+                                      items: d.data
+                                          ?.map((e) => DropdownMenuItem(value: e, child: Text(e.name ?? '')))
+                                          .toList(),
+                                      onChanged: (v) => setState(() {
+                                        selectedRack = v;
+                                        selectedShelf = null;
+                                      }),
+                                    ),
+                                    error: (e, s) => const Text('Error'),
+                                    loading: () => kLoader,
+                                  ),
+                                ),
+                              if ((snapShot.data?.modules?.showRack == '1') &&
+                                  (snapShot.data?.modules?.showShelf == '1'))
+                                const SizedBox(width: 14),
+                              if (snapShot.data?.modules?.showShelf == '1')
+                                Expanded(
                                   child: DropdownButtonFormField<Shelf>(
-                                isExpanded: true,
-                                hint: Text(lang.S.of(context).selectShelf),
-                                decoration: kInputDecoration.copyWith(
-                                    labelText: lang.S.of(context).shelf, border: const OutlineInputBorder()),
-                                initialValue: selectedShelf,
-                                items: selectedRack?.shelves
-                                        ?.map((e) => DropdownMenuItem(value: e, child: Text(e.name ?? '')))
-                                        .toList() ??
-                                    [],
-                                onChanged: selectedRack == null ? null : (v) => setState(() => selectedShelf = v),
-                              )),
-                          ]),
+                                    isExpanded: true,
+                                    hint: Text(lang.S.of(context).selectShelf),
+                                    decoration: kInputDecoration.copyWith(
+                                      labelText: lang.S.of(context).shelf,
+                                      border: const OutlineInputBorder(),
+                                    ),
+                                    initialValue: selectedShelf,
+                                    items:
+                                        selectedRack?.shelves
+                                            ?.map((e) => DropdownMenuItem(value: e, child: Text(e.name ?? '')))
+                                            .toList() ??
+                                        [],
+                                    onChanged: selectedRack == null ? null : (v) => setState(() => selectedShelf = v),
+                                  ),
+                                ),
+                            ],
+                          ),
 
                           if ((snapShot.data?.modules?.showModelNo == '1') ||
                               (snapShot.data?.modules?.showProductUnit == '1'))
                             const SizedBox(height: 24),
-                          Row(children: [
-                            if (snapShot.data?.modules?.showModelNo == '1')
-                              Expanded(
-                                child: TextFormField(
-                                  readOnly: true,
-                                  controller: modelController,
-                                  onTap: () async {
-                                    selectedModel =
-                                        await const ProductModelList(fromProductList: false).launch(context);
-                                    setState(() => modelController.text = selectedModel?.name ?? '');
-                                  },
-                                  decoration: kInputDecoration.copyWith(
-                                    suffixIcon: const Icon(Icons.keyboard_arrow_down),
-                                    labelText: lang.S.of(context).model,
-                                    hintText: lang.S.of(context).selectModel,
-                                    border: const OutlineInputBorder(),
+                          Row(
+                            children: [
+                              if (snapShot.data?.modules?.showModelNo == '1')
+                                Expanded(
+                                  child: TextFormField(
+                                    readOnly: true,
+                                    controller: modelController,
+                                    onTap: () async {
+                                      selectedModel = await const ProductModelList(
+                                        fromProductList: false,
+                                      ).launch(context);
+                                      setState(() => modelController.text = selectedModel?.name ?? '');
+                                    },
+                                    decoration: kInputDecoration.copyWith(
+                                      suffixIcon: const Icon(Icons.keyboard_arrow_down),
+                                      labelText: lang.S.of(context).model,
+                                      hintText: lang.S.of(context).selectModel,
+                                      border: const OutlineInputBorder(),
+                                    ),
                                   ),
                                 ),
-                              ),
-                            if ((snapShot.data?.modules?.showModelNo == '1') &&
-                                (snapShot.data?.modules?.showProductUnit == '1'))
-                              const SizedBox(width: 14),
-                            if (snapShot.data?.modules?.showProductUnit == '1')
-                              Expanded(
-                                child: TextFormField(
-                                  readOnly: true,
-                                  controller: productUnitController,
-                                  onTap: () async {
-                                    selectedUnit = await const UnitList(isFromProductList: false).launch(context);
-                                    setState(() => productUnitController.text = selectedUnit?.unitName ?? '');
-                                  },
-                                  decoration: kInputDecoration.copyWith(
-                                    suffixIcon: const Icon(Icons.keyboard_arrow_down),
-                                    labelText: lang.S.of(context).addUnit,
-                                    hintText: lang.S.of(context).selectProductUnit,
-                                    border: const OutlineInputBorder(),
+                              if ((snapShot.data?.modules?.showModelNo == '1') &&
+                                  (snapShot.data?.modules?.showProductUnit == '1'))
+                                const SizedBox(width: 14),
+                              if (snapShot.data?.modules?.showProductUnit == '1')
+                                Expanded(
+                                  child: TextFormField(
+                                    readOnly: true,
+                                    controller: productUnitController,
+                                    onTap: () async {
+                                      selectedUnit = await const UnitList(isFromProductList: false).launch(context);
+                                      setState(() => productUnitController.text = selectedUnit?.unitName ?? '');
+                                    },
+                                    decoration: kInputDecoration.copyWith(
+                                      suffixIcon: const Icon(Icons.keyboard_arrow_down),
+                                      labelText: lang.S.of(context).addUnit,
+                                      hintText: lang.S.of(context).selectProductUnit,
+                                      border: const OutlineInputBorder(),
+                                    ),
                                   ),
                                 ),
-                              ),
-                          ]),
+                            ],
+                          ),
 
                           if (snapShot.data?.modules?.showAlertQty == '1') ...[
                             const SizedBox(height: 24),
@@ -703,8 +762,9 @@ class AddProductState extends ConsumerState<AddProduct> {
                             decoration: InputDecoration(
                               labelText: lang.S.of(context).select,
                               border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                              fillColor:
-                                  widget.productModel != null ? kGreyTextColor.withOpacity(0.1) : Colors.transparent,
+                              fillColor: widget.productModel != null
+                                  ? kGreyTextColor.withOpacity(0.1)
+                                  : Colors.transparent,
                               filled: widget.productModel != null,
                             ),
                             initialValue: _selectedType,
@@ -725,78 +785,83 @@ class AddProductState extends ConsumerState<AddProduct> {
                                   child: Text(lang.S.of(context).combo),
                                 ),
                             ],
-                            onChanged:
-                                widget.productModel != null ? null : (value) => setState(() => _selectedType = value!),
+                            onChanged: widget.productModel != null
+                                ? null
+                                : (value) => setState(() => _selectedType = value!),
                           ),
 
                           if (snapShot.data?.modules?.showVatType == '1' ||
                               snapShot.data?.modules?.showVatId == '1') ...[
                             const SizedBox(height: 20),
-                            Row(children: [
-                              if (snapShot.data?.modules?.showVatType == '1')
-                                Expanded(
+                            Row(
+                              children: [
+                                if (snapShot.data?.modules?.showVatType == '1')
+                                  Expanded(
                                     child: DropdownButtonFormField<String?>(
-                                        isExpanded: true,
-                                        hint: Text(lang.S.of(context).typeSelect),
-                                        decoration: kInputDecoration.copyWith(labelText: lang.S.of(context).taxType),
-                                        initialValue: selectedTaxType,
-                                        items: ["inclusive", "exclusive"]
-                                            .map((type) => DropdownMenuItem<String?>(value: type, child: Text(type)))
-                                            .toList(),
-                                        onChanged: (value) {
-                                          setState(() {
-                                            selectedTaxType = value!;
-                                          });
-                                        })),
-                              if (snapShot.data?.modules?.showVatType == '1' &&
-                                  snapShot.data?.modules?.showVatId == '1')
-                                const SizedBox(width: 14),
-                              if (snapShot.data?.modules?.showVatId == '1')
-                                Expanded(
-                                  child: taxesData.when(
-                                    data: (dataList) => DropdownButtonFormField<VatModel>(
-                                      key: ValueKey(selectedTax?.id),
                                       isExpanded: true,
-                                      hint: Text(lang.S.of(context).selectTax),
-                                      decoration: kInputDecoration.copyWith(
-                                        labelText: lang.S.of(context).selectTax,
-                                      ),
-                                      initialValue: selectedTax,
-                                      icon: selectedTax != null
-                                          ? IconButton(
-                                              padding: EdgeInsets.zero,
-                                              icon: const Icon(
-                                                Icons.clear,
-                                                color: Colors.red,
-                                                size: 20,
-                                              ),
-                                              onPressed: () {
-                                                setState(() {
-                                                  selectedTax = null;
-                                                });
-                                              },
-                                            )
-                                          : null,
-                                      items: dataList
-                                          .where((vat) => vat.status == true)
-                                          .map(
-                                            (vat) => DropdownMenuItem<VatModel>(
-                                              value: vat,
-                                              child: Text('${vat.name ?? ''} ${vat.rate}%'),
-                                            ),
-                                          )
+                                      hint: Text(lang.S.of(context).typeSelect),
+                                      decoration: kInputDecoration.copyWith(labelText: lang.S.of(context).taxType),
+                                      initialValue: selectedTaxType,
+                                      items: ["inclusive", "exclusive"]
+                                          .map((type) => DropdownMenuItem<String?>(value: type, child: Text(type)))
                                           .toList(),
                                       onChanged: (value) {
                                         setState(() {
-                                          selectedTax = value;
+                                          selectedTaxType = value!;
                                         });
                                       },
                                     ),
-                                    error: (e, s) => const Text('Error'),
-                                    loading: () => kLoader,
                                   ),
-                                ),
-                            ]),
+                                if (snapShot.data?.modules?.showVatType == '1' &&
+                                    snapShot.data?.modules?.showVatId == '1')
+                                  const SizedBox(width: 14),
+                                if (snapShot.data?.modules?.showVatId == '1')
+                                  Expanded(
+                                    child: taxesData.when(
+                                      data: (dataList) => DropdownButtonFormField<VatModel>(
+                                        key: ValueKey(selectedTax?.id),
+                                        isExpanded: true,
+                                        hint: Text(lang.S.of(context).selectTax),
+                                        decoration: kInputDecoration.copyWith(
+                                          labelText: lang.S.of(context).selectTax,
+                                        ),
+                                        initialValue: selectedTax,
+                                        icon: selectedTax != null
+                                            ? IconButton(
+                                                padding: EdgeInsets.zero,
+                                                icon: const Icon(
+                                                  Icons.clear,
+                                                  color: Colors.red,
+                                                  size: 20,
+                                                ),
+                                                onPressed: () {
+                                                  setState(() {
+                                                    selectedTax = null;
+                                                  });
+                                                },
+                                              )
+                                            : null,
+                                        items: dataList
+                                            .where((vat) => vat.status == true)
+                                            .map(
+                                              (vat) => DropdownMenuItem<VatModel>(
+                                                value: vat,
+                                                child: Text('${vat.name ?? ''} ${vat.rate}%'),
+                                              ),
+                                            )
+                                            .toList(),
+                                        onChanged: (value) {
+                                          setState(() {
+                                            selectedTax = value;
+                                          });
+                                        },
+                                      ),
+                                      error: (e, s) => const Text('Error'),
+                                      loading: () => kLoader,
+                                    ),
+                                  ),
+                              ],
+                            ),
                           ],
 
                           ///------------Single Product Form (Dynamic Multiple Batches)------------------------------------
@@ -854,28 +919,37 @@ class AddProductState extends ConsumerState<AddProduct> {
                               (snapShot.data?.modules?.showGuaranty == '1')) ...[
                             Column(
                               children: [
-                                Row(spacing: 10, children: [
-                                  if (snapShot.data?.modules?.showWarranty == '1')
-                                    Expanded(
+                                Row(
+                                  spacing: 10,
+                                  children: [
+                                    if (snapShot.data?.modules?.showWarranty == '1')
+                                      Expanded(
                                         child: TextFormField(
-                                            controller: warrantyController,
-                                            decoration: kInputDecoration.copyWith(
-                                                floatingLabelBehavior: FloatingLabelBehavior.always,
-                                                labelText: lang.S.of(context).warranty,
-                                                hintText: 'Ex 30',
-                                                border: const OutlineInputBorder(),
-                                                suffixIcon: _buildDurationDropdown()))),
-                                  if (snapShot.data?.modules?.showGuaranty == '1')
-                                    Expanded(
+                                          controller: warrantyController,
+                                          decoration: kInputDecoration.copyWith(
+                                            floatingLabelBehavior: FloatingLabelBehavior.always,
+                                            labelText: lang.S.of(context).warranty,
+                                            hintText: 'Ex 30',
+                                            border: const OutlineInputBorder(),
+                                            suffixIcon: _buildDurationDropdown(),
+                                          ),
+                                        ),
+                                      ),
+                                    if (snapShot.data?.modules?.showGuaranty == '1')
+                                      Expanded(
                                         child: TextFormField(
-                                            controller: guaranteeController,
-                                            decoration: kInputDecoration.copyWith(
-                                                floatingLabelBehavior: FloatingLabelBehavior.always,
-                                                labelText: lang.S.of(context).guarantee,
-                                                hintText: 'Ex 30',
-                                                border: const OutlineInputBorder(),
-                                                suffixIcon: _buildGuaranteeDropdown()))),
-                                ]),
+                                          controller: guaranteeController,
+                                          decoration: kInputDecoration.copyWith(
+                                            floatingLabelBehavior: FloatingLabelBehavior.always,
+                                            labelText: lang.S.of(context).guarantee,
+                                            hintText: 'Ex 30',
+                                            border: const OutlineInputBorder(),
+                                            suffixIcon: _buildGuaranteeDropdown(),
+                                          ),
+                                        ),
+                                      ),
+                                  ],
+                                ),
                                 const SizedBox(height: 24),
                               ],
                             ),
@@ -945,21 +1019,34 @@ class AddProductState extends ConsumerState<AddProduct> {
                                 // 3. Call API
                                 if (widget.productModel != null) {
                                   if (!permissionService.hasPermission(Permit.productsUpdate.value)) {
-                                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
                                         backgroundColor: Colors.red,
-                                        content: Text(lang.S.of(context).updateProductWarn)));
+                                        content: Text(lang.S.of(context).updateProductWarn),
+                                      ),
+                                    );
                                     return;
                                   }
-                                  success =
-                                      await productRepo.updateProduct(data: submitData, ref: ref, context: context);
+                                  success = await productRepo.updateProduct(
+                                    data: submitData,
+                                    ref: ref,
+                                    context: context,
+                                  );
                                 } else {
                                   if (!permissionService.hasPermission(Permit.productsCreate.value)) {
-                                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                                        backgroundColor: Colors.red, content: Text(lang.S.of(context).addProductWarn)));
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        backgroundColor: Colors.red,
+                                        content: Text(lang.S.of(context).addProductWarn),
+                                      ),
+                                    );
                                     return;
                                   }
-                                  success =
-                                      await productRepo.createProduct(data: submitData, ref: ref, context: context);
+                                  success = await productRepo.createProduct(
+                                    data: submitData,
+                                    ref: ref,
+                                    context: context,
+                                  );
                                 }
 
                                 if (success) {
@@ -967,13 +1054,18 @@ class AddProductState extends ConsumerState<AddProduct> {
                                     ref.refresh(fetchProductDetails(widget.productModel?.id.toString() ?? ''));
                                   }
                                   ref.refresh(productProvider);
-                                  Navigator.pop(context);
+                                  if (mounted) {
+                                    Navigator.of(context).pushAndRemoveUntil(
+                                      MaterialPageRoute(builder: (_) => const ProductList()),
+                                      (route) => route.isFirst,
+                                    );
+                                  }
                                 }
                               }
                             },
-                            child: Text(widget.productModel != null
-                                ? lang.S.of(context).update
-                                : lang.S.of(context).saveNPublish),
+                            child: Text(
+                              widget.productModel != null ? lang.S.of(context).update : lang.S.of(context).saveNPublish,
+                            ),
                           ),
                         ],
                       ),
@@ -996,44 +1088,52 @@ class AddProductState extends ConsumerState<AddProduct> {
 
   Widget _buildDurationDropdown() {
     return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8),
-        decoration: BoxDecoration(
-            color: kGreyTextColor.withValues(alpha: 0.1),
-            borderRadius: const BorderRadius.only(topRight: Radius.circular(8), bottomRight: Radius.circular(8))),
-        child: DropdownButtonHideUnderline(
-            child: DropdownButton<String>(
-                icon: const Icon(Icons.keyboard_arrow_down),
-                value: selectedTimeWarranty != null && durationList.contains(selectedTimeWarranty)
-                    ? selectedTimeWarranty
-                    : null,
-                items: [
-                  DropdownMenuItem(value: 'Days', child: Text(lang.S.of(context).days)),
-                  DropdownMenuItem(value: 'Months', child: Text(lang.S.of(context).month)),
-                  DropdownMenuItem(value: 'Years', child: Text(lang.S.of(context).years)),
-                ],
-                onChanged: (v) => setState(() => selectedTimeWarranty = v),
-                hint: Text(lang.S.of(context).select))));
+      padding: const EdgeInsets.symmetric(horizontal: 8),
+      decoration: BoxDecoration(
+        color: kGreyTextColor.withValues(alpha: 0.1),
+        borderRadius: const BorderRadius.only(topRight: Radius.circular(8), bottomRight: Radius.circular(8)),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          icon: const Icon(Icons.keyboard_arrow_down),
+          value: selectedTimeWarranty != null && durationList.contains(selectedTimeWarranty)
+              ? selectedTimeWarranty
+              : null,
+          items: [
+            DropdownMenuItem(value: 'Days', child: Text(lang.S.of(context).days)),
+            DropdownMenuItem(value: 'Months', child: Text(lang.S.of(context).month)),
+            DropdownMenuItem(value: 'Years', child: Text(lang.S.of(context).years)),
+          ],
+          onChanged: (v) => setState(() => selectedTimeWarranty = v),
+          hint: Text(lang.S.of(context).select),
+        ),
+      ),
+    );
   }
 
   Widget _buildGuaranteeDropdown() {
     return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8),
-        decoration: BoxDecoration(
-            color: kGreyTextColor.withValues(alpha: 0.1),
-            borderRadius: const BorderRadius.only(topRight: Radius.circular(8), bottomRight: Radius.circular(8))),
-        child: DropdownButtonHideUnderline(
-            child: DropdownButton<String>(
-                icon: const Icon(Icons.keyboard_arrow_down),
-                value: selectedTimeGuarantee != null && guaranteeList.contains(selectedTimeGuarantee)
-                    ? selectedTimeGuarantee
-                    : null,
-                items: [
-                  DropdownMenuItem(value: 'Days', child: Text(lang.S.of(context).days)),
-                  DropdownMenuItem(value: 'Months', child: Text(lang.S.of(context).month)),
-                  DropdownMenuItem(value: 'Years', child: Text(lang.S.of(context).years)),
-                ],
-                onChanged: (v) => setState(() => selectedTimeGuarantee = v),
-                hint: Text(lang.S.of(context).select))));
+      padding: const EdgeInsets.symmetric(horizontal: 8),
+      decoration: BoxDecoration(
+        color: kGreyTextColor.withValues(alpha: 0.1),
+        borderRadius: const BorderRadius.only(topRight: Radius.circular(8), bottomRight: Radius.circular(8)),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          icon: const Icon(Icons.keyboard_arrow_down),
+          value: selectedTimeGuarantee != null && guaranteeList.contains(selectedTimeGuarantee)
+              ? selectedTimeGuarantee
+              : null,
+          items: [
+            DropdownMenuItem(value: 'Days', child: Text(lang.S.of(context).days)),
+            DropdownMenuItem(value: 'Months', child: Text(lang.S.of(context).month)),
+            DropdownMenuItem(value: 'Years', child: Text(lang.S.of(context).years)),
+          ],
+          onChanged: (v) => setState(() => selectedTimeGuarantee = v),
+          hint: Text(lang.S.of(context).select),
+        ),
+      ),
+    );
   }
 
   Future<dynamic> uploadImageDialog(BuildContext context, ThemeData theme) {
@@ -1049,42 +1149,65 @@ class AddProductState extends ConsumerState<AddProduct> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Align(
-                    alignment: AlignmentDirectional.centerEnd,
-                    child: IconButton(
-                        padding: EdgeInsets.zero,
-                        visualDensity: const VisualDensity(vertical: -4, horizontal: -4),
-                        onPressed: () => Navigator.pop(context),
-                        icon: const Icon(Icons.clear, color: kNeutral800))),
-                Text(lang.S.of(context).choose,
-                    style: theme.textTheme.bodyMedium
-                        ?.copyWith(color: kTitleColor, fontWeight: FontWeight.w400, fontSize: 18)),
+                  alignment: AlignmentDirectional.centerEnd,
+                  child: IconButton(
+                    padding: EdgeInsets.zero,
+                    visualDensity: const VisualDensity(vertical: -4, horizontal: -4),
+                    onPressed: () => Navigator.pop(context),
+                    icon: const Icon(Icons.clear, color: kNeutral800),
+                  ),
+                ),
+                Text(
+                  lang.S.of(context).choose,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: kTitleColor,
+                    fontWeight: FontWeight.w400,
+                    fontSize: 18,
+                  ),
+                ),
                 const SizedBox(height: 30),
                 Center(
-                    child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                  GestureDetector(
-                      onTap: () async {
-                        pickedImage = await _picker.pickImage(source: ImageSource.gallery);
-                        setState(() {});
-                        Future.delayed(const Duration(milliseconds: 100), () => Navigator.pop(context));
-                      },
-                      child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-                        const Icon(Icons.photo_library_outlined, size: 40.0, color: kMainColor),
-                        Text(lang.S.of(context).gallery,
-                            style: theme.textTheme.titleMedium?.copyWith(color: kMainColor))
-                      ])),
-                  const SizedBox(width: 50.0),
-                  GestureDetector(
-                      onTap: () async {
-                        pickedImage = await _picker.pickImage(source: ImageSource.camera);
-                        setState(() {});
-                        Future.delayed(const Duration(milliseconds: 100), () => Navigator.pop(context));
-                      },
-                      child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-                        const Icon(Icons.camera_alt_outlined, size: 40.0, color: kGreyTextColor),
-                        Text(lang.S.of(context).camera,
-                            style: theme.textTheme.titleMedium?.copyWith(color: kGreyTextColor))
-                      ])),
-                ])),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      GestureDetector(
+                        onTap: () async {
+                          pickedImage = await _picker.pickImage(source: ImageSource.gallery);
+                          setState(() {});
+                          Future.delayed(const Duration(milliseconds: 100), () => Navigator.pop(context));
+                        },
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(Icons.photo_library_outlined, size: 40.0, color: kMainColor),
+                            Text(
+                              lang.S.of(context).gallery,
+                              style: theme.textTheme.titleMedium?.copyWith(color: kMainColor),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 50.0),
+                      GestureDetector(
+                        onTap: () async {
+                          pickedImage = await _picker.pickImage(source: ImageSource.camera);
+                          setState(() {});
+                          Future.delayed(const Duration(milliseconds: 100), () => Navigator.pop(context));
+                        },
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(Icons.camera_alt_outlined, size: 40.0, color: kGreyTextColor),
+                            Text(
+                              lang.S.of(context).camera,
+                              style: theme.textTheme.titleMedium?.copyWith(color: kGreyTextColor),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ],
             ),
           ),

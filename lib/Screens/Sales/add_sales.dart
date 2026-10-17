@@ -1133,6 +1133,11 @@ class AddSalesScreenState extends ConsumerState<AddSalesScreen> {
                                     final refreshed = await repo.getSingleSale((saleData.id ?? 0).toInt());
 
                                     if (refreshed == null) {
+                                      EasyLoading.showError('Sale was saved, but its invoice could not be loaded.');
+                                      return;
+                                    }
+
+                                    if (refreshed != null) {
                                       Navigator.pushReplacement(
                                         context,
                                         MaterialPageRoute(
@@ -1143,19 +1148,7 @@ class AddSalesScreenState extends ConsumerState<AddSalesScreen> {
                                           ),
                                         ),
                                       );
-                                      return;
                                     }
-
-                                    Navigator.pushReplacement(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) => SalesInvoiceDetails(
-                                          businessInfo: personalData.value!,
-                                          saleTransaction: refreshed,
-                                          fromSale: true,
-                                        ),
-                                      ),
-                                    );
                                   }
                                 } else {
                                   if (!permissionService.hasPermission(Permit.salesUpdate.value)) {

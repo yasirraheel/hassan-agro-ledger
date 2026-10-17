@@ -9,7 +9,7 @@ import '../../../currency.dart';
 import '../../../offline/offline_service.dart';
 
 class LogOutRepo {
-  Future<void> signOut() async {
+  Future<void> signOut({bool restart = true}) async {
     if (!await OfflineService.instance.canSignOut()) {
       EasyLoading.showError('Sync your pending work before signing out.');
       return;
@@ -18,8 +18,10 @@ class LogOutRepo {
     await prefs.remove("token");
     await prefs.remove("hasShownExpiredDialog");
     CurrencyMethods().removeCurrencyFromLocalDatabase();
-    EasyLoading.showSuccess('Successfully Logged Out');
-    Restart.restartApp();
+    if (restart) {
+      EasyLoading.showSuccess('Successfully Logged Out');
+      Restart.restartApp();
+    }
   }
 
   Future<void> signOutApi() async {
@@ -30,13 +32,16 @@ class LogOutRepo {
     try {
       final uri = Uri.parse('${APIConfig.url}/sign-out');
 
-      await http.get(uri, headers: {
-        'Accept': 'application/json',
-        'Authorization': await getAuthToken(),
-      });
-      await signOut();
+      await http.get(
+        uri,
+        headers: {
+          'Accept': 'application/json',
+          'Authorization': await getAuthToken(),
+        },
+      );
+      await signOut(restart: false);
     } catch (e) {
-      await signOut();
+      await signOut(restart: false);
     }
   }
 }
