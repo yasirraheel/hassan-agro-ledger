@@ -9,6 +9,11 @@ use App\Http\Controllers\Controller;
 
 class AcnooCurrencyController extends Controller
 {
+    public function select(\Illuminate\Http\Request $request)
+    {
+        $request->validate(['currency_id' => 'required|exists:currencies,id']);
+        return $this->show($request->currency_id);
+    }
     public function index()
     {
         $currencies = Currency::orderBy('is_default', 'desc')->orderBy('status', 'desc')->get();
@@ -36,7 +41,6 @@ class AcnooCurrencyController extends Controller
         ]);
 
         cache()->forget("business_currency_" . $business_id);
-        DB::commit();
 
         return response()->json([
             'message', __('Currency changed successfully'),

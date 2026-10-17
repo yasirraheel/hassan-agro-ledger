@@ -386,7 +386,7 @@ class AcnooProductController extends Controller
 
             return response()->json([
                 'message' => __('Data saved successfully.'),
-                'data' => $product,
+                'data' => $product->load('stocks'),
             ]);
         } catch (\Exception $e) {
             DB::rollback();

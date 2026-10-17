@@ -260,6 +260,7 @@ class PurchaseController extends Controller
                 'purchase',
                 $request->paidAmount ?? 0,
                 $request->party_id ?? null,
+                date: $purchase->purchaseDate,
             ));
 
             if (moduleCheck('MarketingAddon')) {
@@ -513,6 +514,7 @@ class PurchaseController extends Controller
                 'purchase',
                     $request->paidAmount ?? 0,
                 $request->party_id ?? null,
+                date: $purchase->purchaseDate,
             ));
 
             DB::commit();

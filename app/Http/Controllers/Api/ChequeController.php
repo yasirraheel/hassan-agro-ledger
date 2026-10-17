@@ -89,7 +89,11 @@ class ChequeController extends Controller
 
         DB::beginTransaction();
         try {
-            $transaction = Transaction::findOrFail($request->transaction_id);
+            $transaction = Transaction::where('business_id', $business_id)->lockForUpdate()->findOrFail($request->transaction_id);
+            if ($transaction->transaction_type !== 'cheque_payment' || $transaction->type !== 'pending') {
+                DB::rollBack();
+                return response()->json(['message' => __('Only a pending cheque can be deposited.')], 409);
+            }
             $amount = $transaction->amount;
             $platform = strtolower($transaction->platform);
 

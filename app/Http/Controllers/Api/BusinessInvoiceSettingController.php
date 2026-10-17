@@ -12,6 +12,8 @@ class BusinessInvoiceSettingController extends Controller
     public function index()
     {
         $businessId = auth()->user()->business_id;
+        $saved = Option::where('key', 'invoice_setting_' . $businessId)->first();
+        if ($saved) return response()->json(['message' => __('Invoice size fetched successfully.'), 'invoice_size' => $saved->value]);
 
         $invoiceSetting = Option::where('key', 'invoice_settings')
             ->whereJsonContains('value->business_id', $businessId)
@@ -25,8 +27,8 @@ class BusinessInvoiceSettingController extends Controller
         } else {
             return response()->json([
                 'message' => __('Invoice size not found.'),
-                'invoice_size' => null,
-            ], 404);
+                'invoice_size' => 'a4',
+            ]);
         }
     }
 

@@ -20,7 +20,7 @@ class PurchaseReturnController extends Controller
     public function index()
     {
         $data = PurchaseReturn::with('purchase:id,party_id,isPaid,totalAmount,dueAmount,paidAmount,invoiceNumber', 'purchase.party:id,name', 'details')
-            ->whereBetween('return_date', [request()->start_date, request()->end_date])
+            ->when(request()->filled('start_date') && request()->filled('end_date'), fn ($q) => $q->whereBetween('return_date', [request()->start_date, request()->end_date]))
             ->where('business_id', auth()->user()->business_id)
             ->latest()
             ->get();
@@ -42,6 +42,7 @@ class PurchaseReturnController extends Controller
             'products.*.purchase_detail_id' => 'required|exists:purchase_details,id',
             'products.*.return_qty' => 'required|numeric|min:1',
             'products.*.serial_numbers' => 'nullable|array',
+            'return_date' => 'nullable|date',
         ]);
 
         DB::beginTransaction();
@@ -69,7 +70,7 @@ class PurchaseReturnController extends Controller
                 'business_id' => $business_id,
                 'purchase_id' => $purchase->id,
                 'invoice_no' => $purchase->invoiceNumber,
-                'return_date' => now(),
+                'return_date' => $request->return_date ?? now(),
             ]);
 
             $returnDetails = [];
@@ -233,7 +234,9 @@ class PurchaseReturnController extends Controller
                 $payments,
                 $purchase_return->id,
                 'purchase_return',
-                $total_return_amount
+                $total_return_amount,
+                $purchase->party_id,
+                $purchase_return->return_date
             ));
 
             DB::commit();

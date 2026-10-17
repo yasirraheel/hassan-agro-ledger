@@ -17,7 +17,11 @@ Route::prefix('v1')->group(function () {
     Route::apiResource('default-lang', Api\DefaultLangController::class)->only('index');
     Route::get('/app-settings', [Api\AppSettingsController::class, 'index']);
 
-    Route::group(['middleware' => ['auth:sanctum', 'module']], function () {
+    Route::group(['middleware' => ['auth:sanctum', 'module', \App\Http\Middleware\MobileSyncOperation::class]], function () {
+        Route::get('sync/status', [Api\MobileSyncController::class, 'status']);
+        Route::get('sync/review/{resource}/{id}', [Api\MobileSyncController::class, 'review']);
+        Route::post('currency-selection', [Api\AcnooCurrencyController::class, 'select']);
+        Route::get('tax-transactions', [Api\MobileSyncController::class, 'taxes']);
         Route::get('update-expire-date', [Api\BusinessController::class, 'updateExpireDate']);
 
         Route::get('summary', [Api\StatisticsController::class, 'summary']);
@@ -84,6 +88,7 @@ Route::prefix('v1')->group(function () {
         Route::get('product/generate-code', [Api\AcnooProductController::class, 'generateCode']);
 
         Route::post('bulk-uploads', [Api\BulkUploadControler::class, 'store']);
+        Route::post('bulk-product-rows', [Api\BulkUploadControler::class, 'rows']);
         Route::post('change-password', [Api\AcnooProfileController::class, 'changePassword'])->name('api.change-password');
 
         Route::get('new-invoice', [Api\AcnooInvoiceController::class, 'newInvoice']);

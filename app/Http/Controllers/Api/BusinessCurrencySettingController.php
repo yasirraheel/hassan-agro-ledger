@@ -24,9 +24,9 @@ class BusinessCurrencySettingController extends Controller
             ]);
         } else {
             return response()->json([
-                'message' => __('Currency not found.'),
-                'currency_data' => null,
-            ], 404);
+                'message' => __('Default currency format.'),
+                'currency_data' => 'us',
+            ]);
         }
     }
 

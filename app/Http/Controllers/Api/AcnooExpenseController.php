@@ -89,6 +89,8 @@ class AcnooExpenseController extends Controller
                 $data->id,
                 'expense',
                 $request->amount ?? 0,
+                null,
+                $data->expenseDate,
             ));
 
             DB::commit();

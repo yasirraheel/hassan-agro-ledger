@@ -22,7 +22,7 @@ class SaleReturnController extends Controller
     public function index()
     {
         $data = SaleReturn::with('sale:id,party_id,isPaid,totalAmount,dueAmount,paidAmount,invoiceNumber', 'sale.party:id,name', 'details')
-            ->whereBetween('return_date', [request()->start_date, request()->end_date])
+            ->when(request()->filled('start_date') && request()->filled('end_date'), fn ($q) => $q->whereBetween('return_date', [request()->start_date, request()->end_date]))
             ->where('business_id', auth()->user()->business_id)
             ->latest()
             ->get();
@@ -45,6 +45,7 @@ class SaleReturnController extends Controller
             'products.*.sale_detail_id' => 'required|exists:sale_details,id',
             'products.*.return_qty' => 'required|integer|min:1',
             'products.*.serial_numbers' => 'nullable|array',
+            'return_date' => 'nullable|date',
         ]);
 
         $business_id = auth()->user()->business_id;
@@ -65,7 +66,7 @@ class SaleReturnController extends Controller
                 'business_id' => $business_id,
                 'sale_id'     => $sale->id,
                 'invoice_no'  => $sale->invoiceNumber,
-                'return_date' => now(),
+                'return_date' => $request->return_date ?? now(),
             ]);
 
             $total_discount = $sale->discountAmount;
@@ -296,7 +297,9 @@ class SaleReturnController extends Controller
                 $payments,
                 $sale_return->id,
                 'sale_return',
-                $total_return_amount
+                $total_return_amount,
+                $sale->party_id,
+                $sale_return->return_date
             ));
 
             DB::commit();

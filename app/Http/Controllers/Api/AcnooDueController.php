@@ -128,9 +128,10 @@ class AcnooDueController extends Controller
         event(new MultiPaymentProcessed(
             $payments,
             $data->id,
-            'due_collect',
+            $party->type === 'Supplier' ? 'due_pay' : 'due_collect',
             $payDueAmount,
-            $party->id
+            $party->id,
+            date: $data->paymentDate
         ));
 
         if (moduleCheck('MarketingAddon')) {
@@ -224,6 +225,7 @@ class AcnooDueController extends Controller
                 $data->id,
                 'due_collect',
                 $payDueAmount,
+                date: $data->paymentDate,
             ));
 
             DB::commit();

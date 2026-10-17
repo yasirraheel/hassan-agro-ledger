@@ -300,7 +300,8 @@ class AcnooSaleController extends Controller
                 $sale->id,
                 'sale',
                 $paidAmount,
-                $request->party_id ?? null
+                $request->party_id ?? null,
+                date: $sale->saleDate
             ));
 
             if (moduleCheck('MarketingAddon')) {
@@ -592,6 +593,7 @@ class AcnooSaleController extends Controller
                 'sale',
                 $paidAmount,
                 $request->party_id ?? null,
+                date: $sale->saleDate,
             ));
 
             DB::commit();

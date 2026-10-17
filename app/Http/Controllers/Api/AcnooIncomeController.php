@@ -77,7 +77,7 @@ class AcnooIncomeController extends Controller
                 ->reject(fn($p) => strtolower($p['type'] ?? '') == 'cheque')
                 ->sum(fn($p) => $p['amount'] ?? 0);
 
-            updateBalance($total_amount, 'decrement');
+            updateBalance($total_amount, 'increment');
 
             $data = Income::create($request->except('status', 'amount', 'paymentType') + [
                     'user_id' => auth()->id(),
@@ -90,6 +90,8 @@ class AcnooIncomeController extends Controller
                 $data->id,
                 'income',
                 $total_amount ?? 0,
+                null,
+                $data->incomeDate,
             ));
 
             DB::commit();
