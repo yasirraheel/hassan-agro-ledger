@@ -1,5 +1,9 @@
-import 'package:mobile_pos/offline/offline_media.dart';
+import 'dart:io';
+import 'dart:typed_data';
+import 'dart:ui' as ui;
+
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:intl/intl.dart';
@@ -7,7 +11,13 @@ import 'package:mobile_pos/Provider/profile_provider.dart';
 import 'package:mobile_pos/Screens/invoice_details/components/common_image_builder.dart';
 import 'package:mobile_pos/generated/l10n.dart' as lang;
 import 'package:nb_utils/nb_utils.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:pdf/pdf.dart' as pdf;
+import 'package:pdf/widgets.dart' as pw;
 import 'package:provider/provider.dart' as pro;
+import 'package:share_plus/share_plus.dart';
+
+import 'package:mobile_pos/offline/offline_media.dart';
 
 import '../../GlobalComponents/glonal_popup.dart';
 import '../../constant.dart' as mainConstant;
@@ -19,7 +29,7 @@ import '../../thermal priting invoices/provider/print_thermal_invoice_provider.d
 import '../../widgets/dotted_border/global_dotted_border.dart';
 import '../../widgets/universal_image.dart';
 import '../Products/add product/modle/create_product_model.dart';
-import '../Purchase/Model/purchase_transaction_model.dart';
+import 'package:mobile_pos/Screens/Purchase/Model/purchase_transaction_model.dart';
 import '../language/language_provider.dart';
 
 class PurchaseInvoiceDetails extends StatefulWidget {
@@ -40,6 +50,77 @@ class PurchaseInvoiceDetails extends StatefulWidget {
 
 class _PurchaseInvoiceDetailsState extends State<PurchaseInvoiceDetails> {
   final GlobalKey _screenshotKey = GlobalKey();
+  bool _isPrinting = false;
+
+  Future<Uint8List?> _invoiceImage() async {
+    await Future<void>.delayed(const Duration(milliseconds: 80));
+    final renderObject = _screenshotKey.currentContext?.findRenderObject();
+    if (renderObject is! RenderRepaintBoundary) return null;
+    final image = await renderObject.toImage(pixelRatio: 3);
+    final data = await image.toByteData(format: ui.ImageByteFormat.png);
+    return data?.buffer.asUint8List();
+  }
+
+  Future<void> _shareInvoice({required bool asPdf}) async {
+    final bytes = await _invoiceImage();
+    if (!mounted || bytes == null) return;
+    final directory = await getTemporaryDirectory();
+    final extension = asPdf ? 'pdf' : 'png';
+    final file = File('${directory.path}/invoice-${widget.transitionModel.invoiceNumber ?? 'purchase'}.$extension');
+    if (asPdf) {
+      final document = pw.Document();
+      document.addPage(
+        pw.Page(
+          pageFormat: pdf.PdfPageFormat.a4,
+          build: (_) => pw.Padding(
+            padding: const pw.EdgeInsets.all(24),
+            child: pw.Center(child: pw.Image(pw.MemoryImage(bytes), fit: pw.BoxFit.contain)),
+          ),
+        ),
+      );
+      await file.writeAsBytes(await document.save(), flush: true);
+    } else {
+      await file.writeAsBytes(bytes, flush: true);
+    }
+    if (!mounted) return;
+    await SharePlus.instance.share(
+      ShareParams(
+        files: [XFile(file.path, mimeType: asPdf ? 'application/pdf' : 'image/png')],
+        subject: 'Invoice ${widget.transitionModel.invoiceNumber ?? ''}',
+        text: 'Invoice ${widget.transitionModel.invoiceNumber ?? ''}',
+      ),
+    );
+  }
+
+  Future<void> _chooseShareFormat() async {
+    if (!mounted) return;
+    await showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      builder: (sheetContext) => SafeArea(
+        child: Wrap(
+          children: [
+            ListTile(
+              leading: const Icon(Icons.picture_as_pdf),
+              title: const Text('Share as PDF'),
+              onTap: () {
+                Navigator.pop(sheetContext);
+                _shareInvoice(asPdf: true);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.image),
+              title: const Text('Share as image'),
+              onTap: () {
+                Navigator.pop(sheetContext);
+                _shareInvoice(asPdf: false);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
   num productPrice({required num detailsId}) {
     return widget.transitionModel.details!.where((element) => element.id == detailsId).first.productPurchasePrice ?? 0;
@@ -1135,49 +1216,73 @@ class _PurchaseInvoiceDetailsState extends State<PurchaseInvoiceDetails> {
             bottomNavigationBar: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: SizedBox(
-                height: 60,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
+                height: 116,
+                child: Column(
                   children: [
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: () {
-                          if (widget.isFromPurchase ?? false) {
-                            int count = 0;
-                            Navigator.popUntil(context, (route) {
-                              return count++ == 2;
-                            });
-                          } else {
-                            Navigator.pop(context);
-                          }
+                    SizedBox(
+                      width: double.infinity,
+                      height: 50,
+                      child: pro.Consumer<LanguageChangeProvider>(
+                        builder: (BuildContext context, LanguageChangeProvider value, Widget? child) {
+                          return ElevatedButton(
+                            onPressed: _isPrinting
+                                ? null
+                                : () async {
+                                    setState(() => _isPrinting = true);
+                                    try {
+                                      final model = PrintPurchaseTransactionModel(
+                                          purchaseTransitionModel: widget.transitionModel,
+                                          personalInformationModel: widget.businessInfo);
+                                      await printerData.printPurchaseThermalInvoiceNow(
+                                        transaction: model,
+                                        productList: model.purchaseTransitionModel!.details,
+                                        context: context,
+                                        invoiceSize: ref.watch(businessInfoProvider).value!.data?.invoiceSize,
+                                      );
+                                    } finally {
+                                      if (mounted) setState(() => _isPrinting = false);
+                                    }
+                                  },
+                            child: _isPrinting
+                                ? const SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(strokeWidth: 2),
+                                  )
+                                : Text(lang.S.of(context).print),
+                          );
                         },
-                        child: Text(
-                          lang.S.of(context).cancel,
-                        ),
                       ),
                     ),
-                    const SizedBox(width: 16),
-                    pro.Consumer<LanguageChangeProvider>(
-                      builder: (BuildContext context, LanguageChangeProvider value, Widget? child) {
-                        return Expanded(
-                          child: ElevatedButton(
-                            onPressed: () async {
-                              PrintPurchaseTransactionModel model = PrintPurchaseTransactionModel(
-                                  purchaseTransitionModel: widget.transitionModel,
-                                  personalInformationModel: widget.businessInfo);
-                              await printerData.printPurchaseThermalInvoiceNow(
-                                transaction: model,
-                                productList: model.purchaseTransitionModel!.details,
-                                context: context,
-                                invoiceSize: ref.watch(businessInfoProvider).value!.data?.invoiceSize,
-                              );
-                            },
-                            child: Text(
-                              lang.S.of(context).print,
+                    const SizedBox(height: 8),
+                    Expanded(
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton(
+                              onPressed: () {
+                                if (widget.isFromPurchase ?? false) {
+                                  int count = 0;
+                                  Navigator.popUntil(context, (route) {
+                                    return count++ == 2;
+                                  });
+                                } else {
+                                  Navigator.pop(context);
+                                }
+                              },
+                              child: Text(lang.S.of(context).cancel),
                             ),
                           ),
-                        );
-                      },
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              onPressed: _chooseShareFormat,
+                              icon: const Icon(Icons.share),
+                              label: const Text('Share'),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ),
