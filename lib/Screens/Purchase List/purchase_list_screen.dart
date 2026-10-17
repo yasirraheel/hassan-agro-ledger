@@ -21,7 +21,7 @@ import '../../service/check_actions_when_no_branch.dart';
 import '../../service/check_user_role_permission_provider.dart';
 import '../../thermal priting invoices/provider/print_thermal_invoice_provider.dart';
 import '../../widgets/empty_widget/_empty_widget.dart';
-import '../Home/home.dart';
+import '../../GlobalComponents/back_navigation_guard.dart';
 import '../invoice return/invoice_return_screen.dart';
 import '../invoice_details/purchase_invoice_details.dart';
 
@@ -101,9 +101,7 @@ class PurchaseReportState extends State<PurchaseListScreen> {
     final _theme = Theme.of(context);
 
     return WillPopScope(
-      onWillPop: () async {
-        return await const Home().launch(context, isNewTask: true);
-      },
+      onWillPop: () => handleBackNavigation(context),
       child: GlobalPopup(
         child: Scaffold(
           backgroundColor: kWhite,

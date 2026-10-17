@@ -71,7 +71,10 @@ class StockListState extends ConsumerState<LowStock> {
                       final lastStock =
                           (element.stocks != null && element.stocks!.isNotEmpty) ? element.stocks!.last : null;
 
-                      final purchasePrice = lastStock?.productPurchasePrice ?? element.productPurchasePrice ?? 0;
+                      final stockPurchasePrice = lastStock?.productPurchasePrice;
+                      final purchasePrice = stockPurchasePrice != null && stockPurchasePrice > 0
+                          ? stockPurchasePrice
+                          : (element.productPurchasePrice ?? 0);
 
                       totalStockValue += purchasePrice * qty;
                     }
@@ -268,7 +271,11 @@ class StockListState extends ConsumerState<LowStock> {
                                                     DataCell(
                                                         onTap: () => navigateNextScreen(),
                                                         Text(
-                                                            '$currency${formatPointNumber(lastStock?.productPurchasePrice ?? 0)}',
+                                                            '$currency${formatPointNumber(
+                                                              (lastStock?.productPurchasePrice != null && lastStock!.productPurchasePrice! > 0)
+                                                                  ? lastStock!.productPurchasePrice!
+                                                                  : (product.productPurchasePrice ?? 0),
+                                                            )}',
                                                             style: theme.textTheme.bodyMedium?.copyWith())),
                                                     DataCell(
                                                         onTap: () => navigateNextScreen(),

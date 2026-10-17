@@ -15,7 +15,7 @@ import '../../GlobalComponents/glonal_popup.dart';
 import '../../GlobalComponents/sales_transaction_widget.dart';
 import '../../thermal priting invoices/provider/print_thermal_invoice_provider.dart';
 import '../../widgets/empty_widget/_empty_widget.dart';
-import '../Home/home.dart';
+import '../../GlobalComponents/back_navigation_guard.dart';
 import '../../service/check_user_role_permission_provider.dart';
 
 class SalesListScreen extends StatefulWidget {
@@ -45,9 +45,7 @@ class _SalesListScreenState extends State<SalesListScreen> {
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
-      onWillPop: () async {
-        return await const Home().launch(context, isNewTask: true);
-      },
+      onWillPop: () => handleBackNavigation(context),
       child: GlobalPopup(
         child: Scaffold(
           backgroundColor: kWhite,

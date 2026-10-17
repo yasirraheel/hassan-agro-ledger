@@ -282,12 +282,13 @@ extension OfflineReports on OfflineProjection {
                     : 0);
           });
     }
+    final productCost = OfflineProjection.number(p['productPurchasePrice']);
     return total +
-        (p['stocks'] as List? ?? []).fold<num>(
-          0,
-          (value, s) =>
-              value + OfflineProjection.number(s['productStock']) * OfflineProjection.number(s['productPurchasePrice']),
-        );
+        (p['stocks'] as List? ?? []).fold<num>(0, (value, s) {
+          final stockCost = OfflineProjection.number(s['productPurchasePrice']);
+          final cost = stockCost > 0 ? stockCost : productCost;
+          return value + OfflineProjection.number(s['productStock']) * cost;
+        });
   });
 
   List<JsonMap> _chart(List<JsonMap> values, String dateField, Map<String, String> query) {

@@ -17,7 +17,7 @@ import '../../../core/theme/_app_colors.dart';
 import '../../../currency.dart';
 import '../../../pdf_report/transactions/cashflow_report_pdf.dart';
 import '../../../service/check_user_role_permission_provider.dart';
-import '../../Home/home.dart';
+import '../../../GlobalComponents/back_navigation_guard.dart';
 
 class CashflowScreen extends ConsumerStatefulWidget {
   const CashflowScreen({super.key, this.fromReport});
@@ -193,9 +193,7 @@ class _CashflowScreenState extends ConsumerState<CashflowScreen> {
     final _theme = Theme.of(context);
 
     return WillPopScope(
-      onWillPop: () async {
-        return await const Home().launch(context, isNewTask: true);
-      },
+      onWillPop: () => handleBackNavigation(context),
       child: Consumer(
         builder: (_, ref, watch) {
           final _lang = l.S.of(context);

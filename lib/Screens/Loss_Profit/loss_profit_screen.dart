@@ -14,7 +14,7 @@ import '../../GlobalComponents/glonal_popup.dart';
 import '../../core/theme/_app_colors.dart';
 import '../../currency.dart';
 import '../../widgets/empty_widget/_empty_widget.dart';
-import '../Home/home.dart';
+import '../../GlobalComponents/back_navigation_guard.dart';
 import '../../service/check_user_role_permission_provider.dart';
 
 class LossProfitScreen extends ConsumerStatefulWidget {
@@ -192,9 +192,7 @@ class _LossProfitScreenState extends ConsumerState<LossProfitScreen> {
     final _lang = l.S.of(context);
 
     return WillPopScope(
-      onWillPop: () async {
-        return await const Home().launch(context, isNewTask: true);
-      },
+      onWillPop: () => handleBackNavigation(context),
       child: Consumer(
         builder: (_, ref, watch) {
           final providerData = ref.watch(filteredLossProfitProvider(_getDateRangeFilter()));
