@@ -121,6 +121,12 @@ class AcnooSaleController extends Controller
             $request_products = json_decode($request->products, true);
             $payments = json_decode($request->payments, true);
 
+            // Always resolve the selected party so paid sales can send notifications too.
+            // Previously this variable was only populated for sales with a due amount.
+            $party = $request->filled('party_id')
+                ? Party::where('business_id', $business->id)->find($request->party_id)
+                : null;
+
             $paidAmount = collect($payments)
                 ->reject(fn($p) => strtolower($p['type'] ?? '') === 'cheque')
                 ->sum(fn($p) => $p['amount'] ?? 0);
