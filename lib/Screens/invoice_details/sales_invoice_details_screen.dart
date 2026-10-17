@@ -1435,36 +1435,15 @@ class _SalesInvoiceDetailsState extends State<SalesInvoiceDetails> {
               bottomNavigationBar: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: SizedBox(
-                  height: 60,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
+                  height: 116,
+                  child: Column(
                     children: [
-                      Expanded(
-                        child: OutlinedButton(
-                          onPressed: () async {
-                            if (Navigator.of(context).canPop()) {
-                              Navigator.of(context).pop(true);
-                            }
-                          },
-                          child: Text(
-                            lang.S.of(context).cancel,
-                            //'Cancel',
-                          ),
-                        ),
-                      ),
-                      SizedBox(width: 16),
-                      Expanded(
-                        child: OutlinedButton.icon(
-                          onPressed: _chooseShareFormat,
-                          icon: const Icon(Icons.share),
-                          label: const Text('Share'),
-                        ),
-                      ),
-                      SizedBox(width: 16),
-                      pro.Consumer<LanguageChangeProvider>(
-                        builder: (BuildContext context, LanguageChangeProvider value, Widget? child) {
-                          return Expanded(
-                            child: ElevatedButton(
+                      SizedBox(
+                        width: double.infinity,
+                        height: 50,
+                        child: pro.Consumer<LanguageChangeProvider>(
+                          builder: (BuildContext context, LanguageChangeProvider value, Widget? child) {
+                            return ElevatedButton(
                               onPressed: () async {
                                 PrintSalesTransactionModel model = PrintSalesTransactionModel(
                                   transitionModel: widget.saleTransaction,
@@ -1476,12 +1455,33 @@ class _SalesInvoiceDetailsState extends State<SalesInvoiceDetails> {
                                   context: context,
                                 );
                               },
-                              child: Text(
-                                lang.S.of(context).print,
+                              child: Text(lang.S.of(context).print),
+                            );
+                          },
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Expanded(
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: OutlinedButton(
+                                onPressed: () {
+                                  if (Navigator.of(context).canPop()) Navigator.of(context).pop(true);
+                                },
+                                child: Text(lang.S.of(context).cancel),
                               ),
                             ),
-                          );
-                        },
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: OutlinedButton.icon(
+                                onPressed: _chooseShareFormat,
+                                icon: const Icon(Icons.share),
+                                label: const Text('Share'),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ],
                   ),
