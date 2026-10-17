@@ -221,11 +221,13 @@ class BusinessMeta {
   });
 
   BusinessMeta.fromJson(dynamic json) {
-    showCompanyName = json['show_company_name'];
-    showPhoneNumber = json['show_phone_number'];
-    showAddress = json['show_address'];
-    showEmail = json['show_email'];
-    showVat = json['show_vat'];
+    // The API can return these flags as either numbers or strings.
+    // Normalize them so a saved value of "1" is not treated as unchecked.
+    showCompanyName = _asInt(json['show_company_name']);
+    showPhoneNumber = _asInt(json['show_phone_number']);
+    showAddress = _asInt(json['show_address']);
+    showEmail = _asInt(json['show_email']);
+    showVat = _asInt(json['show_vat']);
   }
 
   num? showCompanyName;

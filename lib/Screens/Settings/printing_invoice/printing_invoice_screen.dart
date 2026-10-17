@@ -70,10 +70,22 @@ class _PrintingInvoiceScreenState extends ConsumerState<PrintingInvoiceScreen> {
     });
   }
 
-  void _loadInitialData() {
-    final businessData = ref.read(businessInfoProvider).value;
-    if (businessData?.data != null) {
-      final data = businessData!.data!;
+  Future<void> _loadInitialData() async {
+    // The settings route can open while the shared business request is still
+    // loading. Reading `.value` at that moment returned null and left every
+    // checkbox at its default state. Wait for the same request to finish.
+    var businessData = ref.read(businessInfoProvider).valueOrNull;
+    if (businessData == null) {
+      try {
+        businessData = await ref.read(businessInfoProvider.future);
+      } catch (_) {
+        return;
+      }
+    }
+    if (!mounted || businessData?.data == null) return;
+
+    final data = businessData!.data!;
+    bool flag(num? value, bool fallback) => value == null ? fallback : value != 0;
 
       // Load form field data - ALWAYS LOAD THESE
       nameController.text = data.companyName ?? '';
@@ -93,21 +105,37 @@ class _PrintingInvoiceScreenState extends ConsumerState<PrintingInvoiceScreen> {
 
       /// ---------- Load visibility flags from META ----------
       final meta = data.meta;
-      if (meta != null) {
-        invoiceVisibility["show_company_name"] = meta.showCompanyName == 1;
-        invoiceVisibility["show_phone_number"] = meta.showPhoneNumber == 1;
-        invoiceVisibility["show_address"] = meta.showAddress == 1;
-        invoiceVisibility["show_email"] = meta.showEmail == 1;
-        invoiceVisibility["show_vat"] = meta.showVat == 1;
-      }
+      invoiceVisibility["show_company_name"] = flag(
+        meta?.showCompanyName,
+        invoiceVisibility["show_company_name"]!,
+      );
+      invoiceVisibility["show_phone_number"] = flag(
+        meta?.showPhoneNumber,
+        invoiceVisibility["show_phone_number"]!,
+      );
+      invoiceVisibility["show_address"] = flag(meta?.showAddress, invoiceVisibility["show_address"]!);
+      invoiceVisibility["show_email"] = flag(meta?.showEmail, invoiceVisibility["show_email"]!);
+      invoiceVisibility["show_vat"] = flag(meta?.showVat, invoiceVisibility["show_vat"]!);
 
       /// ---------- Load visibility flags from ROOT ----------
-      invoiceVisibility["show_note"] = data.showNote == 1;
-      invoiceVisibility["show_gratitude_msg"] = data.showGratitudeMsg == 1;
-      invoiceVisibility["show_invoice_scanner_logo"] = data.showInvoiceScannerLogo == 1;
-      invoiceVisibility["show_a4_invoice_logo"] = data.showA4InvoiceLogo == 1;
-      invoiceVisibility["show_thermal_invoice_logo"] = data.showThermalInvoiceLogo == 1;
-      invoiceVisibility["show_warranty"] = data.showWarranty == 1;
+      invoiceVisibility["show_note"] = flag(data.showNote, invoiceVisibility["show_note"]!);
+      invoiceVisibility["show_gratitude_msg"] = flag(
+        data.showGratitudeMsg,
+        invoiceVisibility["show_gratitude_msg"]!,
+      );
+      invoiceVisibility["show_invoice_scanner_logo"] = flag(
+        data.showInvoiceScannerLogo,
+        invoiceVisibility["show_invoice_scanner_logo"]!,
+      );
+      invoiceVisibility["show_a4_invoice_logo"] = flag(
+        data.showA4InvoiceLogo,
+        invoiceVisibility["show_a4_invoice_logo"]!,
+      );
+      invoiceVisibility["show_thermal_invoice_logo"] = flag(
+        data.showThermalInvoiceLogo,
+        invoiceVisibility["show_thermal_invoice_logo"]!,
+      );
+      invoiceVisibility["show_warranty"] = flag(data.showWarranty, invoiceVisibility["show_warranty"]!);
 
       // Set invoice size
       final invoiceSize = data.invoiceSize;
@@ -131,10 +159,7 @@ class _PrintingInvoiceScreenState extends ConsumerState<PrintingInvoiceScreen> {
         selectedPrinterProfile = PrinterProfile.fallback;
       }
 
-      if (mounted) {
-        setState(() {});
-      }
-    }
+    setState(() {});
   }
 
   Widget invoiceCheckbox(String key) {
